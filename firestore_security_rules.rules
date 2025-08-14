@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isTeamMember(teamData) {
+      return teamData.members != null && 
+             teamData.members.hasAny([{'userId': request.auth.uid}]);
+    }
+    
+    function isTeamOwnerOrCaptain(teamData) {
+      return teamData.members != null && 
+             teamData.members.hasAny([
+               {'userId': request.auth.uid, 'role': 'owner'},
+               {'userId': request.auth.uid, 'role': 'captain'}
+             ]);
+    }
+    
+    function isTournamentOrganizer(tournamentData) {
+      return tournamentData.organizerId == request.auth.uid;
+    }
+
+    // Teams collection rules
+    match /teams/{teamId} {
+      // Allow read if team is public or user is a member
+      allow read: if isAuthenticated() && 
+                     (resource.data.isPublic == true || 
+                      isTeamMember(resource.data));
+      
+      // Allow create if authenticated and user is set as owner
+      allow create: if isAuthenticated() && 
+                       request.resource.data.ownerId == request.auth.uid &&
+                       request.resource.data.members.size() == 1 &&
+                       request.resource.data.members[0].userId == request.auth.uid &&
+                       request.resource.data.members[0].role == 'owner' &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.updatedAt == request.time;
+      
+      // Allow update if user is team owner or captain
+      allow update: if isAuthenticated() && 
+                       isTeamOwnerOrCaptain(resource.data) &&
+                       request.resource.data.updatedAt == request.time &&
+                       // Prevent changing owner
+                       request.resource.data.ownerId == resource.data.ownerId;
+      
+      // Allow delete (soft delete) if user is team owner
+      allow delete: if isAuthenticated() && 
+                       resource.data.ownerId == request.auth.uid;
+    }
+
+    // Team join requests collection rules
+    match /team_join_requests/{requestId} {
+      // Allow read if user is the requester or team owner/captain
+      allow read: if isAuthenticated() && 
+                     (resource.data.requesterId == request.auth.uid ||
+                      exists(/databases/$(database)/documents/teams/$(resource.data.teamId)) &&
+                      isTeamOwnerOrCaptain(get(/databases/$(database)/documents/teams/$(resource.data.teamId)).data));
+      
+      // Allow create if authenticated and user is the requester
+      allow create: if isAuthenticated() && 
+                       request.resource.data.requesterId == request.auth.uid &&
+                       request.resource.data.status == 'pending' &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Allow update for status changes by team owner/captain or cancellation by requester
+      allow update: if isAuthenticated() && 
+                       (
+                         // Team owner/captain can approve/reject
+                         (exists(/databases/$(database)/documents/teams/$(resource.data.teamId)) &&
+                          isTeamOwnerOrCaptain(get(/databases/$(database)/documents/teams/$(resource.data.teamId)).data) &&
+                          request.resource.data.respondedBy == request.auth.uid &&
+                          request.resource.data.respondedAt == request.time) ||
+                         // Requester can cancel
+                         (resource.data.requesterId == request.auth.uid &&
+                          request.resource.data.status == 'cancelled' &&
+                          request.resource.data.respondedAt == request.time)
+                       );
+    }
+
+    // Tournaments collection rules
+    match /tournaments/{tournamentId} {
+      // Allow read if tournament is public or user is organizer
+      allow read: if isAuthenticated() && 
+                     (resource.data.isPublic == true || 
+                      resource.data.organizerId == request.auth.uid);
+      
+      // Allow create if authenticated and user is set as organizer
+      allow create: if isAuthenticated() && 
+                       request.resource.data.organizerId == request.auth.uid &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.updatedAt == request.time &&
+                       request.resource.data.currentTeamsCount == 0;
+      
+      // Allow update if user is tournament organizer
+      allow update: if isAuthenticated() && 
+                       resource.data.organizerId == request.auth.uid &&
+                       request.resource.data.updatedAt == request.time &&
+                       // Prevent changing organizer
+                       request.resource.data.organizerId == resource.data.organizerId;
+      
+      // Allow delete if user is tournament organizer
+      allow delete: if isAuthenticated() && 
+                       resource.data.organizerId == request.auth.uid;
+    }
+
+    // Tournament registrations collection rules
+    match /tournament_registrations/{registrationId} {
+      // Allow read if user registered the team or is tournament organizer
+      allow read: if isAuthenticated() && 
+                     (resource.data.registeredBy == request.auth.uid ||
+                      exists(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)) &&
+                      isTournamentOrganizer(get(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)).data));
+      
+      // Allow create if authenticated and user is registering
+      allow create: if isAuthenticated() && 
+                       request.resource.data.registeredBy == request.auth.uid &&
+                       request.resource.data.status == 'pending' &&
+                       request.resource.data.registeredAt == request.time;
+      
+      // Allow update for status changes by tournament organizer or withdrawal by registrant
+      allow update: if isAuthenticated() && 
+                       (
+                         // Tournament organizer can approve/reject
+                         (exists(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)) &&
+                          isTournamentOrganizer(get(/databases/$(database)/documents/tournaments/$(resource.data.tournamentId)).data) &&
+                          request.resource.data.respondedBy == request.auth.uid &&
+                          request.resource.data.respondedAt == request.time) ||
+                         // Registrant can withdraw
+                         (resource.data.registeredBy == request.auth.uid &&
+                          request.resource.data.status == 'withdrawn' &&
+                          request.resource.data.respondedAt == request.time)
+                       );
+    }
+
+    // User profiles - Updated to allow discovery while protecting sensitive data
+    match /users/{userId} {
+      // Allow authenticated users to read user profiles for discovery (players, coaches)
+      // This enables features like finding players, matchmaking, team formation
+      allow read: if isAuthenticated();
+
+      // Only allow users to write to their own profile
+      allow write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Player profiles (existing rules - keeping for reference)
+    match /player_profiles/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+
+    // Coach profiles (existing rules - keeping for reference)
+    match /coach_profiles/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+    }
+  }
+}

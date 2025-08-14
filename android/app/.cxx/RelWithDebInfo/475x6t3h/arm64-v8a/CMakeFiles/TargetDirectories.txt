@@ -1,0 +1,2 @@
+E:/playaround_auth/android/app/.cxx/RelWithDebInfo/475x6t3h/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/playaround_auth/android/app/.cxx/RelWithDebInfo/475x6t3h/arm64-v8a/CMakeFiles/rebuild_cache.dir

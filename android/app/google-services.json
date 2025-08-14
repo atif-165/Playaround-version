@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1019361375836",
+    "project_id": "playaround-6556e",
+    "storage_bucket": "playaround-6556e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1019361375836:android:91966b3319644b7dd31899",
+        "android_client_info": {
+          "package_name": "com.playaround.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1019361375836-mpkfrqij7o1otio3dendf32hrbt8ntc4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.playaround.app",
+            "certificate_hash": "569487ce1ac95ef34054c7df34a4433949a84528"
+          }
+        },
+        {
+          "client_id": "1019361375836-opqe05ltna2lvogntmu2smbdemf2fq48.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmEthN5fJl_77CAxCEXh9b4DLf0sbOO70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1019361375836-opqe05ltna2lvogntmu2smbdemf2fq48.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1019361375836-7p6dadlsobpsbgdq0ardbikd820meq8i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.authBloc"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

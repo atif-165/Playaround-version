@@ -1,0 +1,22 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  strong-mode:
+    implicit-casts: false
+    implicit-dynamic: false
+  errors:
+    invalid_use_of_visible_for_testing_member: warning
+    unnecessary_cast: warning
+    dead_code: warning
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_print
+    - prefer_single_quotes
+    - prefer_const_constructors
+    - avoid_redundant_argument_values
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - directives_ordering
+
