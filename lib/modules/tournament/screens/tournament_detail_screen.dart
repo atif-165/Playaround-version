@@ -13,6 +13,7 @@ import '../../../theming/styles.dart';
 import '../models/tournament_model.dart';
 
 import '../widgets/tournament_teams_list.dart';
+
 import 'tournament_team_registration_screen.dart';
 import 'match_scheduling_screen.dart';
 import 'score_update_screen.dart';
@@ -631,7 +632,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> with Ti
             Container(
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: ColorsManager.success.withOpacity(0.1),
+                color: ColorsManager.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Text(
@@ -662,7 +663,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> with Ti
           Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: ColorsManager.primary.withOpacity(0.1),
+              color: ColorsManager.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12.r),
                 topRight: Radius.circular(12.r),
@@ -891,7 +892,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> with Ti
       leading: Container(
         padding: EdgeInsets.all(8.w),
         decoration: BoxDecoration(
-          color: ColorsManager.primary.withOpacity(0.1),
+          color: ColorsManager.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: Icon(

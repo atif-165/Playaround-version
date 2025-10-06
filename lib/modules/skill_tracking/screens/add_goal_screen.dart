@@ -43,7 +43,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.black,
       appBar: _buildAppBar(),
       body: _buildBody(),
       bottomNavigationBar: _buildBottomBar(),
@@ -52,17 +52,17 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       elevation: 0,
       title: Text(
         'Set New Goal',
-        style: TextStyles.font18DarkBlue600Weight.copyWith(fontSize: 20.sp),
+        style: TextStyles.font18DarkBlue600Weight.copyWith(fontSize: 20.sp, color: Colors.white),
       ),
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
         icon: Icon(
           Icons.arrow_back_ios,
-          color: ColorsManager.mainBlue,
+          color: Colors.white,
           size: 20.sp,
         ),
       ),
@@ -120,8 +120,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
               onTap: () => setState(() => _selectedSkillType = skillType),
               child: Container(
                 padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration(
-                  color: isSelected ? ColorsManager.mainBlue.withValues(alpha: 0.1) : Colors.white,
+                decoration: BoxDecoration( 
+                  color: isSelected ? ColorsManager.mainBlue.withValues(alpha: 0.3) : Colors.black,
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
                     color: isSelected 
@@ -190,9 +190,9 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
         Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.black,
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: Colors.grey[600]!),
           ),
           child: Column(
             children: [
@@ -267,9 +267,9 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
           child: Container(
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.black,
               borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: Colors.grey[600]!),
             ),
             child: Row(
               children: [
@@ -355,7 +355,7 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
+      decoration: BoxDecoration( 
         color: ColorsManager.mainBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
@@ -409,10 +409,10 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black, 
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+          BoxShadow( 
+            color: Colors.white.withValues(alpha: 0.1),
             blurRadius: 10.r,
             offset: Offset(0, -2.h),
           ),

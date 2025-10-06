@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/order.dart';
+import '../models/order.dart' as order_model;
+import '../models/order_item.dart';
 
 class OrderService {
   final _db = FirebaseFirestore.instance;
@@ -36,9 +37,9 @@ class OrderService {
     return orderRef.id;
   }
 
-  Future<List<OrderModel>> myOrders() async {
+  Future<List<order_model.Order>> myOrders() async {
     final snap = await _orders.where('userId', isEqualTo: _uid).orderBy('orderDate', descending: true).get();
-    return snap.docs.map(OrderModel.fromDoc).toList();
+    return snap.docs.map(order_model.Order.fromDoc).toList();
   }
 
   /// Check if current user has purchased a specific product
@@ -50,7 +51,7 @@ class OrderService {
     for (final doc in snap.docs) {
       final data = doc.data();
       final items = (data['items'] as List<dynamic>? ?? [])
-          .map((e) => OrderItem.fromMap(e as Map<String, dynamic>))
+          .map((e) => OrderItem.fromDoc(e as Map<String, dynamic>))
           .toList();
       for (final item in items) {
         if (item.productId == productId && item.quantity > 0) {

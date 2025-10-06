@@ -180,7 +180,7 @@ class _ListingsScreenState extends State<ListingsScreen> {
               Gap(12.w),
               Expanded(
                 child: DropdownButtonFormField<ListingType>(
-                  value: _selectedTypeFilter,
+                  initialValue: _selectedTypeFilter,
                   decoration: InputDecoration(
                     hintText: 'All Types',
                     border: OutlineInputBorder(

@@ -214,10 +214,10 @@ class CoachProfileCard extends StatelessWidget {
 
   Widget _buildCoachBadge() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 3.h),
+      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
       decoration: BoxDecoration(
         color: ColorsManager.primary, // Red
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(8.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -225,15 +225,18 @@ class CoachProfileCard extends StatelessWidget {
           Icon(
             Icons.sports,
             color: Colors.white,
-            size: 10.sp,
+            size: 8.sp,
           ),
-          Gap(2.w),
-          Text(
-            'COACH',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 8.sp,
-              fontWeight: FontWeight.bold,
+          Gap(1.w),
+          Flexible(
+            child: Text(
+              'COACH',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 7.sp,
+                fontWeight: FontWeight.bold,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

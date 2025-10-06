@@ -117,9 +117,9 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: ColorsManager.mainBlue.withValues(alpha: 0.05),
+        color: ColorsManager.mainBlue.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+        border: Border.all(color: ColorsManager.mainBlue.withOpacity(0.2)),
       ),
       child: Row(
         children: [
@@ -208,11 +208,11 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
           const Center(child: CustomProgressIndicator())
         else if (_availableTimeSlots.isEmpty)
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.all(16.w), 
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
+              color: Colors.orange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8.r),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -302,10 +302,10 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
+      decoration: BoxDecoration( 
         color: Colors.green.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,7 +318,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
           _buildSummaryRow('Date', _formatDate(_selectedDate!)),
           _buildSummaryRow('Time', '${_selectedTimeSlot!.start} - ${_selectedTimeSlot!.end}'),
           _buildSummaryRow('Duration', '${duration.toStringAsFixed(1)} hours'),
-          _buildSummaryRow('Rate', '₹${widget.venue.hourlyRate.toStringAsFixed(0)}/hour'),
+          _buildSummaryRow('Rate', '₹${widget.venue.hourlyRate.toStringAsFixed(0)}/hour'), 
           Divider(color: Colors.green.withValues(alpha: 0.3)),
           _buildSummaryRow('Total Amount', '₹${totalAmount.toStringAsFixed(0)}', isTotal: true),
         ],

@@ -8,12 +8,12 @@ import '../../../logic/cubit/auth_cubit.dart';
 import '../../../models/user_profile.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../routing/routes.dart';
 import '../models/tournament_model.dart';
 import '../services/tournament_service.dart';
 import '../services/tournament_permission_service.dart';
 import '../widgets/tournament_card.dart';
-import 'tournament_detail_screen.dart';
-import 'create_tournament_screen.dart';
+import '../widgets/tournament_filters.dart';
 
 /// Screen displaying list of tournaments
 class TournamentListScreen extends StatefulWidget {
@@ -92,12 +92,19 @@ class _TournamentListScreenState extends State<TournamentListScreen> {
       appBar: AppBar(
         title: Text(
           'Tournaments',
-          style: TextStyles.font18DarkBlueBold,
+          style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         elevation: 0,
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            onPressed: _showFilters,
+            icon: const Icon(
+              Icons.filter_list,
+              color: ColorsManager.mainBlue,
+            ),
+          ),
           if (_canCreateTournament())
             IconButton(
               onPressed: _handleCreateTournament,
@@ -193,11 +200,7 @@ class _TournamentListScreenState extends State<TournamentListScreen> {
   }
 
   void _navigateToCreateTournament() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CreateTournamentScreen(),
-      ),
-    ).then((_) {
+    Navigator.pushNamed(context, Routes.createTournamentScreen).then((_) {
       // Refresh tournaments list when returning
       _loadTournaments();
     });
@@ -229,10 +232,30 @@ class _TournamentListScreenState extends State<TournamentListScreen> {
   }
 
   void _navigateToTournamentDetails(Tournament tournament) {
-    Navigator.push(
+    Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => TournamentDetailScreen(tournament: tournament),
+      Routes.tournamentDetailScreen,
+      arguments: tournament,
+    );
+  }
+
+  void _showFilters() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TournamentFilters(
+        selectedSportType: null,
+        selectedFormat: null,
+        selectedStatus: null,
+        maxEntryFee: null,
+        location: null,
+        showFreeOnly: false,
+        showPaidOnly: false,
+        onApply: (filters) {
+          // Apply filters and reload tournaments
+          _loadTournaments();
+        },
       ),
     );
   }

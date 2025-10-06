@@ -227,8 +227,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   }
                 });
               },
-              selectedColor: ColorsManager.mainBlue.withValues(alpha: 0.2),
-              checkmarkColor: ColorsManager.mainBlue,
+              selectedColor: ColorsManager.primary.withValues(alpha: 0.2),
+              checkmarkColor: ColorsManager.primary,
             );
           }).toList(),
         ),
@@ -302,8 +302,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   }
                 });
               },
-              selectedColor: ColorsManager.mainBlue.withValues(alpha: 0.2),
-              checkmarkColor: ColorsManager.mainBlue,
+              selectedColor: ColorsManager.primary.withValues(alpha: 0.2),
+              checkmarkColor: ColorsManager.primary,
             );
           }).toList(),
         ),

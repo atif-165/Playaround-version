@@ -400,7 +400,7 @@ class AppDropdownField<T> extends StatelessWidget {
     final contentPadding = _getContentPadding();
 
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       items: items,
       onChanged: enabled ? onChanged : null,
       validator: validator,

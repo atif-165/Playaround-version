@@ -16,6 +16,7 @@ class PlayerProfile extends UserProfile {
     required super.location,
     super.profilePictureUrl,
     required super.isProfileComplete,
+    super.teamId,
     required super.createdAt,
     required super.updatedAt,
     required this.sportsOfInterest,

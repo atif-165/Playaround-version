@@ -230,7 +230,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
         ),
         Gap(8.h),
         DropdownButtonFormField<SportType>(
-          value: _selectedSportType,
+          initialValue: _selectedSportType,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),

@@ -118,7 +118,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
               end: Alignment.bottomCenter,
               colors: [
                 ColorsManager.primary,
-                ColorsManager.primary.withValues(alpha: 0.8),
+                ColorsManager.primary.withAlpha(204),
               ],
             ),
           ),
@@ -296,7 +296,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: ColorsManager.primary.withValues(alpha: 0.1),
+        color: ColorsManager.primary.withAlpha(26),
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Column(
@@ -379,10 +379,10 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
             return Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: ColorsManager.primary.withValues(alpha: 0.1),
+                color: ColorsManager.primary.withAlpha(26),
                 borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(
-                  color: ColorsManager.primary.withValues(alpha: 0.3),
+                border: Border.all( 
+                  color: ColorsManager.primary.withAlpha(77),
                   width: 1,
                 ),
               ),
@@ -634,9 +634,9 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
+        boxShadow: [ 
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: Colors.grey.withAlpha(51),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -820,7 +820,7 @@ class _ReviewDialogState extends State<_ReviewDialog> {
               maxLines: 4,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Share your experience with this coach...',
+                hintText: 'Share your experience with this coach...', 
                 hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
                 filled: true,
                 fillColor: Colors.white.withValues(alpha: 0.1),
@@ -828,11 +828,11 @@ class _ReviewDialogState extends State<_ReviewDialog> {
                   borderRadius: BorderRadius.circular(8.r),
                   borderSide: const BorderSide(color: Color(0xFF00FFFF)),
                 ),
-                focusedBorder: OutlineInputBorder(
+                focusedBorder: OutlineInputBorder( 
                   borderRadius: BorderRadius.circular(8.r),
                   borderSide: const BorderSide(color: Color(0xFF00FFFF), width: 2),
                 ),
-                enabledBorder: OutlineInputBorder(
+                enabledBorder: OutlineInputBorder( 
                   borderRadius: BorderRadius.circular(8.r),
                   borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
                 ),

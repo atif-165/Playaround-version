@@ -151,7 +151,7 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
       decoration: BoxDecoration(
         color: ColorsManager.cardBackground,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: ColorsManager.primary.withOpacity(0.3)),
+        border: Border.all(color: ColorsManager.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +195,7 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: ColorsManager.success.withOpacity(0.1),
+                color: ColorsManager.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Text(
@@ -249,7 +249,7 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: isSelected 
-              ? ColorsManager.success.withOpacity(0.1)
+              ? ColorsManager.success.withValues(alpha: 0.1)
               : ColorsManager.cardBackground,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
@@ -266,7 +266,7 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
               decoration: BoxDecoration(
                 color: isSelected 
                     ? ColorsManager.success
-                    : ColorsManager.primary.withOpacity(0.1),
+                    : ColorsManager.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Icon(

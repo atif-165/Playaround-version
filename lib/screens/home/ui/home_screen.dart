@@ -8,9 +8,9 @@ import 'package:flutter_offline/flutter_offline.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '/helpers/extensions.dart';
-import '/routing/routes.dart';
-import '/theming/styles.dart';
+import '../../../helpers/extensions.dart';
+import '../../../routing/routes.dart';
+import '../../../theming/styles.dart';
 import '../../../core/widgets/app_text_button.dart';
 import '../../../core/widgets/no_internet.dart';
 import '../../../core/widgets/progress_indicator.dart';

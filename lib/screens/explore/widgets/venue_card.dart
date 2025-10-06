@@ -48,7 +48,7 @@ class VenueCard extends StatelessWidget {
                 height: 160.h,
                 width: double.infinity,
                 child: ImageUtils.buildSafeCachedImage(
-                  imageUrl: venue.images.isNotEmpty ? venue.images.first : null,
+                  imageUrl: venue.images.isNotEmpty ? venue.images.first : '',
                   width: double.infinity,
                   height: 160.h,
                   fit: BoxFit.cover,

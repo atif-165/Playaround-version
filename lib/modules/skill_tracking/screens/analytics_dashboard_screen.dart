@@ -92,7 +92,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.black,
       appBar: _buildAppBar(),
       body: _isLoading ? _buildLoadingState() : _buildContent(),
     );
@@ -100,17 +100,17 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       elevation: 0,
       title: Text(
         'Performance Analytics',
-        style: TextStyles.font18DarkBlue600Weight.copyWith(fontSize: 20.sp),
+        style: TextStyles.font18DarkBlue600Weight.copyWith(fontSize: 20.sp, color: Colors.white),
       ),
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
         icon: Icon(
           Icons.arrow_back_ios,
-          color: ColorsManager.mainBlue,
+          color: Colors.white,
           size: 20.sp,
         ),
       ),
@@ -151,7 +151,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
       ],
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: BoxDecoration(
+        decoration: BoxDecoration( 
           color: ColorsManager.mainBlue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8.r),
         ),
@@ -324,11 +324,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black,
         borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
+        boxShadow: [ 
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.white.withOpacity(0.1),
             blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
@@ -343,7 +343,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
             style: TextStyle(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              color: Colors.white,
             ),
           ),
           Gap(4.h),
@@ -373,9 +373,9 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
+        boxShadow: [ 
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
@@ -446,7 +446,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
               }).toList(),
               isCurved: true,
               gradient: LinearGradient(
-                colors: [ColorsManager.mainBlue, ColorsManager.mainBlue.withValues(alpha: 0.7)],
+                colors: [ColorsManager.mainBlue, ColorsManager.mainBlue.withOpacity(0.7)],
               ),
               barWidth: 3.w,
               isStrokeCapRound: true,
@@ -463,8 +463,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
                 show: true,
                 gradient: LinearGradient(
                   colors: [
-                    ColorsManager.mainBlue.withValues(alpha: 0.2),
-                    ColorsManager.mainBlue.withValues(alpha: 0.05),
+                    ColorsManager.mainBlue.withOpacity(0.2),
+                    ColorsManager.mainBlue.withOpacity(0.05),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -577,14 +577,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white, 
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         children: [
           Container(
-            width: 40.w,
+            width: 40.w, 
             height: 40.h,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
@@ -682,9 +682,9 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: ColorsManager.mainBlue.withValues(alpha: 0.05),
+        color: ColorsManager.mainBlue.withOpacity(0.05),
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+        border: Border.all(color: ColorsManager.mainBlue.withOpacity(0.2)),
       ),
       child: Row(
         children: [

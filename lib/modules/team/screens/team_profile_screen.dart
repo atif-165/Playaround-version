@@ -9,6 +9,11 @@ import '../../../core/widgets/material3/material3_components.dart';
 
 import '../models/models.dart';
 import '../services/team_service.dart';
+import 'team_performance_screen.dart';
+import 'team_schedule_screen.dart';
+
+import '../widgets/team_showcase_widget.dart';
+import '../widgets/team_communication_widget.dart';
 
 /// Screen for displaying detailed team profile information
 class TeamProfileScreen extends StatefulWidget {
@@ -36,7 +41,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _currentTeam = widget.team;
   }
 
@@ -66,6 +71,8 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
               children: [
                 _buildOverviewTab(),
                 _buildMembersTab(),
+                _buildScheduleTab(),
+                _buildPerformanceTab(),
                 _buildHistoryTab(),
                 _buildTournamentsTab(),
               ],
@@ -105,6 +112,12 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
               ),
       ),
       actions: [
+        if (_isTeamAdmin())
+          IconButton(
+            onPressed: _openAdminPanel,
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: 'Team Admin',
+          ),
         if (widget.showJoinButton)
           Padding(
             padding: EdgeInsets.only(right: 16.w),
@@ -305,15 +318,17 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
 
   Widget _buildTabBar() {
     return Container(
-      color: Colors.white,
+      color: Colors.black,
       child: TabBar(
         controller: _tabController,
-        labelColor: ColorsManager.mainBlue,
-        unselectedLabelColor: ColorsManager.gray,
-        indicatorColor: ColorsManager.mainBlue,
+        labelColor: Colors.white,
+        unselectedLabelColor: Colors.grey[400],
+        indicatorColor: Colors.white,
         tabs: const [
           Tab(text: 'Overview'),
           Tab(text: 'Members'),
+          Tab(text: 'Schedule'),
+          Tab(text: 'Performance'),
           Tab(text: 'History'),
           Tab(text: 'Tournaments'),
         ],
@@ -336,6 +351,18 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
             ),
             Gap(20.h),
           ],
+          // Team Showcase
+          TeamShowcaseWidget(
+            teamId: _currentTeam?.id ?? '',
+            teamName: _currentTeam?.name ?? '',
+          ),
+          Gap(20.h),
+          // Team Communication
+          TeamCommunicationWidget(
+            teamId: _currentTeam?.id ?? '',
+            teamName: _currentTeam?.name ?? '',
+          ),
+          Gap(20.h),
           _buildSectionHeader('Team Details'),
           Gap(12.h),
           _buildDetailRow('Sport', _currentTeam?.sportType.displayName ?? 'Unknown'),
@@ -361,6 +388,24 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
         final member = members[index];
         return _buildMemberCard(member);
       },
+    );
+  }
+
+  Widget _buildScheduleTab() {
+    if (_currentTeam == null) return const SizedBox.shrink();
+    
+    return TeamScheduleScreen(
+      teamId: _currentTeam!.id,
+      teamName: _currentTeam!.name,
+    );
+  }
+
+  Widget _buildPerformanceTab() {
+    if (_currentTeam == null) return const SizedBox.shrink();
+    
+    return TeamPerformanceScreen(
+      teamId: _currentTeam!.id,
+      teamName: _currentTeam!.name,
     );
   }
 
@@ -503,8 +548,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader('Actions'),
+        _buildSectionHeader('Quick Actions'),
         Gap(12.h),
+        // Primary Actions
         Row(
           children: [
             Expanded(
@@ -517,12 +563,56 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
             ),
             Gap(12.w),
             Expanded(
+              child: AppFilledButton(
+                text: 'Dashboard',
+                onPressed: _navigateToTeamDashboard,
+                icon: const Icon(Icons.dashboard),
+              ),
+            ),
+          ],
+        ),
+        Gap(12.h),
+        // Secondary Actions
+        Row(
+          children: [
+            Expanded(
+              child: AppOutlinedButton(
+                text: 'Schedule',
+                onPressed: _navigateToTeamSchedule,
+                icon: const Icon(Icons.calendar_today),
+              ),
+            ),
+            Gap(12.w),
+            Expanded(
+              child: AppOutlinedButton(
+                text: 'Management',
+                onPressed: _navigateToTeamManagement,
+                icon: const Icon(Icons.settings),
+              ),
+            ),
+          ],
+        ),
+        Gap(12.h),
+        // Utility Actions
+        Row(
+          children: [
+            Expanded(
               child: AppOutlinedButton(
                 text: 'Share Team',
                 onPressed: _shareTeam,
                 icon: const Icon(Icons.share),
               ),
             ),
+            if (_isTeamAdmin()) ...[
+              Gap(12.w),
+              Expanded(
+                child: AppOutlinedButton(
+                  text: 'Admin Panel',
+                  onPressed: _openAdminPanel,
+                  icon: const Icon(Icons.admin_panel_settings),
+                ),
+              ),
+            ],
           ],
         ),
       ],
@@ -646,5 +736,64 @@ class _TeamProfileScreenState extends State<TeamProfileScreen>
     // TODO: This should check if the team has won any tournaments
     // For now, return false as placeholder
     return false;
+  }
+
+  /// Check if current user is team admin (owner or captain)
+  bool _isTeamAdmin() {
+    if (_currentTeam == null) return false;
+    
+    // TODO: Get current user ID from auth service
+    // For now, check if user is owner
+    return true; // Placeholder - should check actual user role
+  }
+
+  /// Open team admin panel
+  void _openAdminPanel() {
+    if (_currentTeam == null) return;
+    
+    Navigator.pushNamed(
+      context,
+      '/teamAdminScreen',
+      arguments: {
+        'teamId': _currentTeam!.id,
+        'teamName': _currentTeam!.name,
+      },
+    );
+  }
+  
+  /// Navigate to team management
+  void _navigateToTeamManagement() {
+    if (_currentTeam == null) return;
+    
+    Navigator.pushNamed(
+      context,
+      '/teamManagementScreen',
+      arguments: _currentTeam!.id,
+    );
+  }
+  
+  /// Navigate to team schedule
+  void _navigateToTeamSchedule() {
+    if (_currentTeam == null) return;
+    
+    Navigator.pushNamed(
+      context,
+      '/teamScheduleScreen',
+      arguments: {
+        'teamId': _currentTeam!.id,
+        'teamName': _currentTeam!.name,
+      },
+    );
+  }
+  
+  /// Navigate to team dashboard
+  void _navigateToTeamDashboard() {
+    if (_currentTeam == null) return;
+    
+    Navigator.pushNamed(
+      context,
+      '/teamDashboardScreen',
+      arguments: _currentTeam!.id,
+    );
   }
 }

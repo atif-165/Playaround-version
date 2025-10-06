@@ -131,6 +131,31 @@ class TeamService {
     }
   }
 
+  /// Get team by ID (alias for getTeam)
+  Future<Team?> getTeamById(String teamId) async {
+    return getTeam(teamId);
+  }
+
+  /// Get upcoming events for a team
+  Future<List<TeamScheduleEvent>> getUpcomingEvents(String teamId) async {
+    try {
+      final now = DateTime.now();
+      final query = await _firestore
+          .collection('team_schedule_events')
+          .where('teamId', isEqualTo: teamId)
+          .where('startTime', isGreaterThan: now)
+          .orderBy('startTime')
+          .limit(10)
+          .get();
+
+      return query.docs
+          .map((doc) => TeamScheduleEvent.fromMap(doc.data()))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to get upcoming events: $e');
+    }
+  }
+
   /// Get teams for current user
   Stream<List<Team>> getUserTeams() {
     final user = _auth.currentUser;
@@ -386,7 +411,7 @@ class TeamService {
         );
       } catch (e) {
         // Log error but don't fail the approval
-        print('Warning: Failed to add member to team group chat: $e');
+        // Log error but don't fail the approval
       }
     } catch (e) {
       throw Exception('Failed to approve join request: $e');
@@ -652,7 +677,7 @@ class TeamService {
       );
     } catch (e) {
       // Log error but don't fail team creation
-      print('Warning: Failed to create team group chat: $e');
+      // Log error but don't fail team creation
     }
   }
 
@@ -907,7 +932,7 @@ class TeamService {
         });
       }
     } catch (e) {
-      print('Error checking captain voting: $e');
+      // Error checking captain voting
     }
   }
 
@@ -988,5 +1013,241 @@ class TeamService {
     } catch (e) {
       throw Exception('Failed to assign role: $e');
     }
+  }
+
+  // ============ PERFORMANCE TRACKING ============
+
+  /// Get player performance for a team
+  Future<PlayerPerformance?> getPlayerPerformance(String teamId, String playerId) async {
+    try {
+      final doc = await _firestore
+          .collection('team_performance')
+          .doc('${teamId}_$playerId')
+          .get();
+
+      if (doc.exists) {
+        return PlayerPerformance.fromMap(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get player performance: $e');
+    }
+  }
+
+  /// Get all player performances for a team
+  Stream<List<PlayerPerformance>> getTeamPlayerPerformances(String teamId) {
+    return _firestore
+        .collection('team_performance')
+        .where('teamId', isEqualTo: teamId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PlayerPerformance.fromMap(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  /// Update player performance
+  Future<void> updatePlayerPerformance(PlayerPerformance performance) async {
+    try {
+      await _firestore
+          .collection('team_performance')
+          .doc('${performance.teamId}_${performance.playerId}')
+          .set(performance.toMap());
+    } catch (e) {
+      throw Exception('Failed to update player performance: $e');
+    }
+  }
+
+  /// Get team performance
+  Future<TeamPerformance?> getTeamPerformance(String teamId) async {
+    try {
+      final doc = await _firestore
+          .collection('team_performance')
+          .doc('${teamId}_team')
+          .get();
+
+      if (doc.exists) {
+        return TeamPerformance.fromMap(doc.data() as Map<String, dynamic>);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get team performance: $e');
+    }
+  }
+
+  /// Update team performance
+  Future<void> updateTeamPerformance(TeamPerformance performance) async {
+    try {
+      await _firestore
+          .collection('team_performance')
+          .doc('${performance.teamId}_team')
+          .set(performance.toMap());
+    } catch (e) {
+      throw Exception('Failed to update team performance: $e');
+    }
+  }
+
+  /// Add team achievement
+  Future<void> addTeamAchievement(TeamAchievement achievement) async {
+    try {
+      await _firestore
+          .collection('team_achievements')
+          .doc(achievement.id)
+          .set(achievement.toMap());
+    } catch (e) {
+      throw Exception('Failed to add team achievement: $e');
+    }
+  }
+
+  /// Get team achievements
+  Stream<List<TeamAchievement>> getTeamAchievements(String teamId) {
+    return _firestore
+        .collection('team_achievements')
+        .where('teamId', isEqualTo: teamId)
+        .orderBy('achievedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => TeamAchievement.fromMap(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  // ============ SCHEDULING ============
+
+  /// Create a team schedule event
+  Future<String> createScheduleEvent(TeamScheduleEvent event) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('User not authenticated');
+
+      final team = await getTeam(event.teamId);
+      if (team == null) throw Exception('Team not found');
+
+      // Check if user has permission to create events
+      final userMember = team.members.firstWhere(
+        (member) => member.userId == user.uid,
+        orElse: () => throw Exception('User not a team member'),
+      );
+
+      if (userMember.role != TeamRole.owner && 
+          userMember.role != TeamRole.captain) {
+        throw Exception('Only team owner or captain can create events');
+      }
+
+      await _firestore
+          .collection('team_schedule')
+          .doc(event.id)
+          .set(event.toMap());
+
+      return event.id;
+    } catch (e) {
+      throw Exception('Failed to create schedule event: $e');
+    }
+  }
+
+  /// Get team schedule events
+  Stream<List<TeamScheduleEvent>> getTeamSchedule(String teamId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    Query query = _firestore
+        .collection('team_schedule')
+        .where('teamId', isEqualTo: teamId)
+        .orderBy('startTime');
+
+    if (startDate != null) {
+      query = query.where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+    }
+
+    if (endDate != null) {
+      query = query.where('startTime', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => TeamScheduleEvent.fromMap(doc.data() as Map<String, dynamic>))
+        .toList());
+  }
+
+  /// Update schedule event
+  Future<void> updateScheduleEvent(TeamScheduleEvent event) async {
+    try {
+      await _firestore
+          .collection('team_schedule')
+          .doc(event.id)
+          .update(event.toMap());
+    } catch (e) {
+      throw Exception('Failed to update schedule event: $e');
+    }
+  }
+
+  /// Delete schedule event
+  Future<void> deleteScheduleEvent(String eventId) async {
+    try {
+      await _firestore
+          .collection('team_schedule')
+          .doc(eventId)
+          .delete();
+    } catch (e) {
+      throw Exception('Failed to delete schedule event: $e');
+    }
+  }
+
+  /// Mark member attendance for an event
+  Future<void> markAttendance({
+    required String eventId,
+    required String memberId,
+    required String memberName,
+    required AttendanceStatus status,
+    String? reason,
+  }) async {
+    try {
+      final attendance = MemberAttendance(
+        eventId: eventId,
+        memberId: memberId,
+        memberName: memberName,
+        status: status,
+        reason: reason,
+        updatedAt: DateTime.now(),
+      );
+
+      await _firestore
+          .collection('team_attendance')
+          .doc('${eventId}_$memberId')
+          .set(attendance.toMap());
+    } catch (e) {
+      throw Exception('Failed to mark attendance: $e');
+    }
+  }
+
+  /// Get attendance for an event
+  Stream<List<MemberAttendance>> getEventAttendance(String eventId) {
+    return _firestore
+        .collection('team_attendance')
+        .where('eventId', isEqualTo: eventId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => MemberAttendance.fromMap(doc.data() as Map<String, dynamic>))
+            .toList());
+  }
+
+  /// Get member's attendance history
+  Stream<List<MemberAttendance>> getMemberAttendanceHistory(String memberId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    Query query = _firestore
+        .collection('team_attendance')
+        .where('memberId', isEqualTo: memberId)
+        .orderBy('updatedAt', descending: true);
+
+    if (startDate != null) {
+      query = query.where('updatedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+    }
+
+    if (endDate != null) {
+      query = query.where('updatedAt', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => MemberAttendance.fromMap(doc.data() as Map<String, dynamic>))
+        .toList());
   }
 }

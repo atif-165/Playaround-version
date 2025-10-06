@@ -58,8 +58,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
       price: double.tryParse(_price.text.trim()) ?? 0,
       category: _category ?? SportsCategories.all.first,
       ownerId: user.uid,
+      shopId: '', // TODO: Get from shop selection
+      shopName: '', // TODO: Get from shop selection
       images: _images,
+      sizes: [], // TODO: Add size selection
+      colors: [], // TODO: Add color selection
+      stock: 0, // TODO: Add stock input
+      isAvailable: true,
+      rating: 0.0,
+      reviewCount: 0,
+      tags: [], // TODO: Add tag input
+      specifications: {}, // TODO: Add specifications
+      isFeatured: false,
+      isExclusive: false,
       createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
 
     try {
@@ -103,7 +116,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Category'),
-              value: _category,
+              initialValue: _category,
               items: SportsCategories.all.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (v) => setState(() => _category = v),
             ),

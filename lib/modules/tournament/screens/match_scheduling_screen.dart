@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/widgets/app_text_button.dart';
 import '../../../core/widgets/progress_indicaror.dart';
 import '../../../helpers/extensions.dart';
+
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/models.dart';

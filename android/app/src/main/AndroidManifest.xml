@@ -51,6 +51,9 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <meta-data android:name="com.google.android.geo.API_KEY"
+           android:value="AIzaSyBuXzHOyHAHopl_9b8RgK1RrfSWVn-xPHE"/>
+
         <!-- Firebase Auth reCAPTCHA configuration -->
         <meta-data
             android:name="com.google.firebase.auth.api_key"

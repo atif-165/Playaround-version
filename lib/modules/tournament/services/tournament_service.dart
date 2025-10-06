@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'tournament_notification_service.dart';
 import 'package:flutter/foundation.dart';
 import '../../../services/notification_service.dart';
 import '../../../models/listing_model.dart' as listing_models;
@@ -8,7 +9,6 @@ import '../../team/models/models.dart';
 import '../../team/services/team_service.dart';
 import '../../skill_tracking/services/automated_skill_service.dart';
 import '../../chat/services/chat_service.dart';
-import 'tournament_notification_service.dart';
 
 /// Service class for tournament management operations
 class TournamentService {

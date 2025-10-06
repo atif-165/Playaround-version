@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/order_service.dart';
-import '../models/order.dart';
+import '../models/order.dart' as order_model;
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -16,7 +16,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('My Orders')),
-      body: FutureBuilder<List<OrderModel>>(
+      body: FutureBuilder<List<order_model.Order>>(
         future: _orders.myOrders(),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {

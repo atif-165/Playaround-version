@@ -11,6 +11,7 @@ enum NotificationType {
   matchScheduled('match_scheduled'),
   scoreUpdate('score_update'),
   tournamentComplete('tournament_complete'),
+  tournamentUpdate('tournament_update'),
   teamInvite('team_invite'),
   ratingReceived('rating_received'),
   ratingRequest('rating_request'),
@@ -49,6 +50,8 @@ enum NotificationType {
         return 'Score Update';
       case NotificationType.tournamentComplete:
         return 'Tournament Complete';
+      case NotificationType.tournamentUpdate:
+        return 'Tournament Update';
       case NotificationType.teamInvite:
         return 'Team Invite';
       case NotificationType.ratingReceived:

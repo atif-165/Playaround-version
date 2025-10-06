@@ -7,6 +7,7 @@ import '../../../models/geo_models.dart';
 import '../../../services/location_service.dart';
 import '../widgets/team_card.dart';
 import '../../../core/widgets/progress_indicaror.dart';
+import '../../../modules/team/models/models.dart';
 
 /// Teams tab for explore screen
 class TeamsTab extends StatefulWidget {
@@ -150,69 +151,22 @@ class _TeamsTabState extends State<TeamsTab> {
 
   @override
   Widget build(BuildContext context) {
+    return _buildContent();
+  }
+  
+
+  
+  Widget _buildContent() {
     if (_isLoading) {
       return const Center(child: CustomProgressIndicator());
     }
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48.sp,
-              color: Colors.grey[400],
-            ),
-            Gap(16.h),
-            Text(
-              _error!,
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
-            Gap(16.h),
-            ElevatedButton(
-              onPressed: _loadTeams,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorState();
     }
 
     if (_teams.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.groups_outlined,
-              size: 48.sp,
-              color: Colors.grey[400],
-            ),
-            Gap(16.h),
-            Text(
-              'No teams found',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-            Gap(8.h),
-            Text(
-              'Try adjusting your search or filters',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey[500],
-              ),
-            ),
-          ],
-        ),
-      );
+      return _buildEmptyState();
     }
 
     return RefreshIndicator(
@@ -247,12 +201,99 @@ class _TeamsTabState extends State<TeamsTab> {
       ),
     );
   }
+  
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48.sp,
+            color: Colors.grey[400],
+          ),
+          Gap(16.h),
+          Text(
+            _error!,
+            style: TextStyle(
+              fontSize: 16.sp,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          Gap(16.h),
+          ElevatedButton(
+            onPressed: _loadTeams,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.groups_outlined,
+            size: 48.sp,
+            color: Colors.grey[400],
+          ),
+          Gap(16.h),
+          Text(
+            'No teams found',
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+          Gap(8.h),
+          Text(
+            'Try adjusting your search or filters',
+            style: TextStyle(
+              fontSize: 14.sp,
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _onTeamTap(GeoTeam team) {
-    // Navigate to team details
-    // TODO: Implement team details navigation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Team details for ${team.name}')),
+    // Convert GeoTeam to Team model for navigation
+    final teamModel = Team(
+      id: team.id,
+      name: team.name,
+      description: team.description,
+      sportType: _getSportTypeFromString(team.sportType),
+      ownerId: team.ownerId ?? '',
+      members: [],
+      location: team.location,
+      teamImageUrl: team.teamImageUrl,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
     );
+    
+    Navigator.pushNamed(
+      context,
+      '/teamProfileScreen',
+      arguments: teamModel,
+    );
+  }
+  
+  SportType _getSportTypeFromString(String sportType) {
+    switch (sportType.toLowerCase()) {
+      case 'cricket': return SportType.cricket;
+      case 'football': return SportType.football;
+      case 'basketball': return SportType.basketball;
+      case 'volleyball': return SportType.volleyball;
+      case 'tennis': return SportType.tennis;
+      case 'badminton': return SportType.badminton;
+      default: return SportType.other;
+    }
   }
 }

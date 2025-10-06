@@ -107,9 +107,9 @@ class _TournamentTeamsListState extends State<TournamentTeamsList> {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black,
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: Colors.grey[700]!),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.1),
@@ -148,14 +148,14 @@ class _TournamentTeamsListState extends State<TournamentTeamsList> {
               children: [
                 Text(
                   registration.teamName,
-                  style: TextStyles.font14DarkBlueBold,
+                  style: TextStyles.font14DarkBlueBold.copyWith(color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Gap(2.h),
                 Text(
                   'Registered by ${registration.registeredByName}',
-                  style: TextStyles.font10Grey400Weight,
+                  style: TextStyles.font10Grey400Weight.copyWith(color: Colors.grey[300]),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

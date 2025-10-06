@@ -1,241 +1,209 @@
 import 'app_regex.dart';
 
-/// Utility class containing reusable form validation functions.
-/// 
-/// This class provides consistent validation logic across the app
-/// and centralizes validation rules for easier maintenance.
 class FormValidators {
-  /// Validates an email address.
-  /// 
-  /// Returns null if valid, error message string if invalid.
+  /// Validate email field
   static String? validateEmail(String? value) {
-    final email = (value ?? '').trim();
-    
-    if (email.isEmpty) {
-      return 'Please enter an email address';
+    if (value == null || value.trim().isEmpty) {
+      return 'Email is required';
     }
     
-    if (!AppRegex.isEmailValid(email)) {
+    if (!AppRegex.isEmailValid(value.trim())) {
       return 'Please enter a valid email address';
     }
     
     return null;
   }
-  
-  /// Validates a password.
-  /// 
-  /// Returns null if valid, error message string if invalid.
+
+  /// Validate password field
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter a password';
+      return 'Password is required';
     }
     
-    if (!AppRegex.isPasswordValid(value)) {
-      return AppRegex.getPasswordValidationMessage(value);
+    if (!AppRegex.hasMinLength(value)) {
+      return 'Password must be at least 8 characters';
+    }
+    
+    if (!AppRegex.hasUppercase(value)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+    
+    if (!AppRegex.hasLowercase(value)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+    
+    if (!AppRegex.hasNumber(value)) {
+      return 'Password must contain at least one number';
     }
     
     return null;
   }
-  
-  /// Validates password confirmation.
-  /// 
-  /// [value] - The confirmation password
-  /// [originalPassword] - The original password to match against
-  /// 
-  /// Returns null if valid, error message string if invalid.
-  static String? validatePasswordConfirmation(String? value, String originalPassword) {
-    if (value != originalPassword) {
+
+  /// Validate password confirmation
+  static String? validatePasswordConfirmation(String? value, String? password) {
+    if (value == null || value.isEmpty) {
+      return 'Please confirm your password';
+    }
+    
+    if (value != password) {
       return 'Passwords do not match';
     }
     
-    return validatePassword(value);
-  }
-  
-  /// Validates a name field.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateName(String? value) {
-    final name = (value ?? '').trim();
-
-    if (name.isEmpty) {
-      return 'Please enter a valid name';
-    }
-
-    if (name.length < 2) {
-      return 'Name must be at least 2 characters long';
-    }
-
-    if (name.length > 50) {
-      return 'Name must be 50 characters or less';
-    }
-
-    // Check for valid characters (letters, spaces, hyphens, apostrophes)
-    if (!RegExp(r"^[a-zA-Z\s\-']+$").hasMatch(name)) {
-      return 'Name can only contain letters, spaces, hyphens, and apostrophes';
-    }
-
     return null;
   }
 
-  /// Validates an age field.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateAge(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your age';
+  /// Validate name field
+  static String? validateName(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Name is required';
     }
+    
+    if (value.trim().length < 2) {
+      return 'Name must be at least 2 characters';
+    }
+    
+    if (!AppRegex.isNameValid(value.trim())) {
+      return 'Please enter a valid name';
+    }
+    
+    return null;
+  }
 
-    final age = int.tryParse(value);
+  /// Validate phone number
+  static String? validatePhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Phone number is required';
+    }
+    
+    if (!AppRegex.isPhoneValid(value.trim())) {
+      return 'Please enter a valid phone number';
+    }
+    
+    return null;
+  }
+
+  /// Validate required field
+  static String? validateRequired(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    return null;
+  }
+
+  /// Validate minimum length
+  static String? validateMinLength(String? value, int minLength, String fieldName) {
+    if (value == null || value.isEmpty) {
+      return '$fieldName is required';
+    }
+    
+    if (value.length < minLength) {
+      return '$fieldName must be at least $minLength characters';
+    }
+    
+    return null;
+  }
+
+  /// Validate maximum length
+  static String? validateMaxLength(String? value, int maxLength, String fieldName) {
+    if (value != null && value.length > maxLength) {
+      return '$fieldName must not exceed $maxLength characters';
+    }
+    
+    return null;
+  }
+
+  /// Validate age
+  static String? validateAge(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Age is required';
+    }
+    
+    final age = int.tryParse(value.trim());
     if (age == null) {
       return 'Please enter a valid age';
     }
-
-    if (age < 13 || age > 100) {
-      return 'Age must be between 13 and 100';
+    
+    if (age < 13) {
+      return 'You must be at least 13 years old';
     }
-
+    
+    if (age > 120) {
+      return 'Please enter a valid age';
+    }
+    
     return null;
   }
 
-  /// Validates a location/city field.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateLocation(String? value) {
-    final location = (value ?? '').trim();
-
-    if (location.isEmpty) {
-      return 'Please enter your location';
-    }
-
-    if (location.length < 2) {
-      return 'Location must be at least 2 characters long';
-    }
-
-    if (location.length > 100) {
-      return 'Location must be 100 characters or less';
-    }
-
-    return null;
-  }
-
-  /// Validates experience years field.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateExperienceYears(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter years of experience';
-    }
-
-    final years = int.tryParse(value);
-    if (years == null) {
-      return 'Please enter a valid number';
-    }
-
-    if (years < 0 || years > 50) {
-      return 'Experience must be between 0 and 50 years';
-    }
-
-    return null;
-  }
-
-  /// Validates hourly rate field.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateHourlyRate(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your hourly rate';
-    }
-
-    final rate = double.tryParse(value);
-    if (rate == null) {
-      return 'Please enter a valid rate';
-    }
-
-    if (rate < 0 || rate > 1000) {
-      return 'Rate must be between \$0 and \$1000';
-    }
-
-    return null;
-  }
-
-  /// Validates bio field with character limit.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateBio(String? value, {int maxLength = 500}) {
-    if (value != null && value.length > maxLength) {
-      return 'Bio must be $maxLength characters or less';
-    }
-    return null;
-  }
-
-  /// Validates certifications field.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateCertifications(String? value, {int maxLength = 1000}) {
-    if (value != null && value.length > maxLength) {
-      return 'Certifications must be $maxLength characters or less';
-    }
-    return null;
-  }
-
-  /// Validates that at least one item is selected from a list.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateListSelection(List<String>? values, String fieldName) {
-    if (values == null || values.isEmpty) {
-      return 'Please select at least one $fieldName';
-    }
-    return null;
-  }
-
-  /// Validates that at least one time slot is selected.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateTimeSlots(List<dynamic>? timeSlots) {
-    if (timeSlots == null || timeSlots.isEmpty) {
-      return 'Please add at least one time slot';
-    }
-    return null;
-  }
-
-  /// Validates a required dropdown selection.
-  ///
-  /// Returns null if valid, error message string if invalid.
+  /// Validate dropdown selection
   static String? validateDropdownSelection(dynamic value, String fieldName) {
     if (value == null) {
-      return 'Please select $fieldName';
+      return '$fieldName is required';
     }
     return null;
   }
 
-  /// Generic required field validator.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateRequired(String? value, [String? fieldName]) {
-    final trimmedValue = (value ?? '').trim();
-    if (trimmedValue.isEmpty) {
-      return fieldName != null ? 'Please enter $fieldName' : 'This field is required';
+  /// Validate list selection
+  static String? validateListSelection(List<dynamic>? values, String fieldName) {
+    if (values == null || values.isEmpty) {
+      return '$fieldName is required';
     }
     return null;
   }
 
-  /// Validates minimum length requirement.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateMinLength(String? value, int minLength, String fieldName) {
-    final trimmedValue = (value ?? '').trim();
-    if (trimmedValue.length < minLength) {
-      return '$fieldName must be at least $minLength characters long';
+  /// Validate location
+  static String? validateLocation(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Location is required';
     }
     return null;
   }
 
-  /// Validates maximum length requirement.
-  ///
-  /// Returns null if valid, error message string if invalid.
-  static String? validateMaxLength(String? value, int maxLength, String fieldName) {
-    if (value != null && value.length > maxLength) {
-      return '$fieldName must be $maxLength characters or less';
+  /// Validate time slots
+  static String? validateTimeSlots(List<dynamic>? value) {
+    if (value == null || value.isEmpty) {
+      return 'Time slots are required';
+    }
+    return null;
+  }
+
+  /// Validate experience years
+  static String? validateExperienceYears(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Experience years is required';
+    }
+    
+    final years = int.tryParse(value.trim());
+    if (years == null || years < 0) {
+      return 'Please enter valid experience years';
+    }
+    
+    return null;
+  }
+
+  /// Validate certifications
+  static String? validateCertifications(String? value) {
+    // Optional field, so return null if empty
+    return null;
+  }
+
+  /// Validate hourly rate
+  static String? validateHourlyRate(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Hourly rate is required';
+    }
+    
+    final rate = double.tryParse(value.trim());
+    if (rate == null || rate <= 0) {
+      return 'Please enter a valid hourly rate';
+    }
+    
+    return null;
+  }
+
+  /// Validate bio
+  static String? validateBio(String? value) {
+    if (value != null && value.length > 500) {
+      return 'Bio must not exceed 500 characters';
     }
     return null;
   }

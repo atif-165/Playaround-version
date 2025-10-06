@@ -9,6 +9,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'firebase_options.dart';
 import 'logic/cubit/auth_cubit.dart';
 import 'logic/cubit/onboarding_cubit.dart';
+import 'logic/cubit/dashboard_cubit.dart';
 import 'repositories/user_repository.dart';
 import 'routing/app_router.dart';
 import 'routing/routes.dart';
@@ -77,6 +78,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (context) => OnboardingCubit(
           userRepository: UserRepository(),
         )),
+        BlocProvider(create: (context) => DashboardCubit()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(360, 690),

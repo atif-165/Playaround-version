@@ -49,7 +49,7 @@ class TournamentCard extends StatelessWidget {
                 height: 140.h,
                 width: double.infinity,
                 child: ImageUtils.buildSafeCachedImage(
-                  imageUrl: tournament.imageUrl,
+                  imageUrl: tournament.imageUrl ?? '',
                   width: double.infinity,
                   height: 140.h,
                   fit: BoxFit.cover,

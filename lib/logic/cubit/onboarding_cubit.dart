@@ -180,7 +180,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         updatedAt: now,
         specializationSports: specializationSports,
         experienceYears: experienceYears,
-        certifications: certifications?.trim(),
+        certifications: certifications?.trim().isNotEmpty == true 
+            ? [certifications!.trim()] 
+            : null,
         hourlyRate: hourlyRate,
         availableTimeSlots: availableTimeSlots,
         coachingType: coachingType,

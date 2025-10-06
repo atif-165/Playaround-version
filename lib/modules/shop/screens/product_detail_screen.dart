@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/typography.dart';
 import '../../../core/widgets/material3/material3_components.dart';
@@ -20,7 +21,6 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final _service = ProductService();
-  final _cart = CartService();
   Future<Product?>? _future;
   int _quantity = 1;
   bool _isFavorite = false;
@@ -78,9 +78,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 final r = Review(
                   id: '',
                   userId: '',
-                  rating: rating,
+                  userName: '',
+                  userImage: '',
+                  rating: rating.toDouble(),
                   comment: commentCtrl.text.trim(),
-                  timestamp: DateTime.now(),
+                  images: const [],
+                  createdAt: DateTime.now(),
+                  isVerified: false,
+                  helpfulCount: 0,
+                  helpfulUsers: const [],
                 );
                 final nav = Navigator.of(context);
                 await _service.addReview(p.id, r);
@@ -512,7 +518,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   final p = await _future;
                   if (!mounted) return;
                   if (p != null) {
-                    await _cart.addToCart(p.id, quantity: _quantity);
+                    await CartService.addToCart(
+                      userId: FirebaseAuth.instance.currentUser?.uid ?? '',
+                      product: p,
+                      quantity: _quantity,
+                    );
                     messenger.showSnackBar(
                       SnackBar(
                         content: Text('Added $_quantity ${p.title} to cart'),

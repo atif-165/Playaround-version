@@ -193,7 +193,7 @@ class _TournamentTeamRegistrationScreenState extends State<TournamentTeamRegistr
       decoration: BoxDecoration(
         color: ColorsManager.cardBackground,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: ColorsManager.primary.withOpacity(0.3)),
+        border: Border.all(color: ColorsManager.primary.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

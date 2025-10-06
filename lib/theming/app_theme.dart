@@ -49,23 +49,23 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 2,
-        backgroundColor: ColorsManager.surface,           // Deep Black
-        foregroundColor: ColorsManager.onSurface,        // White
+        backgroundColor: Colors.black,           // Deep Black
+        foregroundColor: Colors.white,        // White
         surfaceTintColor: ColorsManager.primary,         // Red tint
         systemOverlayStyle: SystemUiOverlayStyle.light,  // Light status bar for dark theme
         titleTextStyle: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w600,                   // Bolder for sports theme
-          color: ColorsManager.onSurface,               // White
+          color: Colors.white,               // White
         ),
         iconTheme: IconThemeData(
-          color: ColorsManager.onSurface,               // White icons
+          color: Colors.white,               // White icons
           size: 24,
         ),
       ),
 
       // Card Theme - Dark gray cards with red accents
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         color: ColorsManager.surfaceVariant,             // Dark gray background
         surfaceTintColor: ColorsManager.primary,         // Red tint
@@ -206,7 +206,7 @@ class AppTheme {
       // Bottom Navigation Bar Theme - Deep black with red accents
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
-        backgroundColor: ColorsManager.surface,          // Deep Black
+        backgroundColor: Colors.black,          // Deep Black
         selectedItemColor: ColorsManager.primary,        // Red for active
         unselectedItemColor: ColorsManager.textSecondary, // Light gray for inactive
         elevation: 8,
@@ -222,7 +222,7 @@ class AppTheme {
 
       // Navigation Bar Theme (Material 3) - Deep black with red indicators
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: ColorsManager.surface,          // Deep Black
+        backgroundColor: Colors.black,          // Deep Black
         surfaceTintColor: ColorsManager.primary,         // Red tint
         indicatorColor: ColorsManager.primary,           // Red indicator
         height: 80,
@@ -281,7 +281,7 @@ class AppTheme {
       ),
 
       // Dialog Theme - Dark background with red/orange accents
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: ColorsManager.surfaceVariant,   // Dark gray background
         surfaceTintColor: ColorsManager.primary,         // Red tint
         elevation: 12,

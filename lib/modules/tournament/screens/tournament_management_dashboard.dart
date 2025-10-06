@@ -12,6 +12,11 @@ import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/models.dart';
 import '../services/tournament_service.dart';
+import '../services/tournament_live_service.dart';
+import '../widgets/live_bracket_view.dart';
+import '../widgets/tournament_leaderboard.dart';
+import '../widgets/tournament_comments.dart';
+import '../widgets/tournament_sharing.dart';
 import 'match_scheduling_screen.dart';
 import 'score_update_screen.dart';
 import 'winner_declaration_screen.dart';
@@ -31,6 +36,7 @@ class TournamentManagementDashboard extends StatefulWidget {
 
 class _TournamentManagementDashboardState extends State<TournamentManagementDashboard> with TickerProviderStateMixin {
   final _tournamentService = TournamentService();
+  final _liveService = TournamentLiveService();
   late TabController _tabController;
 
   // State
@@ -39,19 +45,52 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
   List<TournamentTeamRegistration> _pendingRegistrations = [];
   List<TournamentTeamRegistration> _approvedTeams = [];
   List<TournamentMatch> _matches = [];
+  Map<String, int> _teamPoints = {};
+  Tournament? _currentTournament;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _loadUserProfile();
     _loadTournamentData();
+    _setupLiveUpdates();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _liveService.dispose();
     super.dispose();
+  }
+
+  void _setupLiveUpdates() {
+    // Listen to tournament updates
+    _liveService.getTournamentUpdates(widget.tournament.id).listen((tournament) {
+      if (mounted) {
+        setState(() {
+          _currentTournament = tournament;
+        });
+      }
+    });
+
+    // Listen to match updates
+    _liveService.getMatchUpdates(widget.tournament.id).listen((matches) {
+      if (mounted) {
+        setState(() {
+          _matches = matches;
+        });
+      }
+    });
+
+    // Listen to leaderboard updates
+    _liveService.getLeaderboardUpdates(widget.tournament.id).listen((teamPoints) {
+      if (mounted) {
+        setState(() {
+          _teamPoints = teamPoints;
+        });
+      }
+    });
   }
 
   void _loadUserProfile() {
@@ -121,6 +160,7 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
           labelColor: ColorsManager.primary,
           unselectedLabelColor: ColorsManager.textSecondary,
           indicatorColor: ColorsManager.primary,
+          isScrollable: true,
           tabs: [
             Tab(
               child: Row(
@@ -151,7 +191,9 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
               ),
             ),
             const Tab(text: 'Teams'),
-            const Tab(text: 'Matches'),
+            const Tab(text: 'Bracket'),
+            const Tab(text: 'Leaderboard'),
+            const Tab(text: 'Comments'),
             const Tab(text: 'Settings'),
           ],
         ),
@@ -163,7 +205,9 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
               children: [
                 _buildRequestsTab(),
                 _buildTeamsTab(),
-                _buildMatchesTab(),
+                _buildBracketTab(),
+                _buildLeaderboardTab(),
+                _buildCommentsTab(),
                 _buildSettingsTab(),
               ],
             ),
@@ -294,45 +338,50 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
     );
   }
 
-  Widget _buildMatchesTab() {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildSectionHeader(
-                'Tournament Matches',
-                _matches.length,
-                ColorsManager.primary,
-              ),
-              ElevatedButton.icon(
-                onPressed: _navigateToMatchScheduling,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Schedule'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: ColorsManager.primary,
-                  foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                ),
-              ),
-            ],
+  Widget _buildBracketTab() {
+    return LiveBracketView(
+      tournament: _currentTournament ?? widget.tournament,
+      matches: _matches,
+      onMatchTap: (match) {
+        // Navigate to match details or score update
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScoreUpdateScreen(
+              tournament: _currentTournament ?? widget.tournament,
+            ),
           ),
-          Gap(16.h),
-          if (_matches.isEmpty)
-            _buildEmptyState(
-              'No matches scheduled',
-              Icons.sports_cricket_outlined,
-              'Use the Schedule button to create matches',
-            )
-          else
-            ..._matches.map((match) => 
-              _buildMatchCard(match)
-            ).toList(),
-        ],
-      ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLeaderboardTab() {
+    return TournamentLeaderboard(
+      tournament: _currentTournament ?? widget.tournament,
+      teams: _approvedTeams,
+      teamPoints: _teamPoints,
+      onTeamTap: (teamId) {
+        // Navigate to team details
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Team details for $teamId')),
+        );
+      },
+    );
+  }
+
+  Widget _buildCommentsTab() {
+    return TournamentComments(
+      tournament: _currentTournament ?? widget.tournament,
+      onCommentAdded: (comment) {
+        // Handle comment added
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Comment added successfully!'),
+            backgroundColor: ColorsManager.success,
+          ),
+        );
+      },
     );
   }
 
@@ -370,6 +419,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
             enabled: widget.tournament.canBeDeleted,
             isDestructive: true,
           ),
+          Gap(24.h),
+          _buildSocialSharingSection(),
           Gap(24.h),
           _buildTournamentStatsWidget(),
         ],
@@ -1052,6 +1103,49 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
     } else {
       context.showSnackBar('No group chat available');
     }
+  }
+
+  Widget _buildSocialSharingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Share Tournament',
+          style: TextStyles.font16DarkBlueBold.copyWith(
+            color: ColorsManager.textPrimary,
+          ),
+        ),
+        Gap(16.h),
+        TournamentSharing(
+          tournament: _currentTournament ?? widget.tournament,
+          onShared: (platform) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Tournament shared on $platform!'),
+                backgroundColor: ColorsManager.success,
+              ),
+            );
+          },
+        ),
+        Gap(16.h),
+        TournamentFollowButton(
+          tournament: _currentTournament ?? widget.tournament,
+          isFollowing: false, // TODO: Get actual follow status
+          onFollowChanged: (isFollowing) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  isFollowing 
+                      ? 'You are now following this tournament!'
+                      : 'You have unfollowed this tournament.',
+                ),
+                backgroundColor: isFollowing ? ColorsManager.success : ColorsManager.textSecondary,
+              ),
+            );
+          },
+        ),
+      ],
+    );
   }
 
   Widget _buildTournamentStatsWidget() {

@@ -113,9 +113,9 @@ class _CoachListingScreenState extends State<CoachListingScreen> {
       appBar: AppBar(
         title: Text(
           'Find a Coach',
-          style: TextStyles.font18DarkBlueBold,
+          style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: ColorsManager.primary),
         actions: [
@@ -142,136 +142,183 @@ class _CoachListingScreenState extends State<CoachListingScreen> {
 
   Widget _buildSearchAndFilters() {
     return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF00FFFF), // Neon blue
-            Color(0xFF0080FF), // Darker neon blue
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      color: Colors.black,
+      child: Row(
         children: [
-          // Search bar
-          TextField(
-            controller: _searchController,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Search coaches by name, bio, or sport...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
-              prefixIcon: const Icon(Icons.search, color: Colors.white),
-              filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.3),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(color: Colors.white),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: const BorderSide(color: Colors.white, width: 2),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12.r),
-                borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Search coaches by name, bio, or sport...',
+                hintStyle: TextStyle(color: Colors.grey[400]),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Colors.grey[400],
+                  size: 20.sp,
+                ),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear,
+                          color: Colors.grey[400],
+                          size: 20.sp,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _applyFilters();
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: Colors.grey[600]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: const BorderSide(color: Colors.white),
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                filled: true,
+                fillColor: Colors.grey[900],
               ),
             ),
           ),
-          Gap(12.h),
-          // Sport filters
-          if (_availableSports.isNotEmpty) _buildSportFilters(),
+          Gap(8.w),
+          IconButton(
+            onPressed: _showFilterDialog,
+            icon: Icon(
+              Icons.filter_list,
+              color: _selectedSportFilters.isNotEmpty ? Colors.white : Colors.grey[400],
+              size: 24.sp,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSportFilters() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
+  void _showFilterDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: BoxDecoration(
+          color: ColorsManager.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
           children: [
-            Text(
-              'Filter by Sport:',
-              style: TextStyle(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: ColorsManager.dividerColor),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    'Filter Coaches',
+                    style: TextStyles.font18DarkBlueBold,
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedSportFilters.clear();
+                      });
+                      _applyFilters();
+                    },
+                    child: Text(
+                      'Clear All',
+                      style: TextStyles.font14MainBlue500Weight,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const Spacer(),
-            if (_selectedSportFilters.isNotEmpty)
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedSportFilters.clear();
-                  });
-                  _applyFilters();
-                },
-                child: Text(
-                  'Clear All',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sport Type',
+                      style: TextStyles.font16DarkBlueBold,
+                    ),
+                    Gap(12.h),
+                    Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: _availableSports.map((sport) {
+                        final isSelected = _selectedSportFilters.contains(sport);
+                        return FilterChip(
+                          label: Text(sport),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedSportFilters.add(sport);
+                              } else {
+                                _selectedSportFilters.remove(sport);
+                              }
+                            });
+                          },
+                          selectedColor: ColorsManager.primary.withValues(alpha: 0.2),
+                          checkmarkColor: ColorsManager.primary,
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
+            ),
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: ColorsManager.dividerColor),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ColorsManager.textSecondary,
+                        side: BorderSide(color: ColorsManager.textSecondary),
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  Gap(16.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _applyFilters();
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsManager.primary,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                      ),
+                      child: const Text('Apply Filters'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-        Gap(8.h),
-        SizedBox(
-          height: 40.h,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: _availableSports.length,
-            itemBuilder: (context, index) {
-              final sport = _availableSports[index];
-              final isSelected = _selectedSportFilters.contains(sport);
-              
-              return Padding(
-                padding: EdgeInsets.only(right: 8.w),
-                child: FilterChip(
-                  label: Text(sport),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        _selectedSportFilters.add(sport);
-                      } else {
-                        _selectedSportFilters.remove(sport);
-                      }
-                    });
-                    _applyFilters();
-                  },
-                  selectedColor: ColorsManager.primary,
-                  backgroundColor: Colors.black.withValues(alpha: 0.3),
-                  checkmarkColor: Colors.white,
-                  side: BorderSide(
-                    color: isSelected ? ColorsManager.primary : Colors.white.withValues(alpha: 0.5),
-                    width: 1,
-                  ),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white,
-                    fontSize: 12.sp,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 

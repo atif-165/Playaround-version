@@ -295,4 +295,7 @@ class Team {
 
   /// Get active members count
   int get activeMembersCount => members.where((member) => member.isActive).length;
+
+  /// Get total members count
+  int get memberCount => members.length;
 }

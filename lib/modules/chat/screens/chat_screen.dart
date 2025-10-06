@@ -106,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             CircleAvatar(
               radius: 16.r, // Reduced avatar size
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              backgroundColor: Colors.white.withAlpha(51),
               backgroundImage: (displayImage != null && displayImage.isNotEmpty)
                   ? NetworkImage(displayImage)
                   : null,
@@ -136,7 +136,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   Text(
                     '${widget.chatRoom.participants.length} members',
                     style: TextStyles.font10Grey400Weight.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: Colors.white.withAlpha(204),
                     ),
                   ),
               ],
@@ -275,8 +275,8 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.2),
+          top: BorderSide( 
+            color: Colors.grey.withAlpha(51),
             width: 1,
           ),
         ),
@@ -304,14 +304,14 @@ class _ChatScreenState extends State<ChatScreen> {
                   hintStyle: TextStyles.font14Grey400Weight,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24.r),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withValues(alpha: 0.3),
+                    borderSide: BorderSide( 
+                      color: Colors.grey.withAlpha(77),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24.r),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withValues(alpha: 0.3),
+                    borderSide: BorderSide( 
+                      color: Colors.grey.withAlpha(77),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(

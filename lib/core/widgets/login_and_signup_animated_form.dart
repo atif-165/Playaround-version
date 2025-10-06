@@ -10,7 +10,7 @@ import '../../../helpers/app_regex.dart';
 import '../../../helpers/form_validators.dart';
 import '../../../routing/routes.dart';
 import '../../../theming/styles.dart';
-import '../../helpers/extensions.dart';
+import '../../../helpers/extensions.dart';
 import '../../helpers/rive_controller.dart';
 import '../../logic/cubit/auth_cubit.dart';
 import 'app_text_button.dart';

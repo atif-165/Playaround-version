@@ -5,7 +5,7 @@ import 'user_profile.dart';
 class CoachProfile extends UserProfile {
   final List<String> specializationSports;
   final int experienceYears;
-  final String? certifications;
+  final List<String>? certifications;
   final double hourlyRate;
   final List<TimeSlot> availableTimeSlots;
   final TrainingType coachingType;
@@ -19,6 +19,7 @@ class CoachProfile extends UserProfile {
     required super.location,
     super.profilePictureUrl,
     required super.isProfileComplete,
+    super.teamId,
     required super.createdAt,
     required super.updatedAt,
     required this.specializationSports,
@@ -64,7 +65,11 @@ class CoachProfile extends UserProfile {
         updatedAt: baseData['updatedAt'],
         specializationSports: List<String>.from(data['specializationSports'] ?? []),
         experienceYears: data['experienceYears'] as int? ?? 0,
-        certifications: data['certifications'] as String?,
+        certifications: data['certifications'] != null 
+            ? (data['certifications'] is List 
+                ? List<String>.from(data['certifications']) 
+                : [data['certifications'].toString()])
+            : null,
         hourlyRate: (data['hourlyRate'] as num?)?.toDouble() ?? 0.0,
         availableTimeSlots: (data['availableTimeSlots'] as List<dynamic>?)
                 ?.map((slot) => TimeSlot.fromMap(slot as Map<String, dynamic>))
@@ -93,7 +98,7 @@ class CoachProfile extends UserProfile {
     DateTime? updatedAt,
     List<String>? specializationSports,
     int? experienceYears,
-    String? certifications,
+    List<String>? certifications,
     double? hourlyRate,
     List<TimeSlot>? availableTimeSlots,
     TrainingType? coachingType,

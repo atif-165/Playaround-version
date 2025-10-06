@@ -3,16 +3,19 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../theming/colors.dart';
 import 'filter_bottom_sheet.dart';
+import '../../../modules/team/widgets/team_filter_sheet.dart';
 
 /// Filter button widget for explore screen
 class ExploreFilterButton extends StatelessWidget {
   final Function(Map<String, dynamic>) onFiltersChanged;
   final Map<String, dynamic> currentFilters;
+  final int currentTabIndex;
 
   const ExploreFilterButton({
     super.key,
     required this.onFiltersChanged,
     required this.currentFilters,
+    required this.currentTabIndex,
   });
 
   bool get hasActiveFilters {
@@ -73,10 +76,20 @@ class ExploreFilterButton extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => FilterBottomSheet(
-        currentFilters: currentFilters,
-        onFiltersChanged: onFiltersChanged,
-      ),
+      builder: (context) {
+        // Show team filter for teams tab (index 1)
+        if (currentTabIndex == 1) {
+          return TeamFilterSheet(
+            currentFilters: currentFilters,
+            onFiltersApplied: onFiltersChanged,
+          );
+        }
+        // Default filter for other tabs
+        return FilterBottomSheet(
+          currentFilters: currentFilters,
+          onFiltersChanged: onFiltersChanged,
+        );
+      },
     );
   }
 }

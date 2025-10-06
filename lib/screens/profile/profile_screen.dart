@@ -211,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: ColorsManager.mainBlue.withValues(alpha: 0.1),
           ),
           child: ImageUtils.buildSafeCachedImage(
-            imageUrl: profile.profilePictureUrl,
+            imageUrl: profile.profilePictureUrl ?? '',
             width: 100.w,
             height: 100.h,
             fit: BoxFit.cover,
@@ -330,13 +330,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildInfoRow(
                 Icons.verified,
                 'Certifications',
-                profile.certifications!,
+                profile.certifications?.join(', ') ?? '',
               ),
             if (profile.bio != null && profile.bio!.isNotEmpty)
               _buildInfoRow(
                 Icons.info,
                 'Bio',
-                profile.bio!,
+                profile.bio ?? '',
               ),
           ],
         ],

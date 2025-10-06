@@ -180,28 +180,22 @@ class VenueService {
     Map<String, dynamic>? metadata,
   }) async {
     try {
-      print('🔄 VenueService: Starting updateVenue for venueId: $venueId');
+
 
       final user = _auth.currentUser;
       if (user == null) {
-        print('❌ VenueService: User not authenticated');
         throw Exception('User not authenticated');
       }
-      print('✅ VenueService: User authenticated: ${user.uid}');
 
       final venue = await getVenue(venueId);
       if (venue == null) {
-        print('❌ VenueService: Venue not found');
         throw Exception('Venue not found');
       }
-      print('✅ VenueService: Venue found, owner: ${venue.ownerId}');
 
       // Check if user owns the venue
       if (venue.ownerId != user.uid) {
-        print('❌ VenueService: User ${user.uid} is not owner of venue ${venue.ownerId}');
         throw Exception('Only venue owner can update venue');
       }
-      print('✅ VenueService: User is venue owner');
 
       final updateData = <String, dynamic>{
         'updatedAt': FieldValue.serverTimestamp(),
@@ -223,12 +217,10 @@ class VenueService {
       if (isActive != null) updateData['isActive'] = isActive;
       if (metadata != null) updateData['metadata'] = metadata;
 
-      print('📝 VenueService: Update data prepared: ${updateData.keys.toList()}');
+
 
       await _venuesCollection.doc(venueId).update(updateData);
-      print('✅ VenueService: Venue updated successfully in Firestore');
     } catch (e) {
-      print('❌ VenueService: Error updating venue: $e');
       throw Exception('Failed to update venue: $e');
     }
   }
@@ -394,8 +386,6 @@ class VenueService {
         );
       } catch (e) {
         // Log notification error but don't fail the booking
-        // In production, use proper logging instead of print
-        // print('Failed to send booking notification: $e');
       }
 
       return bookingId;
@@ -729,9 +719,7 @@ class VenueService {
         }
       }
 
-      if (kDebugMode) {
-        debugPrint('✅ VenueService: Cancelled booking with ID: $bookingId');
-      }
+
     } catch (e) {
       throw Exception('Failed to cancel venue booking: $e');
     }
@@ -827,9 +815,7 @@ class VenueService {
         }
       }
 
-      if (kDebugMode) {
-        debugPrint('✅ VenueService: Rescheduled booking with ID: $bookingId');
-      }
+
     } catch (e) {
       throw Exception('Failed to reschedule venue booking: $e');
     }

@@ -328,14 +328,14 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: goal.status == GoalStatus.achieved
-              ? Colors.green[200]!
-              : Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}')).withValues(alpha: 0.3),
+              ? Colors.green[200]! 
+              : Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}')).withOpacity(0.3),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 4.r,
-            offset: Offset(0, 2.h),
+            offset: Offset(0, 2.h), 
           ),
         ],
       ),

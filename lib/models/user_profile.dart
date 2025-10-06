@@ -67,6 +67,7 @@ abstract class UserProfile {
   final String? profilePictureUrl;
   final UserRole role;
   final bool isProfileComplete;
+  final String? teamId; // Add teamId field
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -79,6 +80,7 @@ abstract class UserProfile {
     this.profilePictureUrl,
     required this.role,
     required this.isProfileComplete,
+    this.teamId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -105,6 +107,7 @@ abstract class UserProfile {
       'profilePictureUrl': profilePictureUrl,
       'role': role.value,
       'isProfileComplete': isProfileComplete,
+      'teamId': teamId,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -122,10 +125,20 @@ abstract class UserProfile {
       'profilePictureUrl': data['profilePictureUrl'] as String?,
       'role': UserRole.fromString(data['role'] as String),
       'isProfileComplete': data['isProfileComplete'] as bool? ?? false,
+      'teamId': data['teamId'] as String?,
       'createdAt': (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       'updatedAt': (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     };
   }
+
+  /// Get user ID (alias for uid)
+  String get id => uid;
+
+  /// Get display name (alias for fullName)
+  String get displayName => fullName;
+
+  /// Get photo URL (alias for profilePictureUrl)
+  String? get photoURL => profilePictureUrl;
 }
 
 /// Enum for skill levels

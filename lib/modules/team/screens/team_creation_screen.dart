@@ -168,11 +168,11 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
       appBar: AppBar(
         title: Text(
           'Create Team',
-          style: TextStyles.font18DarkBlue600Weight,
+          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ColorsManager.darkBlue),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16.w),

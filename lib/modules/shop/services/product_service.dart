@@ -71,5 +71,47 @@ class ProductService {
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
+
+  // Additional methods for enhanced shop functionality
+  Future<List<Product>> getAllProducts() async {
+    final snap = await _products.get();
+    return snap.docs.map(Product.fromDoc).toList();
+  }
+
+  Future<List<Product>> getFeaturedProducts() async {
+    final snap = await _products.where('isFeatured', isEqualTo: true).get();
+    return snap.docs.map(Product.fromDoc).toList();
+  }
+
+  Future<List<Product>> getExclusiveProducts() async {
+    final snap = await _products.where('isExclusive', isEqualTo: true).get();
+    return snap.docs.map(Product.fromDoc).toList();
+  }
+
+  Future<List<Product>> getProductsOnSale() async {
+    final snap = await _products.where('originalPrice', isGreaterThan: 0).get();
+    return snap.docs.map(Product.fromDoc).toList();
+  }
+
+  Future<List<Product>> searchProducts(String query) async {
+    final snap = await _products
+        .where('title', isGreaterThanOrEqualTo: query)
+        .where('title', isLessThan: '${query}z')
+        .get();
+    return snap.docs.map(Product.fromDoc).toList();
+  }
+
+  Future<List<Product>> getRelatedProducts(String productId) async {
+    // Get the current product to find related products by category
+    final product = await getProduct(productId);
+    if (product == null) return [];
+    
+    final snap = await _products
+        .where('category', isEqualTo: product.category)
+        .where('id', isNotEqualTo: productId)
+        .limit(4)
+        .get();
+    return snap.docs.map(Product.fromDoc).toList();
+  }
 }
 

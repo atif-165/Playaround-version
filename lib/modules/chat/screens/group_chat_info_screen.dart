@@ -136,8 +136,8 @@ class _GroupChatInfoScreenState extends State<GroupChatInfoScreen> {
       width: 100.w,
       height: 100.h,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+        shape: BoxShape.circle, 
+        color: ColorsManager.mainBlue.withAlpha(26),
       ),
       child: Icon(
         Icons.group,
@@ -221,8 +221,8 @@ class _GroupChatInfoScreenState extends State<GroupChatInfoScreen> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
-        side: BorderSide(
-          color: Colors.grey.withValues(alpha: 0.2),
+        side: BorderSide( 
+          color: Colors.grey.withAlpha(51),
           width: 1,
         ),
       ),
@@ -242,8 +242,8 @@ class _GroupChatInfoScreenState extends State<GroupChatInfoScreen> {
             if (isParticipantAdmin)
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+                decoration: BoxDecoration( 
+                  color: ColorsManager.mainBlue.withAlpha(26),
                   borderRadius: BorderRadius.circular(4.r),
                 ),
                 child: Text(
@@ -321,7 +321,7 @@ class _GroupChatInfoScreenState extends State<GroupChatInfoScreen> {
       height: 40.h,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+        color: ColorsManager.mainBlue.withAlpha(26),
       ),
       child: Center(
         child: Text(

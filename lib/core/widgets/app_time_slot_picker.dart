@@ -203,7 +203,7 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
             children: [
               // Day selection
               DropdownButtonFormField<String>(
-                value: selectedDay,
+                initialValue: selectedDay,
                 decoration: InputDecoration(
                   labelText: 'Day',
                   border: OutlineInputBorder(
@@ -226,7 +226,7 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
 
               // Start time selection
               DropdownButtonFormField<String>(
-                value: selectedStartTime,
+                initialValue: selectedStartTime,
                 decoration: InputDecoration(
                   labelText: 'Start Time',
                   border: OutlineInputBorder(
@@ -257,7 +257,7 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
 
               // End time selection
               DropdownButtonFormField<String>(
-                value: selectedEndTime,
+                initialValue: selectedEndTime,
                 decoration: InputDecoration(
                   labelText: 'End Time',
                   border: OutlineInputBorder(

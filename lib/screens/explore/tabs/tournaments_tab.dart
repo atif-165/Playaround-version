@@ -8,6 +8,7 @@ import '../../../services/location_service.dart';
 import '../widgets/tournament_card.dart';
 import '../../../core/widgets/progress_indicaror.dart';
 
+
 /// Tournaments tab for explore screen
 class TournamentsTab extends StatefulWidget {
   final String searchQuery;

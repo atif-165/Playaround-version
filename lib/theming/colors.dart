@@ -39,14 +39,14 @@ class ColorsManager {
   static const Color onErrorContainer = Color(0xFFFFFFFF); // White text on dark red
 
   // Material 3 Surface Color Palette (Deep Black Theme)
-  static const Color surface = Color(0xFF0D0D0D);         // Deep Black primary background
+  static const Color surface = Color(0xFF000000);         // Pure Black primary background
   static const Color onSurface = Color(0xFFFFFFFF);       // White text on black
   static const Color surfaceVariant = Color(0xFF1A1A1A);  // Dark gray for sections/cards
   static const Color onSurfaceVariant = Color(0xFFCCCCCC); // Light gray for less prominent info
   static const Color surfaceTint = primary;               // Red tint
 
   // Material 3 Background Colors (Deep Black)
-  static const Color background = Color(0xFF0D0D0D);      // Deep Black background
+  static const Color background = Color(0xFF000000);      // Pure Black background
   static const Color onBackground = Color(0xFFFFFFFF);    // White text on black
 
   // Material 3 Outline Colors (Subtle borders)
@@ -105,7 +105,7 @@ class ColorsManager {
   );
 
   // Additional Dark Theme Specific Colors
-  static const Color cardBackground = Color(0xFF1A1A1A);  // Dark gray for cards
+  static const Color cardBackground = Color(0xFF000000);  // Pure black for cards
   static const Color dividerColor = Color(0xFF404040);    // Subtle dividers
   static const Color shimmerBase = Color(0xFF2A2A2A);     // Shimmer base color
   static const Color shimmerHighlight = Color(0xFF404040); // Shimmer highlight

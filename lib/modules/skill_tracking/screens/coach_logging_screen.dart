@@ -248,7 +248,7 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withValues(alpha: 0.3),
+          color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.3),
         ),
       ),
       child: Column(
@@ -260,7 +260,7 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
                 width: 32.w,
                 height: 32.h,
                 decoration: BoxDecoration(
-                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withValues(alpha: 0.1),
+                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
@@ -295,7 +295,7 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withValues(alpha: 0.1),
+                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
@@ -313,9 +313,9 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
-              inactiveTrackColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withValues(alpha: 0.2),
+              inactiveTrackColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.2),
               thumbColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
-              overlayColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withValues(alpha: 0.2),
+              overlayColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.2),
               trackHeight: 6.h,
             ),
             child: Slider(
@@ -384,10 +384,10 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
+      decoration: BoxDecoration( 
         color: ColorsManager.mainBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+        border: Border.all(color: ColorsManager.mainBlue.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,7 +467,7 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(
+          BoxShadow( 
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10.r,
             offset: Offset(0, -2.h),

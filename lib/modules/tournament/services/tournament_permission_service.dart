@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../models/user_profile.dart';
+import '../../../models/venue_model.dart';
+import '../../team/models/team_model.dart';
 import '../../team/services/team_service.dart';
 import '../../venue/services/venue_service.dart';
 
@@ -87,7 +89,10 @@ class TournamentPermissionService {
       final user = _auth.currentUser;
       if (user == null) return false;
 
-      final teams = await _teamService.getUserTeams().first;
+      final teams = await _teamService.getUserTeams().first.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => <Team>[],
+      );
       
       for (final team in teams) {
         final userMember = team.members.where(
@@ -115,7 +120,10 @@ class TournamentPermissionService {
       final user = _auth.currentUser;
       if (user == null) return false;
 
-      final venues = await _venueService.getMyVenues().first;
+      final venues = await _venueService.getMyVenues().first.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => <VenueModel>[],
+      );
       return venues.isNotEmpty;
     } catch (e) {
       if (kDebugMode) {

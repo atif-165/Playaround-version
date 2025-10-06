@@ -1,65 +1,83 @@
 class Routes {
-  static const String loginScreen = "/loginScreen";
-  static const String forgetScreen = "/forgetScreen";
-  static const String signupScreen = "/signupScreen";
-  static const String createPassword = "/createPassword";
-  static const String homeScreen = "/homeScreen";
-  static const String dashboardScreen = "/dashboardScreen";
-  static const String emailVerificationScreen = "/emailVerificationScreen";
-  static const String roleSelectionScreen = "/roleSelectionScreen";
-  static const String playerOnboardingScreen = "/playerOnboardingScreen";
-  static const String coachOnboardingScreen = "/coachOnboardingScreen";
-  static const String profileScreen = "/profileScreen";
-  static const String matchRequestsScreen = "/matchRequestsScreen";
-  static const String chatListScreen = "/chatListScreen";
-  static const String chatScreen = "/chatScreen";
-  static const String userSearchScreen = "/userSearchScreen";
-
-  // Shop / E-commerce Routes
-  static const String shopHome = "/shop";
-  static const String shopProduct = "/shop/product";
-  static const String shopCart = "/shop/cart";
-  static const String shopOrders = "/shop/orders";
-  static const String shopAddProduct = "/shop/addProduct";
-  static const String shopCheckout = "/shop/checkout";
-  static const String shopMyProducts = "/shop/myProducts";
-  static const String shopSellerStore = "/shop/store";
-  static const String shopProductReviews = "/shop/product/reviews";
-
-  // Skill Tracking Routes
-  static const String skillDashboardScreen = "/skillDashboardScreen";
-  static const String addGoalScreen = "/addGoalScreen";
-  static const String coachLoggingScreen = "/coachLoggingScreen";
-  static const String analyticsDashboardScreen = "/analyticsDashboardScreen";
-
-  // Booking Analytics Routes
-  static const String myBookingHistoryScreen = "/myBookingHistoryScreen";
-  static const String coachEarningsScreen = "/coachEarningsScreen";
-  static const String bookingDetailScreen = "/bookingDetailScreen";
-
-  // Venue Booking Routes
-  static const String myVenueBookingsScreen = "/myVenueBookingsScreen";
-  static const String venueBookingDetailScreen = "/venueBookingDetailScreen";
-  static const String venueRescheduleScreen = "/venueRescheduleScreen";
-  static const String addVenueScreen = "/add-venue";
-
-  // Coach Analytics Routes
-  static const String coachAnalyticsDashboardScreen = "/coachAnalyticsDashboardScreen";
-  static const String teamPerformanceScreen = "/teamPerformanceScreen";
-  static const String playerComparisonScreen = "/playerComparisonScreen";
-
-  // Quick Action Routes
-  static const String venueBookingScreen = "/venueBookingScreen";
-  static const String teamFinderScreen = "/teamFinderScreen";
-  static const String createSessionScreen = "/createSessionScreen";
-  static const String analyticsScreen = "/analyticsScreen";
-
-  // Team Management Routes
-  static const String createTeamScreen = "/createTeamScreen";
-  static const String teamProfileScreen = "/teamProfileScreen";
-
-  // People Search & Matching Routes
-  static const String peopleSearchScreen = "/peopleSearchScreen";
-  static const String matchingScreen = "/matchingScreen";
-  static const String profileViewScreen = "/profileViewScreen";
+  static const String dashboard = '/dashboard';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String home = '/home';
+  static const String profile = '/profile';
+  static const String venues = '/venues';
+  static const String tournaments = '/tournaments';
+  static const String teams = '/teams';
+  static const String shop = '/shop';
+  static const String chat = '/chat';
+  static const String notifications = '/notifications';
+  static const String settings = '/settings';
+  static const String onboarding = '/onboarding';
+  static const String emailVerification = '/email-verification';
+  static const String createPassword = '/create-password';
+  static const String forgotPassword = '/forgot-password';
+  
+  // Screen routes
+  static const String loginScreen = '/login';
+  static const String signupScreen = '/signup';
+  static const String dashboardScreen = '/dashboard';
+  static const String forgetScreen = '/forgot-password';
+  static const String homeScreen = '/home';
+  static const String emailVerificationScreen = '/email-verification';
+  static const String roleSelectionScreen = '/role-selection';
+  static const String playerOnboardingScreen = '/player-onboarding';
+  static const String coachOnboardingScreen = '/coach-onboarding';
+  static const String profileScreen = '/profile';
+  static const String matchRequestsScreen = '/match-requests';
+  static const String chatListScreen = '/chat-list';
+  static const String userSearchScreen = '/user-search';
+  static const String chatScreen = '/chat';
+  static const String skillDashboardScreen = '/skill-dashboard';
+  static const String addGoalScreen = '/add-goal';
+  static const String coachLoggingScreen = '/coach-logging';
+  static const String analyticsDashboardScreen = '/analytics-dashboard';
+  static const String myBookingHistoryScreen = '/my-booking-history';
+  static const String coachEarningsScreen = '/coach-earnings';
+  static const String bookingDetailScreen = '/booking-detail';
+  static const String coachAnalyticsDashboardScreen = '/coach-analytics-dashboard';
+  static const String venueDiscoveryScreen = '/venue-discovery';
+  static const String venueProfileScreen = '/venue-profile';
+  static const String venueBookingScreen = '/venue-booking';
+  static const String addVenueScreen = '/add-venue';
+  static const String shopHome = '/shop-home';
+  static const String shopAddProduct = '/shop-add-product';
+  static const String shopCart = '/shop-cart';
+  static const String shopOrders = '/shop-orders';
+  static const String shopCheckout = '/shop-checkout';
+  static const String shopProductDetail = '/shop-product-detail';
+  static const String shopDetail = '/shop-detail';
+  static const String teamFinderScreen = '/team-finder';
+  static const String createSessionScreen = '/create-session';
+  static const String analyticsScreen = '/analytics';
+  static const String createTeamScreen = '/create-team';
+  static const String createTeam = '/create-team';
+  static const String teamProfileScreen = '/team-profile';
+  static const String teamManagementScreen = '/team-management';
+  static const String teamAdminScreen = '/team-admin';
+  static const String teamScheduleScreen = '/team-schedule';
+  static const String teamDashboardScreen = '/team-dashboard';
+  static const String peopleSearchScreen = '/people-search';
+  static const String tournamentListScreen = '/tournament-list';
+  static const String createTournamentScreen = '/create-tournament';
+  static const String tournamentDetailScreen = '/tournament-detail';
+  static const String tournamentJoinScreen = '/tournament-join';
+  static const String tournamentManagementScreen = '/tournament-management';
+  static const String tournamentDiscoveryScreen = '/tournament-discovery';
+  static const String matchSchedulingScreen = '/match-scheduling';
+  static const String scoreUpdateScreen = '/score-update';
+  static const String tournamentPreviewScreen = '/tournament-preview';
+  static const String tournamentTeamRegistrationScreen = '/tournament-team-registration';
+  static const String winnerDeclarationScreen = '/winner-declaration';
+  static const String teamPerformanceScreen = '/team-performance';
+  static const String playerComparisonScreen = '/player-comparison';
+  static const String notificationsScreen = '/notifications';
+  static const String coachListingScreen = '/coach-listing';
+  static const String myStudentsScreen = '/my-students';
+  static const String scheduleScreen = '/schedule';
+  static const String eventDetailsScreen = '/event-details';
+  static const String bookCoachScreen = '/book-coach';
 }

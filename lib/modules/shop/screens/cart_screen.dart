@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/typography.dart';
 import '../../../core/widgets/material3/material3_components.dart';
 import '../services/cart_service.dart';
+import '../../../routing/routes.dart';
 import '../services/product_service.dart';
 import '../models/cart.dart';
 import '../models/product.dart';
@@ -18,14 +20,17 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final _cart = CartService();
   final _products = ProductService();
   Future<List<CartItem>>? _future;
 
   @override
   void initState() {
     super.initState();
-    _future = _cart.getCartItems();
+    _future = CartService.getCartItems(_getCurrentUserId());
+  }
+
+  String _getCurrentUserId() {
+    return FirebaseAuth.instance.currentUser?.uid ?? '';
   }
 
   Future<double> _computeTotal(List<CartItem> items) async {
@@ -159,7 +164,7 @@ class _CartScreenState extends State<CartScreen> {
           variant: CardVariant.outlined,
           margin: EdgeInsets.only(bottom: 12.h),
           onTap: product != null ? () {
-            Navigator.of(context).pushNamed('/shop/product', arguments: product.id);
+            Navigator.of(context).pushNamed(Routes.shopProductDetail, arguments: product);
           } : null,
           child: Row(
             children: [
@@ -349,7 +354,7 @@ class _CartScreenState extends State<CartScreen> {
               text: 'Proceed to Checkout',
               fullWidth: true,
               onPressed: () => Navigator.of(context).pushNamed(
-                '/shop/checkout',
+                Routes.shopCheckout,
                 arguments: total,
               ),
               icon: const Icon(Icons.payment),
@@ -384,9 +389,12 @@ class _CartScreenState extends State<CartScreen> {
 
   void _removeFromCart(String productId) async {
     try {
-      await _cart.removeFromCart(productId);
+      await CartService.removeFromCart(
+        userId: _getCurrentUserId(),
+        cartItemId: productId,
+      );
       setState(() {
-        _future = _cart.getCartItems();
+        _future = CartService.getCartItems(_getCurrentUserId());
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -412,9 +420,13 @@ class _CartScreenState extends State<CartScreen> {
 
   void _updateQuantity(String productId, int newQuantity) async {
     try {
-      await _cart.updateQuantity(productId, newQuantity);
+      await CartService.updateCartItemQuantity(
+        userId: _getCurrentUserId(),
+        cartItemId: productId,
+        quantity: newQuantity,
+      );
       setState(() {
-        _future = _cart.getCartItems();
+        _future = CartService.getCartItems(_getCurrentUserId());
       });
     } catch (e) {
       if (mounted) {

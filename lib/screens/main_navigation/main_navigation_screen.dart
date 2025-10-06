@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../modules/coach/screens/coach_listing_screen.dart';
-import '../../modules/venue/screens/venues_screen.dart';
+import '../../screens/venue/venue_discovery_screen.dart';
 import '../../modules/tournament/screens/tournament_list_screen.dart';
 import '../../modules/team/screens/team_management_screen.dart';
 import '../../theming/colors.dart';
-import '../../core/widgets/material3/material3_components.dart';
+
+import '../../core/widgets/notification_badge.dart' as notification_badge;
 import '../dashboard/ui/dashboard_screen.dart';
-import '../../modules/shop/screens/shop_home_screen.dart';
+import '../dashboard/dashboard_integration.dart';
+import '../../modules/shop/screens/enhanced_shop_home_screen.dart';
+import '../../routing/routes.dart';
+import 'package:flutter/material.dart' as material;
 
 /// Main navigation screen with bottom navigation bar
 class MainNavigationScreen extends StatefulWidget {
@@ -47,51 +51,59 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     const NavigationDestination(
       icon: Icon(Icons.dashboard_outlined),
       selectedIcon: Icon(Icons.dashboard),
-      label: '',
+      label: 'Dashboard',
     ),
     const NavigationDestination(
       icon: Icon(Icons.sports_outlined),
       selectedIcon: Icon(Icons.sports),
-      label: '',
+      label: 'Coaches',
     ),
     const NavigationDestination(
       icon: Icon(Icons.location_on_outlined),
       selectedIcon: Icon(Icons.location_on),
-      label: '',
+      label: 'Venues',
     ),
     const NavigationDestination(
       icon: Icon(Icons.groups_outlined),
       selectedIcon: Icon(Icons.groups),
-      label: '',
+      label: 'Teams',
     ),
     const NavigationDestination(
       icon: Icon(Icons.emoji_events_outlined),
       selectedIcon: Icon(Icons.emoji_events),
-      label: '',
+      label: 'Tournaments',
     ),
     const NavigationDestination(
       icon: Icon(Icons.storefront_outlined),
       selectedIcon: Icon(Icons.storefront),
-      label: '',
+      label: 'Shop',
     ),
   ];
 
   final List<Widget> _screens = [
     const DashboardScreen(),     // Dashboard (main hub)
     const CoachListingScreen(),  // Coach
-    const VenuesScreen(),        // Venues
+    const VenueDiscoveryScreen(), // Venues
     const TeamManagementScreen(), // Teams
     const TournamentListScreen(), // Tournaments
-    const ShopHomeScreen(),      // Shop
+    const EnhancedShopHomeScreen(),      // Shop
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _buildBody(),
-      bottomNavigationBar: _buildNavigationBar(),
-      floatingActionButton: _buildFloatingActionButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: Stack(
+        children: [
+          _buildBody(),
+          _buildNavigationBar(),
+          if (_buildFloatingActionButton() != null)
+            Positioned(
+              bottom: 90.h,
+              right: 16.w,
+              child: _buildFloatingActionButton()!,
+            ),
+        ],
+      ),
     );
   }
 
@@ -113,51 +125,58 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   }
 
   Widget _buildNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: ColorsManager.outline.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: _onDestinationSelected,
-        backgroundColor: ColorsManager.surface,
-        surfaceTintColor: ColorsManager.surfaceTint,
-        indicatorColor: ColorsManager.secondaryContainer,
-        height: 80.h,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
-        destinations: _destinations.map((destination) {
-          final index = _destinations.indexOf(destination);
+    return Positioned(
+      bottom: 16.h,
+      left: 16.w,
+      right: 16.w,
+      child: Container(
+        height: 50.h,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: ColorsManager.outline.withValues(alpha: 0.15),
+              blurRadius: 12,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: _destinations.asMap().entries.map((entry) {
+            final index = entry.key;
+            final destination = entry.value;
+            final isSelected = index == _currentIndex;
 
-          // Add badge for ratings if needed
-          Widget icon = destination.icon;
-          Widget selectedIcon = destination.selectedIcon ?? destination.icon;
-
-          if (destination.label == 'Dashboard' && index == 0) {
-            // Add notification badge to dashboard if there are pending items
-            icon = NotificationBadge(
-              count: 0, // TODO: Get actual notification count
-              showZero: false,
-              child: destination.icon,
+            Widget icon = IconTheme(
+              data: IconThemeData(color: isSelected ? Colors.red : Colors.grey[400], size: 24),
+              child: isSelected ? (destination.selectedIcon ?? destination.icon) : destination.icon,
             );
-            selectedIcon = NotificationBadge(
-              count: 0, // TODO: Get actual notification count
-              showZero: false,
-              child: destination.selectedIcon ?? destination.icon,
-            );
-          }
 
-          return NavigationDestination(
-            icon: icon,
-            selectedIcon: selectedIcon,
-            label: destination.label,
-          );
-        }).toList(),
+            if (destination.label == 'Dashboard' && index == 0) {
+              icon = notification_badge.NotificationBadge(
+                count: 0,
+                child: IconTheme(
+                  data: IconThemeData(color: isSelected ? Colors.red : Colors.grey[400], size: 24),
+                  child: isSelected ? (destination.selectedIcon ?? destination.icon) : destination.icon,
+                ),
+              );
+            }
+
+            return GestureDetector(
+              onTap: () => _onDestinationSelected(index),
+              child: Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: isSelected ? BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12.r),
+                ) : null,
+                child: icon,
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -166,35 +185,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     // Show different FABs based on current screen
     switch (_currentIndex) {
       case 1: // Listings/Book
-        return FloatingActionButton(
+        return material.FloatingActionButton(
           onPressed: _navigateToCreateListing,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
           child: const Icon(Icons.add),
         );
       case 2: // Venues
-        return FloatingActionButton(
+        return material.FloatingActionButton(
           onPressed: _navigateToAddVenue,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
           child: const Icon(Icons.add_location),
         );
       case 3: // Teams
-        return FloatingActionButton(
+        return material.FloatingActionButton(
           onPressed: _navigateToCreateTeam,
           backgroundColor: ColorsManager.mainBlue,
           foregroundColor: Colors.white,
           child: const Icon(Icons.group_add),
         );
       case 4: // Tournaments
-        return FloatingActionButton(
+        return material.FloatingActionButton(
           onPressed: _navigateToCreateTournament,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
           child: const Icon(Icons.emoji_events),
         );
       case 5: // Shop
-        return FloatingActionButton(
+        return material.FloatingActionButton(
           onPressed: _navigateToAddProduct,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
@@ -236,22 +255,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
 
   // Navigation methods for FAB actions
   void _navigateToCreateListing() {
-    Navigator.pushNamed(context, '/create-listing');
+    Navigator.pushNamed(context, Routes.shopAddProduct);
   }
 
   void _navigateToAddVenue() {
-    Navigator.pushNamed(context, '/add-venue');
+    Navigator.pushNamed(context, Routes.addVenueScreen);
   }
 
   void _navigateToCreateTeam() {
-    Navigator.pushNamed(context, '/create-team');
+    Navigator.pushNamed(context, Routes.createTeamScreen);
   }
 
   void _navigateToCreateTournament() {
-    Navigator.pushNamed(context, '/create-tournament');
+    Navigator.pushNamed(context, Routes.createTournamentScreen);
   }
 
   void _navigateToAddProduct() {
-    Navigator.pushNamed(context, '/shop/add-product');
+    Navigator.pushNamed(context, Routes.shopAddProduct);
   }
 }

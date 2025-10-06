@@ -12,7 +12,9 @@ import 'team_profile_screen.dart';
 
 /// Screen for managing user's teams
 class TeamManagementScreen extends StatefulWidget {
-  const TeamManagementScreen({super.key});
+  final String? teamId;
+  
+  const TeamManagementScreen({super.key, this.teamId});
 
   @override
   State<TeamManagementScreen> createState() => _TeamManagementScreenState();
@@ -50,28 +52,22 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
       appBar: AppBar(
         title: Text(
           'Team Management',
-          style: TextStyles.font18DarkBlue600Weight,
+          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ColorsManager.darkBlue),
+        iconTheme: const IconThemeData(color: Colors.white),
         bottom: PreferredSize(
-          preferredSize: Size.fromHeight(120.h),
-          child: Column(
-            children: [
-              // Search bar (only show on Browse Teams tab)
-              if (_tabController.index == 1) _buildSearchBar(),
-              TabBar(
-                controller: _tabController,
-                labelColor: ColorsManager.mainBlue,
-                unselectedLabelColor: ColorsManager.gray,
-                indicatorColor: ColorsManager.mainBlue,
-                tabs: const [
-                  Tab(text: 'My Teams'),
-                  Tab(text: 'Browse Teams'),
-                  Tab(text: 'Join Requests'),
-                ],
-              ),
+          preferredSize: Size.fromHeight(50.h),
+          child: TabBar(
+            controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.grey[400],
+            indicatorColor: Colors.white,
+            tabs: const [
+              Tab(text: 'My Teams'),
+              Tab(text: 'Browse Teams'),
+              Tab(text: 'Join Requests'),
             ],
           ),
         ),
@@ -84,12 +80,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
           _buildJoinRequestsTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: "team_management_fab",
-        onPressed: _navigateToCreateTeam,
-        backgroundColor: ColorsManager.mainBlue,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+
     );
   }
 
@@ -212,6 +203,7 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
 
         return Column(
           children: [
+            _buildSearchBar(),
             if (_searchQuery.isNotEmpty || _selectedSportFilter != null)
               _buildActiveFiltersChips(),
             Expanded(
@@ -600,83 +592,138 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
   }
 
   void _showFilterDialog() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filter Teams'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: BoxDecoration(
+          color: ColorsManager.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
           children: [
-            Text(
-              'Sport Type',
-              style: TextStyles.font14DarkBlue600Weight,
-            ),
-            Gap(8.h),
-            DropdownButtonFormField<SportType>(
-              value: _selectedSportFilter,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: ColorsManager.dividerColor),
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               ),
-              hint: const Text('Select sport'),
-              items: SportType.values.map((sport) {
-                return DropdownMenuItem(
-                  value: sport,
-                  child: Text(sport.displayName),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedSportFilter = value;
-                });
-              },
+              child: Row(
+                children: [
+                  Text(
+                    'Filter Teams',
+                    style: TextStyles.font18DarkBlueBold,
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedSportFilter = null;
+                        _selectedLocationFilter = null;
+                      });
+                    },
+                    child: Text(
+                      'Clear All',
+                      style: TextStyles.font14MainBlue500Weight,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            Gap(16.h),
-            Text(
-              'Location',
-              style: TextStyles.font14DarkBlue600Weight,
-            ),
-            Gap(8.h),
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Enter location',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sport Type',
+                      style: TextStyles.font16DarkBlueBold,
+                    ),
+                    Gap(12.h),
+                    Wrap(
+                      spacing: 8.w,
+                      runSpacing: 8.h,
+                      children: SportType.values.map((sport) {
+                        final isSelected = _selectedSportFilter == sport;
+                        return FilterChip(
+                          label: Text(sport.displayName),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedSportFilter = selected ? sport : null;
+                            });
+                          },
+                          selectedColor: ColorsManager.primary.withValues(alpha: 0.2),
+                          checkmarkColor: ColorsManager.primary,
+                        );
+                      }).toList(),
+                    ),
+                    Gap(24.h),
+                    Text(
+                      'Location',
+                      style: TextStyles.font16DarkBlueBold,
+                    ),
+                    Gap(12.h),
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Enter location',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                      ),
+                      onChanged: (value) {
+                        _selectedLocationFilter = value.isNotEmpty ? value : null;
+                      },
+                    ),
+                  ],
                 ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               ),
-              onChanged: (value) {
-                _selectedLocationFilter = value.isNotEmpty ? value : null;
-              },
+            ),
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: ColorsManager.dividerColor),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: ColorsManager.textSecondary,
+                        side: BorderSide(color: ColorsManager.textSecondary),
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        setState(() {}); // Refresh the stream
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColorsManager.primary,
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16.h),
+                      ),
+                      child: const Text('Apply Filters'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _selectedSportFilter = null;
-                _selectedLocationFilter = null;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Clear All'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {}); // Refresh the stream
-            },
-            child: const Text('Apply'),
-          ),
-        ],
       ),
     );
   }

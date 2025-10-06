@@ -21,7 +21,7 @@ class SportTypeDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<SportType>(
-      value: selectedSportType,
+      initialValue: selectedSportType,
       decoration: InputDecoration(
         hintText: hintText ?? 'Select sport type',
         border: OutlineInputBorder(

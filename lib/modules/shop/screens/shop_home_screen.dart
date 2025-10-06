@@ -8,6 +8,7 @@ import '../../../core/responsive/responsive_layout.dart';
 import '../../../core/accessibility/accessibility_helpers.dart';
 import '../models/sports_categories.dart';
 import '../models/product.dart';
+import '../../../routing/routes.dart';
 
 class ShopHomeScreen extends StatefulWidget {
   const ShopHomeScreen({super.key});
@@ -363,21 +364,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
 
   // Navigation methods
   void _navigateToCart() {
-    Navigator.pushNamed(context, '/shop/cart');
+    Navigator.pushNamed(context, Routes.shopCart);
   }
 
   void _navigateToOrders() {
-    Navigator.pushNamed(context, '/shop/orders');
+    Navigator.pushNamed(context, Routes.shopOrders);
   }
 
   void _navigateToAddProduct() {
-    Navigator.pushNamed(context, '/shop/add-product');
+    Navigator.pushNamed(context, Routes.shopAddProduct);
   }
 
   void _navigateToProductDetail(Product product) {
     Navigator.pushNamed(
       context,
-      '/shop/product-detail',
+      Routes.shopProductDetail,
       arguments: product,
     );
   }
@@ -406,8 +407,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         price: 2500.0,
         category: 'Football',
         ownerId: 'sample-owner',
+        shopId: 'shop1',
+        shopName: 'Sports Store',
         images: ['https://example.com/football.jpg'],
+        sizes: ['M', 'L'],
+        colors: ['Brown', 'White'],
+        stock: 10,
+        isAvailable: true,
+        rating: 4.5,
+        reviewCount: 25,
+        tags: ['football', 'sports', 'professional'],
+        specifications: {'material': 'Leather', 'weight': '400g'},
+        isFeatured: true,
+        isExclusive: false,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
       Product(
         id: '2',
@@ -416,8 +430,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         price: 4500.0,
         category: 'Basketball',
         ownerId: 'sample-owner',
+        shopId: 'shop1',
+        shopName: 'Sports Store',
         images: ['https://example.com/basketball-shoes.jpg'],
+        sizes: ['8', '9', '10', '11'],
+        colors: ['Black', 'White', 'Red'],
+        stock: 15,
+        isAvailable: true,
+        rating: 4.2,
+        reviewCount: 18,
+        tags: ['basketball', 'shoes', 'sports'],
+        specifications: {'brand': 'Nike', 'type': 'Running'},
+        isFeatured: false,
+        isExclusive: false,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
       Product(
         id: '3',
@@ -426,8 +453,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         price: 3200.0,
         category: 'Tennis',
         ownerId: 'sample-owner',
+        shopId: 'shop1',
+        shopName: 'Sports Store',
         images: ['https://example.com/tennis-racket.jpg'],
+        sizes: ['M', 'L'],
+        colors: ['Black', 'Red'],
+        stock: 8,
+        isAvailable: true,
+        rating: 4.7,
+        reviewCount: 32,
+        tags: ['tennis', 'racket', 'sports'],
+        specifications: {'weight': '280g', 'grip': '4 3/8'},
+        isFeatured: true,
+        isExclusive: false,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
       Product(
         id: '4',
@@ -436,8 +476,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         price: 5500.0,
         category: 'Cricket',
         ownerId: 'sample-owner',
+        shopId: 'shop1',
+        shopName: 'Sports Store',
         images: ['https://example.com/cricket-bat.jpg'],
+        sizes: ['SH', 'LH'],
+        colors: ['Natural'],
+        stock: 5,
+        isAvailable: true,
+        rating: 4.8,
+        reviewCount: 12,
+        tags: ['cricket', 'bat', 'willow'],
+        specifications: {'wood': 'English Willow', 'weight': '2.8 lbs'},
+        isFeatured: false,
+        isExclusive: true,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
       Product(
         id: '5',
@@ -446,8 +499,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         price: 1800.0,
         category: 'Volleyball',
         ownerId: 'sample-owner',
+        shopId: 'shop1',
+        shopName: 'Sports Store',
         images: ['https://example.com/volleyball.jpg'],
+        sizes: ['Standard'],
+        colors: ['White', 'Blue'],
+        stock: 20,
+        isAvailable: true,
+        rating: 4.3,
+        reviewCount: 28,
+        tags: ['volleyball', 'ball', 'sports'],
+        specifications: {'size': 'Official', 'material': 'Synthetic leather'},
+        isFeatured: false,
+        isExclusive: false,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
       Product(
         id: '6',
@@ -456,8 +522,21 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
         price: 2800.0,
         category: 'Badminton',
         ownerId: 'sample-owner',
+        shopId: 'shop1',
+        shopName: 'Sports Store',
         images: ['https://example.com/badminton-set.jpg'],
+        sizes: ['M', 'L'],
+        colors: ['Black', 'Red'],
+        stock: 12,
+        isAvailable: true,
+        rating: 4.1,
+        reviewCount: 15,
+        tags: ['badminton', 'racket', 'set'],
+        specifications: {'includes': '2 rackets, 6 shuttlecocks'},
+        isFeatured: false,
+        isExclusive: false,
         createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       ),
     ];
   }

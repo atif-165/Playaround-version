@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/order_service.dart';
-import '../models/order.dart';
+import '../models/order_item.dart';
 import '../services/cart_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -13,14 +14,20 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final _orders = OrderService();
-  final _cart = CartService();
 
   Future<void> _placeOrder() async {
     // For simplicity, we fetch cart items and create order items with priceAtPurchase resolved at confirmation page.
-    final items = await _cart.getCartItems();
-    final orderItems = items.map((e) => OrderItem(productId: e.productId, quantity: e.quantity, priceAtPurchase: 0)).toList();
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final items = await CartService.getCartItems(userId);
+    final orderItems = items.map((e) => OrderItem(
+      productId: e.productId,
+      productName: e.productName,
+      price: e.price,
+      quantity: e.quantity,
+      imageUrl: e.productImage,
+    )).toList();
     await _orders.placeOrder(orderItems, widget.total);
-    await _cart.clearCart();
+    await CartService.clearCart(userId);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order placed')));
     if (Navigator.canPop(context)) {

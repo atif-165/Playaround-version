@@ -23,11 +23,19 @@ class _ExploreScreenState extends State<ExploreScreen>
   late TabController _tabController;
   String _searchQuery = '';
   Map<String, dynamic> _filters = {};
+  int _currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        setState(() {
+          _currentTabIndex = _tabController.index;
+        });
+      }
+    });
   }
 
   @override
@@ -82,6 +90,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                     ExploreFilterButton(
                       onFiltersChanged: _onFiltersChanged,
                       currentFilters: _filters,
+                      currentTabIndex: _currentTabIndex,
                     ),
                   ],
                 ),

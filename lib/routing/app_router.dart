@@ -14,9 +14,17 @@ import '../screens/signup/ui/sign_up_screen.dart';
 import '../modules/skill_tracking/skill_tracking_module.dart';
 import '../modules/team/screens/team_creation_screen.dart';
 import '../modules/team/screens/team_profile_screen.dart';
+import '../modules/team/screens/team_management_screen.dart';
+import '../modules/team/screens/team_admin_screen.dart';
+import '../modules/team/screens/team_schedule_screen.dart';
+import '../screens/dashboard/ui/team_dashboard_screen.dart';
 import '../modules/team/models/models.dart';
 import '../screens/match_requests/match_requests_screen.dart';
 import '../modules/venue/screens/add_venue_screen.dart';
+import '../screens/venue/venue_discovery_screen.dart';
+import '../screens/venue/venue_profile_screen.dart';
+import '../screens/venue_booking/venue_booking_screen.dart';
+import '../models/venue.dart';
 import '../modules/chat/screens/chat_list_screen.dart';
 import '../modules/chat/screens/chat_screen.dart';
 import '../modules/chat/screens/user_search_screen.dart';
@@ -29,13 +37,37 @@ import '../models/booking_model.dart';
 import 'routes.dart';
 // Shop
 import '../modules/shop/screens/shop_home_screen.dart';
+import '../modules/shop/screens/add_product_screen.dart';
+import '../modules/shop/screens/cart_screen.dart';
+import '../modules/shop/screens/checkout_screen.dart';
+import '../modules/shop/screens/orders_screen.dart';
+import '../modules/shop/screens/product_detail_screen.dart';
+import '../modules/shop/screens/enhanced_product_detail_screen.dart';
+import '../modules/shop/models/product.dart';
+
 // Quick Action Screens
-import '../screens/venue_booking/venue_booking_screen.dart';
 import '../screens/team_finder/team_finder_screen.dart';
 import '../screens/create_session/create_session_screen.dart';
 import '../screens/analytics/analytics_screen.dart';
 // People Search Screens
 import '../screens/people_search/people_search_screen.dart';
+// Tournament Screens
+import '../modules/tournament/screens/tournament_list_screen.dart';
+import '../modules/tournament/screens/create_tournament_screen.dart';
+import '../modules/tournament/screens/tournament_detail_screen.dart';
+import '../modules/tournament/screens/tournament_join_screen.dart';
+import '../modules/tournament/screens/tournament_management_screen.dart';
+import '../modules/tournament/screens/tournament_discovery_screen.dart';
+import '../modules/tournament/screens/match_scheduling_screen.dart';
+import '../modules/tournament/screens/score_update_screen.dart';
+import '../modules/tournament/screens/tournament_preview_screen.dart';
+import '../modules/tournament/screens/tournament_team_registration_screen.dart';
+import '../modules/tournament/screens/winner_declaration_screen.dart';
+import '../modules/tournament/models/tournament_model.dart';
+import '../screens/coach/my_students_screen.dart';
+import '../screens/schedule/schedule_screen.dart';
+import '../screens/events/event_details_screen.dart';
+import '../screens/coach/book_coach_screen.dart';
 
 class AppRouter {
   static Route? generateRoute(RouteSettings settings) {
@@ -195,6 +227,23 @@ class AppRouter {
         );
 
       // Venue routes
+      case Routes.venueDiscoveryScreen:
+        return MaterialPageRoute(builder: (_) => const VenueDiscoveryScreen());
+
+      case Routes.venueProfileScreen:
+        final venue = settings.arguments as Venue?;
+        if (venue != null) {
+          return MaterialPageRoute(
+            builder: (_) => VenueProfileScreen(venue: venue),
+          );
+        }
+        break;
+
+      case Routes.venueBookingScreen:
+        return MaterialPageRoute(
+          builder: (_) => const VenueBookingScreen(),
+        );
+
       case Routes.addVenueScreen:
         return MaterialPageRoute(builder: (_) => const AddVenueScreen());
 
@@ -202,9 +251,43 @@ class AppRouter {
       case Routes.shopHome:
         return MaterialPageRoute(builder: (_) => const ShopHomeScreen());
 
+      case Routes.shopAddProduct:
+        return MaterialPageRoute(builder: (_) => const AddProductScreen());
+
+      case Routes.shopCart:
+        return MaterialPageRoute(builder: (_) => const CartScreen());
+
+      case Routes.shopOrders:
+        return MaterialPageRoute(builder: (_) => const OrdersScreen());
+
+      case Routes.shopCheckout:
+        final total = settings.arguments as double?;
+        if (total != null) {
+          return MaterialPageRoute(
+            builder: (_) => CheckoutScreen(total: total),
+          );
+        }
+        break;
+
+      case Routes.shopProductDetail:
+        final product = settings.arguments as Product?;
+        if (product != null) {
+          return MaterialPageRoute(
+            builder: (_) => EnhancedProductDetailScreen(product: product),
+          );
+        }
+        break;
+
+      case Routes.shopDetail:
+        final productId = settings.arguments as String?;
+        if (productId != null) {
+          return MaterialPageRoute(
+            builder: (_) => ProductDetailScreen(productId: productId),
+          );
+        }
+        break;
+
       // Quick Action routes
-      case Routes.venueBookingScreen:
-        return MaterialPageRoute(builder: (_) => const VenueBookingScreen());
 
       case Routes.teamFinderScreen:
         return MaterialPageRoute(builder: (_) => const TeamFinderScreen());
@@ -217,7 +300,6 @@ class AppRouter {
 
       // Team Management routes
       case Routes.createTeamScreen:
-      case '/create-team':
         return MaterialPageRoute(builder: (_) => const TeamCreationScreen());
 
       case Routes.teamProfileScreen:
@@ -232,11 +314,130 @@ class AppRouter {
         }
         break;
 
+      case Routes.teamManagementScreen:
+        final teamId = settings.arguments as String?;
+        if (teamId != null) {
+          return MaterialPageRoute(
+            builder: (_) => TeamManagementScreen(teamId: teamId),
+          );
+        }
+        break;
+
+      case Routes.teamAdminScreen:
+        final arguments = settings.arguments as Map<String, dynamic>?;
+        if (arguments != null) {
+          return MaterialPageRoute(
+            builder: (_) => TeamAdminScreen(
+              teamId: arguments['teamId'] as String,
+              teamName: arguments['teamName'] as String,
+            ),
+          );
+        }
+        break;
+
+      case Routes.teamScheduleScreen:
+        final arguments = settings.arguments as Map<String, dynamic>?;
+        if (arguments != null) {
+          return MaterialPageRoute(
+            builder: (_) => TeamScheduleScreen(
+              teamId: arguments['teamId'] as String,
+              teamName: arguments['teamName'] as String,
+            ),
+          );
+        }
+        break;
+
+      case Routes.teamDashboardScreen:
+        final teamId = settings.arguments as String?;
+        if (teamId != null) {
+          return MaterialPageRoute(
+            builder: (_) => TeamDashboardScreen(teamId: teamId),
+          );
+        }
+        break;
+
       // People Search routes
       case Routes.peopleSearchScreen:
         return MaterialPageRoute(builder: (_) => const PeopleSearchScreen());
 
-      // TODO: Implement shop routes when shop module is ready
+      // Tournament routes
+      case Routes.tournamentListScreen:
+        return MaterialPageRoute(builder: (_) => const TournamentListScreen());
+
+      case Routes.createTournamentScreen:
+        return MaterialPageRoute(builder: (_) => const CreateTournamentScreen());
+
+      case Routes.tournamentDetailScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => TournamentDetailScreen(tournament: tournament),
+          );
+        }
+        break;
+
+      case Routes.tournamentJoinScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => TournamentJoinScreen(tournament: tournament),
+          );
+        }
+        break;
+
+      case Routes.tournamentManagementScreen:
+        return MaterialPageRoute(builder: (_) => const TournamentManagementScreen());
+
+      case Routes.tournamentDiscoveryScreen:
+        return MaterialPageRoute(builder: (_) => const TournamentDiscoveryScreen());
+
+      case Routes.matchSchedulingScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => MatchSchedulingScreen(tournament: tournament),
+          );
+        }
+        break;
+
+      case Routes.scoreUpdateScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => ScoreUpdateScreen(tournament: tournament),
+          );
+        }
+        break;
+
+      case Routes.tournamentPreviewScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (context) => TournamentPreviewScreen(
+              tournament: tournament,
+              onConfirm: () => Navigator.of(context).pop(),
+            ),
+          );
+        }
+        break;
+
+      case Routes.tournamentTeamRegistrationScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => TournamentTeamRegistrationScreen(tournament: tournament),
+          );
+        }
+        break;
+
+      case Routes.winnerDeclarationScreen:
+        final tournament = settings.arguments as Tournament?;
+        if (tournament != null) {
+          return MaterialPageRoute(
+            builder: (_) => WinnerDeclarationScreen(tournament: tournament),
+          );
+        }
+        break;
 
       case Routes.teamPerformanceScreen:
         // Note: This route expects a Team object as argument
@@ -246,6 +447,30 @@ class AppRouter {
       case Routes.playerComparisonScreen:
         // Note: This route expects a List<Team> as argument
         // It's typically navigated to programmatically from the analytics dashboard
+        break;
+
+      case Routes.myStudentsScreen:
+        return MaterialPageRoute(builder: (_) => const MyStudentsScreen());
+
+      case Routes.scheduleScreen:
+        return MaterialPageRoute(builder: (_) => const ScheduleScreen());
+
+      case Routes.eventDetailsScreen:
+        final eventId = settings.arguments as String?;
+        if (eventId != null) {
+          return MaterialPageRoute(
+            builder: (_) => EventDetailsScreen(eventId: eventId),
+          );
+        }
+        break;
+
+      case Routes.bookCoachScreen:
+        final coachId = settings.arguments as String?;
+        if (coachId != null) {
+          return MaterialPageRoute(
+            builder: (_) => BookCoachScreen(coachId: coachId),
+          );
+        }
         break;
     }
     return null;

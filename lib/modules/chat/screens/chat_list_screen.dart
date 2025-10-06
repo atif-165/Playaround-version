@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
-
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../../../core/widgets/app_text_button.dart';
@@ -65,7 +64,6 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             tooltip: 'Connection Requests',
           ),
-          Gap(8.w),
         ],
       ),
     );

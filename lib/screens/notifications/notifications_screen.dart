@@ -242,6 +242,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.scoreboard;
       case NotificationType.tournamentComplete:
         return Icons.emoji_events;
+      case NotificationType.tournamentUpdate:
+        return Icons.update;
       case NotificationType.teamInvite:
         return Icons.group_add;
       case NotificationType.ratingReceived:
@@ -279,6 +281,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return ColorsManager.warning;
       case NotificationType.tournamentComplete:
         return ColorsManager.success;
+      case NotificationType.tournamentUpdate:
+        return ColorsManager.primary;
       case NotificationType.teamInvite:
         return ColorsManager.primary;
       case NotificationType.ratingReceived:
@@ -356,6 +360,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           // TODO: Implement navigation to match detail
           break;
         case NotificationType.tournamentComplete:
+          // Navigate to tournament detail
+          // TODO: Implement navigation to tournament detail
+          break;
+        case NotificationType.tournamentUpdate:
           // Navigate to tournament detail
           // TODO: Implement navigation to tournament detail
           break;

@@ -546,7 +546,7 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
           color: isSelected
-              ? ColorsManager.success.withOpacity(0.1)
+              ? ColorsManager.success.withValues(alpha: 0.1)
               : ColorsManager.cardBackground,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(

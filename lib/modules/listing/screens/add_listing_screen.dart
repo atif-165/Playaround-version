@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import '../../../core/widgets/app_text_button.dart';
 import '../../../core/widgets/progress_indicaror.dart';
 import '../../../helpers/extensions.dart';
+
 import '../../../logic/cubit/auth_cubit.dart';
 import '../../../models/listing_model.dart' as listing;
 import '../../../models/user_profile.dart';
@@ -77,11 +78,11 @@ class _AddListingScreenState extends State<AddListingScreen> {
       appBar: AppBar(
         title: Text(
           'Create Listing',
-          style: TextStyles.font18DarkBlueBold,
+          style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.black,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ColorsManager.mainBlue),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: _isLoading
           ? const Center(child: CustomProgressIndicator())
@@ -154,29 +155,74 @@ class _AddListingScreenState extends State<AddListingScreen> {
         Row(
           children: [
             Expanded(
-              child: RadioListTile<listing.ListingType>(
-                title: const Text('Coaching Service'),
-                value: listing.ListingType.coach,
-                groupValue: _selectedListingType,
-                onChanged: (value) {
+              child: GestureDetector(
+                onTap: () {
                   setState(() {
-                    _selectedListingType = value!;
+                    _selectedListingType = listing.ListingType.coach;
                   });
                 },
-                activeColor: ColorsManager.mainBlue,
+                child: Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _selectedListingType == listing.ListingType.coach
+                          ? ColorsManager.mainBlue
+                          : Colors.grey,
+                    ),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Radio<listing.ListingType>(
+                        value: listing.ListingType.coach,
+                        groupValue: _selectedListingType,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedListingType = value!;
+                          });
+                        },
+                        activeColor: ColorsManager.mainBlue,
+                      ),
+                      const Text('Coaching Service'),
+                    ],
+                  ),
+                ),
               ),
             ),
+            Gap(8.w),
             Expanded(
-              child: RadioListTile<listing.ListingType>(
-                title: const Text('Venue'),
-                value: listing.ListingType.venue,
-                groupValue: _selectedListingType,
-                onChanged: (value) {
+              child: GestureDetector(
+                onTap: () {
                   setState(() {
-                    _selectedListingType = value!;
+                    _selectedListingType = listing.ListingType.venue;
                   });
                 },
-                activeColor: ColorsManager.mainBlue,
+                child: Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _selectedListingType == listing.ListingType.venue
+                          ? ColorsManager.mainBlue
+                          : Colors.grey,
+                    ),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Radio<listing.ListingType>(
+                        value: listing.ListingType.venue,
+                        groupValue: _selectedListingType,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedListingType = value!;
+                          });
+                        },
+                        activeColor: ColorsManager.mainBlue,
+                      ),
+                      const Text('Venue'),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
