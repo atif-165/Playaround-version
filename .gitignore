@@ -45,3 +45,35 @@ app.*.map.json
 # Firebase service account credentials
 firebase-service-account.json
 firebase-admin-key.json
+playaround-*-firebase-adminsdk-*.json
+
+# Temporary and test files
+*.png
+!assets/**/*.png
+!android/**/*.png
+!ios/**/*.png
+!web/**/*.png
+!macos/**/*.png
+cursor_test_sprites.json
+temp_test_output.json
+routes_map.json
+
+# Backup files and folders
+backup/
+*.bak
+*.backup
+*.old
+*_backup
+*.zip
+
+# Documentation files (optional - uncomment if you don't want docs in repo)
+# *.md
+# *.docx
+
+# Development scripts (optional - uncomment if you don't want scripts in repo)
+# scripts/
+# lib/scripts/
+# *.bat
+# *.ps1
+# *.py
+# *.js
