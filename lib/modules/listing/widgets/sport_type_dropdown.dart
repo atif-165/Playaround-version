@@ -22,6 +22,10 @@ class SportTypeDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     return DropdownButtonFormField<SportType>(
       initialValue: selectedSportType,
+      style: TextStyles.font14DarkBlueMedium.copyWith(
+        color: ColorsManager.darkBlue,
+        fontWeight: FontWeight.w600,
+      ),
       decoration: InputDecoration(
         hintText: hintText ?? 'Select sport type',
         border: OutlineInputBorder(
@@ -38,7 +42,10 @@ class SportTypeDropdown extends StatelessWidget {
           value: sportType,
           child: Text(
             sportType.displayName,
-            style: TextStyles.font14DarkBlueMedium,
+            style: TextStyles.font14DarkBlueMedium.copyWith(
+              color: ColorsManager.darkBlue,
+              fontWeight: FontWeight.w600,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
         );
@@ -50,7 +57,7 @@ class SportTypeDropdown extends StatelessWidget {
         }
         return null;
       },
-      dropdownColor: Colors.white,
+      dropdownColor: ColorsManager.surfaceVariant,
       icon: const Icon(
         Icons.keyboard_arrow_down,
         color: ColorsManager.mainBlue,

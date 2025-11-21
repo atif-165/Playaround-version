@@ -170,9 +170,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  _isFavorite
-                      ? 'Added to favorites'
-                      : 'Removed from favorites',
+                  _isFavorite ? 'Added to favorites' : 'Removed from favorites',
                 ),
                 backgroundColor: ColorsManager.success,
                 behavior: SnackBarBehavior.floating,
@@ -221,7 +219,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               child: Image.network(
                 p.images.first,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(p),
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildImagePlaceholder(p),
               ),
             )
           : _buildImagePlaceholder(p),
@@ -311,11 +310,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: _quantity > 1 ? () {
-                  setState(() {
-                    _quantity--;
-                  });
-                } : null,
+                onPressed: _quantity > 1
+                    ? () {
+                        setState(() {
+                          _quantity--;
+                        });
+                      }
+                    : null,
                 icon: const Icon(Icons.remove),
                 iconSize: 20.w,
               ),
@@ -419,54 +420,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 );
               }
               return Column(
-                children: reviews.map((r) => AppCard(
-                  variant: CardVariant.outlined,
-                  size: CardSize.small,
-                  margin: EdgeInsets.only(bottom: 8.h),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        radius: 20.r,
-                        backgroundColor: ColorsManager.primaryContainer,
-                        child: Icon(
-                          Icons.person,
-                          color: ColorsManager.onPrimaryContainer,
-                          size: 20.w,
-                        ),
-                      ),
-                      Gap(12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                ...List.generate(5, (index) => Icon(
-                                  index < r.rating ? Icons.star : Icons.star_border,
-                                  color: ColorsManager.warning,
-                                  size: 16.w,
-                                )),
-                                Gap(8.w),
-                                Text(
-                                  '${r.rating}/5',
-                                  style: AppTypography.bodySmall,
+                children: reviews
+                    .map((r) => AppCard(
+                          variant: CardVariant.outlined,
+                          size: CardSize.small,
+                          margin: EdgeInsets.only(bottom: 8.h),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CircleAvatar(
+                                radius: 20.r,
+                                backgroundColor: ColorsManager.primaryContainer,
+                                child: Icon(
+                                  Icons.person,
+                                  color: ColorsManager.onPrimaryContainer,
+                                  size: 20.w,
                                 ),
-                              ],
-                            ),
-                            if (r.comment.isNotEmpty) ...[
-                              Gap(4.h),
-                              Text(
-                                r.comment,
-                                style: AppTypography.bodyMedium,
+                              ),
+                              Gap(12.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        ...List.generate(
+                                            5,
+                                            (index) => Icon(
+                                                  index < r.rating
+                                                      ? Icons.star
+                                                      : Icons.star_border,
+                                                  color: ColorsManager.warning,
+                                                  size: 16.w,
+                                                )),
+                                        Gap(8.w),
+                                        Text(
+                                          '${r.rating}/5',
+                                          style: AppTypography.bodySmall,
+                                        ),
+                                      ],
+                                    ),
+                                    if (r.comment.isNotEmpty) ...[
+                                      Gap(4.h),
+                                      Text(
+                                        r.comment,
+                                        style: AppTypography.bodyMedium,
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
                             ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                )).toList(),
+                          ),
+                        ))
+                    .toList(),
               );
             },
           ),
@@ -541,4 +548,3 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 }
-

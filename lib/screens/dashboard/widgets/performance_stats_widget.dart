@@ -43,7 +43,7 @@ class PerformanceStatsWidget extends StatelessWidget {
           ],
         ),
         Gap(16.h),
-        
+
         // Win Rate & Top Performer
         Row(
           children: [
@@ -67,7 +67,7 @@ class PerformanceStatsWidget extends StatelessWidget {
           ],
         ),
         Gap(16.h),
-        
+
         // Skill Progress Chart
         Container(
           padding: EdgeInsets.all(16.w),
@@ -86,19 +86,21 @@ class PerformanceStatsWidget extends StatelessWidget {
                 ),
               ),
               Gap(16.h),
-              ...stats!.skillProgress.map((skill) => _buildSkillProgressBar(skill)),
+              ...stats!.skillProgress
+                  .map((skill) => _buildSkillProgressBar(skill)),
             ],
           ),
         ),
         Gap(16.h),
-        
+
         // Analytics Overview
         Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             color: ColorsManager.surface,
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: ColorsManager.primary.withOpacity(0.3)),
+            border:
+                Border.all(color: ColorsManager.primary.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,16 +160,17 @@ class PerformanceStatsWidget extends StatelessWidget {
     }
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: ColorsManager.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 6.r,
             offset: Offset(0, 2.h),
           ),

@@ -14,8 +14,8 @@ class ListingService {
   ListingService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance;
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   /// Create a new listing
   Future<String> createListing({
@@ -79,10 +79,8 @@ class ListingService {
   /// Get listing by ID
   Future<ListingModel?> getListing(String listingId) async {
     try {
-      final doc = await _firestore
-          .collection(_listingsCollection)
-          .doc(listingId)
-          .get();
+      final doc =
+          await _firestore.collection(_listingsCollection).doc(listingId).get();
 
       if (doc.exists) {
         return ListingModel.fromFirestore(doc);
@@ -186,7 +184,7 @@ class ListingService {
       if (hourlyRate != null) updateData['hourlyRate'] = hourlyRate;
       if (availableDays != null) updateData['availableDays'] = availableDays;
       if (availableTimeSlots != null) {
-        updateData['availableTimeSlots'] = 
+        updateData['availableTimeSlots'] =
             availableTimeSlots.map((slot) => slot.toMap()).toList();
       }
       if (location != null) updateData['location'] = location;
@@ -224,10 +222,7 @@ class ListingService {
         throw Exception('Only listing owner can delete the listing');
       }
 
-      await _firestore
-          .collection(_listingsCollection)
-          .doc(listingId)
-          .update({
+      await _firestore.collection(_listingsCollection).doc(listingId).update({
         'isActive': false,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
@@ -255,10 +250,7 @@ class ListingService {
       final newTotal = currentTotal + newRating;
       final newAverage = newTotal / (totalRatings + 1);
 
-      await _firestore
-          .collection(_listingsCollection)
-          .doc(listingId)
-          .update({
+      await _firestore.collection(_listingsCollection).doc(listingId).update({
         'averageRating': newAverage,
         'totalBookings': FieldValue.increment(1),
         'updatedAt': Timestamp.fromDate(DateTime.now()),
@@ -283,9 +275,7 @@ class ListingService {
           .collection(_listingsCollection)
           .where('isActive', isEqualTo: true)
           .orderBy('title')
-          .startAt([searchTerm])
-          .endAt(['$searchTerm\uf8ff'])
-          .get();
+          .startAt([searchTerm]).endAt(['$searchTerm\uf8ff']).get();
 
       final results = titleQuery.docs
           .map((doc) => ListingModel.fromFirestore(doc))

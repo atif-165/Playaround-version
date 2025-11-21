@@ -16,7 +16,8 @@ class TournamentManagementScreen extends StatefulWidget {
   const TournamentManagementScreen({super.key});
 
   @override
-  State<TournamentManagementScreen> createState() => _TournamentManagementScreenState();
+  State<TournamentManagementScreen> createState() =>
+      _TournamentManagementScreenState();
 }
 
 class _TournamentManagementScreenState extends State<TournamentManagementScreen>
@@ -202,7 +203,7 @@ class _TournamentManagementScreenState extends State<TournamentManagementScreen>
         }
 
         final registrations = snapshot.data ?? [];
-        
+
         if (registrations.isEmpty) {
           return Center(
             child: Column(
@@ -285,7 +286,8 @@ class _TournamentManagementScreenState extends State<TournamentManagementScreen>
             'Registered on ${_formatDate(registration.registeredAt)}',
             style: TextStyles.font13Grey400Weight,
           ),
-          if (registration.responseMessage != null && registration.responseMessage!.isNotEmpty) ...[
+          if (registration.responseMessage != null &&
+              registration.responseMessage!.isNotEmpty) ...[
             Gap(8.h),
             Text(
               'Response: ${registration.responseMessage}',
@@ -362,7 +364,7 @@ class _TournamentManagementScreenState extends State<TournamentManagementScreen>
   void _showTeamSelectionDialog(Tournament tournament) async {
     // Get user's teams
     final teams = await _teamService.getUserTeams().first;
-    
+
     if (teams.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -382,15 +384,20 @@ class _TournamentManagementScreenState extends State<TournamentManagementScreen>
           title: Text('Select Team', style: TextStyles.font18DarkBlue600Weight),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: teams.map((team) => ListTile(
-              leading: const Icon(Icons.group, color: ColorsManager.mainBlue),
-              title: Text(team.name, style: TextStyles.font15DarkBlue500Weight),
-              subtitle: Text('${team.activeMembersCount} members', style: TextStyles.font13Grey400Weight),
-              onTap: () {
-                Navigator.pop(context);
-                _registerTeamForTournament(tournament, team);
-              },
-            )).toList(),
+            children: teams
+                .map((team) => ListTile(
+                      leading: const Icon(Icons.group,
+                          color: ColorsManager.mainBlue),
+                      title: Text(team.name,
+                          style: TextStyles.font15DarkBlue500Weight),
+                      subtitle: Text('${team.activeMembersCount} members',
+                          style: TextStyles.font13Grey400Weight),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _registerTeamForTournament(tournament, team);
+                      },
+                    ))
+                .toList(),
           ),
           actions: [
             TextButton(

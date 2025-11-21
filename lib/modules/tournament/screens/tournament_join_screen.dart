@@ -156,7 +156,8 @@ class _TournamentJoinScreenState extends State<TournamentJoinScreen>
               ),
               Gap(4.w),
               Text(
-                DateFormat('MMM dd, yyyy at HH:mm').format(widget.tournament.startDate),
+                DateFormat('MMM dd, yyyy at HH:mm')
+                    .format(widget.tournament.startDate),
                 style: TextStyles.font14Grey400Weight.copyWith(
                   color: ColorsManager.textSecondary,
                 ),
@@ -458,11 +459,12 @@ class _TournamentJoinScreenState extends State<TournamentJoinScreen>
 
   Widget _buildJoinButton() {
     final canJoin = _agreeToTerms && _agreeToRules;
-    
+
     return AppTextButton(
       buttonText: _isProcessingPayment ? 'Processing...' : 'Join Tournament',
       textStyle: TextStyles.font16WhiteSemiBold,
-      onPressed: canJoin && !_isProcessingPayment ? _handleJoinTournament : null,
+      onPressed:
+          canJoin && !_isProcessingPayment ? _handleJoinTournament : null,
     );
   }
 
@@ -483,7 +485,8 @@ class _TournamentJoinScreenState extends State<TournamentJoinScreen>
 
     try {
       // Process payment if required
-      if (widget.tournament.entryFee != null && widget.tournament.entryFee! > 0) {
+      if (widget.tournament.entryFee != null &&
+          widget.tournament.entryFee! > 0) {
         if (_paymentMethodId == null) {
           throw Exception('Please select a payment method');
         }

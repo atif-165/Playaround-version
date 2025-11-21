@@ -21,6 +21,7 @@ import '../../../models/user_profile.dart';
 import '../../../models/player_profile.dart';
 import '../../../routing/routes.dart';
 import '../../../theming/colors.dart';
+import '../../../theming/public_profile_theme.dart';
 import '../../../theming/styles.dart';
 
 /// Player onboarding form screen
@@ -61,211 +62,227 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PublicProfileTheme.backgroundColor,
       appBar: AppBar(
         title: Text(
           'Player Profile',
-          style: TextStyles.font18DarkBlue600Weight,
+          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
-            color: ColorsManager.darkBlue,
+            color: Colors.white,
           ),
           onPressed: () => context.pop(),
         ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: PublicProfileTheme.backgroundGradient,
+          ),
+        ),
       ),
-      body: BlocListener<OnboardingCubit, OnboardingState>(
-        listener: (context, state) {
-          if (state is OnboardingValidating) {
-            AppProgressIndicator.showProgressIndicator(context);
-          } else if (state is OnboardingProfileSaved) {
-            context.pop(); // Close loading dialog
-            _showSuccessDialog();
-          } else if (state is OnboardingComplete) {
-            // Refresh auth state with the new profile
-            context.read<AuthCubit>().refreshUserProfile();
-            context.pushNamedAndRemoveUntil(
-              Routes.dashboardScreen,
-              predicate: (route) => false,
-            );
-          } else if (state is OnboardingError) {
-            context.pop(); // Close loading dialog
-            _showErrorDialog(state.message);
-          } else if (state is OnboardingImageUploaded) {
-            setState(() {
-              _uploadedImageUrl = state.imageUrl;
-            });
-            // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile picture uploaded successfully!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          } else if (state is OnboardingImageUploadError) {
-            _showErrorDialog('Image Upload Error: ${state.message}');
-          }
-        },
-        child: SafeArea(
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  _buildHeader(),
-                  Gap(30.h),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: PublicProfileTheme.backgroundGradient,
+        ),
+        child: BlocListener<OnboardingCubit, OnboardingState>(
+          listener: (context, state) {
+            if (state is OnboardingValidating) {
+              AppProgressIndicator.showProgressIndicator(context);
+            } else if (state is OnboardingProfileSaved) {
+              context.pop(); // Close loading dialog
+              _showSuccessDialog();
+            } else if (state is OnboardingComplete) {
+              // Refresh auth state with the new profile
+              context.read<AuthCubit>().refreshUserProfile();
+              context.pushNamedAndRemoveUntil(
+                Routes.dashboardScreen,
+                predicate: (route) => false,
+              );
+            } else if (state is OnboardingError) {
+              context.pop(); // Close loading dialog
+              _showErrorDialog(state.message);
+            } else if (state is OnboardingImageUploaded) {
+              setState(() {
+                _uploadedImageUrl = state.imageUrl;
+              });
+              // Show success message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile picture uploaded successfully!'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            } else if (state is OnboardingImageUploadError) {
+              _showErrorDialog('Image Upload Error: ${state.message}');
+            }
+          },
+          child: SafeArea(
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: EdgeInsets.all(20.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    _buildHeader(),
+                    Gap(30.h),
 
-                  // Profile Picture
-                  BlocBuilder<OnboardingCubit, OnboardingState>(
-                    builder: (context, state) {
-                      return AppImagePicker(
-                        label: 'Profile Picture',
-                        imageFile: _selectedImage,
-                        imageUrl: _uploadedImageUrl,
-                        isLoading: state is OnboardingImageUploading,
-                        onImageSelected: (file) {
-                          setState(() {
-                            _selectedImage = file;
-                          });
-                          if (file != null) {
-                            context.read<OnboardingCubit>().uploadSelectedImage(file);
-                          }
-                        },
-                      );
-                    },
-                  ),
-                  Gap(20.h),
-
-                  // Full Name
-                  AppTextFormField(
-                    hint: 'Enter your full name',
-                    controller: _nameController,
-                    validator: FormValidators.validateName,
-                  ),
-                  Gap(20.h),
-
-                  // Gender
-                  AppDropdownField<Gender>(
-                    label: 'Gender',
-                    value: _selectedGender,
-                    items: DropdownHelper.genderItems(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGender = value;
-                      });
-                    },
-                    validator: (value) => FormValidators.validateDropdownSelection(
-                      value,
-                      'gender',
+                    // Profile Picture
+                    BlocBuilder<OnboardingCubit, OnboardingState>(
+                      builder: (context, state) {
+                        return AppImagePicker(
+                          label: 'Profile Picture',
+                          imageFile: _selectedImage,
+                          imageUrl: _uploadedImageUrl,
+                          isLoading: state is OnboardingImageUploading,
+                          onImageSelected: (file) {
+                            setState(() {
+                              _selectedImage = file;
+                            });
+                            if (file != null) {
+                              context
+                                  .read<OnboardingCubit>()
+                                  .uploadSelectedImage(file);
+                            }
+                          },
+                        );
+                      },
                     ),
-                    hint: 'Select your gender',
-                    isRequired: true,
-                  ),
-                  Gap(20.h),
+                    Gap(20.h),
 
-                  // Age
-                  AppTextFormField(
-                    hint: 'Enter your age',
-                    controller: _ageController,
-                    validator: FormValidators.validateAge,
-                  ),
-                  Gap(20.h),
-
-                  // Sports of Interest
-                  AppMultiSelectField(
-                    label: 'Sports of Interest',
-                    options: SportsOptions.availableSports,
-                    selectedValues: _selectedSports,
-                    onChanged: (values) {
-                      setState(() {
-                        _selectedSports = values;
-                      });
-                    },
-                    validator: (values) => FormValidators.validateListSelection(
-                      values,
-                      'sport',
+                    // Full Name
+                    AppTextFormField(
+                      hint: 'Enter your full name',
+                      controller: _nameController,
+                      validator: FormValidators.validateName,
                     ),
-                    hint: 'Select sports you\'re interested in',
-                    isRequired: true,
-                    maxSelections: 5,
-                  ),
-                  Gap(20.h),
+                    Gap(20.h),
 
-                  // Skill Level
-                  AppDropdownField<SkillLevel>(
-                    label: 'Skill Level',
-                    value: _selectedSkillLevel,
-                    items: DropdownHelper.skillLevelItems(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSkillLevel = value;
-                      });
-                    },
-                    validator: (value) => FormValidators.validateDropdownSelection(
-                      value,
-                      'skill level',
+                    // Gender
+                    AppDropdownField<Gender>(
+                      label: 'Gender',
+                      value: _selectedGender,
+                      items: DropdownHelper.genderItems(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGender = value;
+                        });
+                      },
+                      validator: (value) =>
+                          FormValidators.validateDropdownSelection(
+                        value,
+                        'gender',
+                      ),
+                      hint: 'Select your gender',
+                      isRequired: true,
                     ),
-                    hint: 'Select your skill level',
-                    isRequired: true,
-                  ),
-                  Gap(20.h),
+                    Gap(20.h),
 
-                  // Location
-                  AppTextFormField(
-                    hint: 'Enter your city/location',
-                    controller: _locationController,
-                    validator: FormValidators.validateLocation,
-                  ),
-                  Gap(20.h),
-
-                  // Availability
-                  AppTimeSlotPicker(
-                    label: 'Availability',
-                    selectedSlots: _selectedTimeSlots,
-                    onChanged: (slots) {
-                      setState(() {
-                        _selectedTimeSlots = slots;
-                      });
-                    },
-                    validator: FormValidators.validateTimeSlots,
-                    isRequired: true,
-                  ),
-                  Gap(20.h),
-
-                  // Preferred Training Type
-                  AppDropdownField<TrainingType>(
-                    label: 'Preferred Training Type',
-                    value: _selectedTrainingType,
-                    items: DropdownHelper.trainingTypeItems(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedTrainingType = value;
-                      });
-                    },
-                    validator: (value) => FormValidators.validateDropdownSelection(
-                      value,
-                      'training type',
+                    // Age
+                    AppTextFormField(
+                      hint: 'Enter your age',
+                      controller: _ageController,
+                      validator: FormValidators.validateAge,
                     ),
-                    hint: 'Select your preferred training type',
-                    isRequired: true,
-                  ),
-                  Gap(40.h),
+                    Gap(20.h),
 
-                  // Submit button
-                  AppTextButton(
-                    buttonText: 'Complete Profile',
-                    textStyle: TextStyles.font16White600Weight,
-                    onPressed: _submitForm,
-                  ),
-                  Gap(20.h),
-                ],
+                    // Sports of Interest
+                    AppMultiSelectField(
+                      label: 'Sports of Interest',
+                      options: SportsOptions.availableSports,
+                      selectedValues: _selectedSports,
+                      onChanged: (values) {
+                        setState(() {
+                          _selectedSports = values;
+                        });
+                      },
+                      validator: (values) => FormValidators.validateListSelection(
+                        values,
+                        'sport',
+                      ),
+                      hint: 'Select sports you\'re interested in',
+                      isRequired: true,
+                      maxSelections: 5,
+                    ),
+                    Gap(20.h),
+
+                    // Skill Level
+                    AppDropdownField<SkillLevel>(
+                      label: 'Skill Level',
+                      value: _selectedSkillLevel,
+                      items: DropdownHelper.skillLevelItems(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedSkillLevel = value;
+                        });
+                      },
+                      validator: (value) =>
+                          FormValidators.validateDropdownSelection(
+                        value,
+                        'skill level',
+                      ),
+                      hint: 'Select your skill level',
+                      isRequired: true,
+                    ),
+                    Gap(20.h),
+
+                    // Location
+                    AppTextFormField(
+                      hint: 'Enter your city/location',
+                      controller: _locationController,
+                      validator: FormValidators.validateLocation,
+                    ),
+                    Gap(20.h),
+
+                    // Availability
+                    AppTimeSlotPicker(
+                      label: 'Availability',
+                      selectedSlots: _selectedTimeSlots,
+                      onChanged: (slots) {
+                        setState(() {
+                          _selectedTimeSlots = slots;
+                        });
+                      },
+                      validator: FormValidators.validateTimeSlots,
+                      isRequired: true,
+                    ),
+                    Gap(20.h),
+
+                    // Preferred Training Type
+                    AppDropdownField<TrainingType>(
+                      label: 'Preferred Training Type',
+                      value: _selectedTrainingType,
+                      items: DropdownHelper.trainingTypeItems(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedTrainingType = value;
+                        });
+                      },
+                      validator: (value) =>
+                          FormValidators.validateDropdownSelection(
+                        value,
+                        'training type',
+                      ),
+                      hint: 'Select your preferred training type',
+                      isRequired: true,
+                    ),
+                    Gap(40.h),
+
+                    // Submit button
+                    AppTextButton(
+                      buttonText: 'Complete Profile',
+                      textStyle: TextStyles.font16White600Weight,
+                      onPressed: _submitForm,
+                    ),
+                    Gap(20.h),
+                  ],
+                ),
               ),
             ),
           ),

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
-
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/tournament_model.dart';
 import '../models/tournament_team_registration.dart';
+import '../models/tournament_match_model.dart';
 
 /// Widget for displaying tournament winner highlights and achievements
 class TournamentWinnerHighlights extends StatelessWidget {
@@ -93,7 +93,8 @@ class TournamentWinnerHighlights extends StatelessWidget {
               color: Colors.amber[700],
             ),
           ),
-          if (tournament.winningPrize != null && tournament.winningPrize! > 0) ...[
+          if (tournament.winningPrize != null &&
+              tournament.winningPrize! > 0) ...[
             Gap(12.h),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -114,7 +115,7 @@ class TournamentWinnerHighlights extends StatelessWidget {
 
   Widget _buildFinalStandings() {
     final sortedTeams = _getSortedTeams();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -128,32 +129,35 @@ class TournamentWinnerHighlights extends StatelessWidget {
           final team = entry.value;
           final points = finalStandings[team.teamId] ?? 0;
           final position = index + 1;
-          
+
           return _buildStandingCard(team, position, points);
         }).toList(),
       ],
     );
   }
 
-  Widget _buildStandingCard(TournamentTeamRegistration team, int position, int points) {
+  Widget _buildStandingCard(
+      TournamentTeamRegistration team, int position, int points) {
     final isTopThree = position <= 3;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: ColorsManager.cardBackground,
         borderRadius: BorderRadius.circular(12.r),
-        border: isTopThree 
+        border: isTopThree
             ? Border.all(color: _getPositionColor(position), width: 2)
             : Border.all(color: ColorsManager.dividerColor),
-        boxShadow: isTopThree ? [
-          BoxShadow(
-            color: _getPositionColor(position).withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ] : null,
+        boxShadow: isTopThree
+            ? [
+                BoxShadow(
+                  color: _getPositionColor(position).withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
@@ -166,7 +170,9 @@ class TournamentWinnerHighlights extends StatelessWidget {
                 Text(
                   team.teamName,
                   style: TextStyles.font16DarkBlueBold.copyWith(
-                    color: isTopThree ? _getPositionColor(position) : ColorsManager.textPrimary,
+                    color: isTopThree
+                        ? _getPositionColor(position)
+                        : ColorsManager.textPrimary,
                   ),
                 ),
                 Gap(4.h),
@@ -185,7 +191,9 @@ class TournamentWinnerHighlights extends StatelessWidget {
               Text(
                 '$points',
                 style: TextStyles.font18DarkBlueBold.copyWith(
-                  color: isTopThree ? _getPositionColor(position) : ColorsManager.textPrimary,
+                  color: isTopThree
+                      ? _getPositionColor(position)
+                      : ColorsManager.textPrimary,
                 ),
               ),
               Text(
@@ -203,22 +211,24 @@ class TournamentWinnerHighlights extends StatelessWidget {
 
   Widget _buildPositionBadge(int position) {
     final isTopThree = position <= 3;
-    
+
     return Container(
       width: 40.w,
       height: 40.h,
       decoration: BoxDecoration(
-        color: isTopThree 
+        color: isTopThree
             ? _getPositionColor(position)
             : ColorsManager.textSecondary,
         shape: BoxShape.circle,
-        boxShadow: isTopThree ? [
-          BoxShadow(
-            color: _getPositionColor(position).withValues(alpha: 0.3),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ] : null,
+        boxShadow: isTopThree
+            ? [
+                BoxShadow(
+                  color: _getPositionColor(position).withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: Center(
         child: Text(
@@ -288,7 +298,8 @@ class TournamentWinnerHighlights extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -325,7 +336,7 @@ class TournamentWinnerHighlights extends StatelessWidget {
 
   Widget _buildMatchHighlights() {
     final recentMatches = completedMatches.take(5).toList();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -354,7 +365,7 @@ class TournamentWinnerHighlights extends StatelessWidget {
           Row(
             children: [
               Text(
-                match.round,
+                match.round ?? 'N/A',
                 style: TextStyles.font12Grey400Weight.copyWith(
                   color: ColorsManager.textSecondary,
                 ),
@@ -452,7 +463,8 @@ class TournamentWinnerHighlights extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementCard(String title, String description, IconData icon, Color color) {
+  Widget _buildAchievementCard(
+      String title, String description, IconData icon, Color color) {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(16.w),

@@ -28,7 +28,7 @@ class TournamentComments extends StatefulWidget {
 class _TournamentCommentsState extends State<TournamentComments> {
   final TextEditingController _commentController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   List<TournamentComment> _comments = [];
   bool _isLoading = false;
   bool _isPosting = false;
@@ -66,7 +66,7 @@ class _TournamentCommentsState extends State<TournamentComments> {
       // TODO: Load comments from service
       // For now, simulate loading
       await Future.delayed(const Duration(seconds: 1));
-      
+
       setState(() {
         _comments = [
           // Mock comments
@@ -187,7 +187,8 @@ class _TournamentCommentsState extends State<TournamentComments> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorsManager.primary,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
                 ),
                 child: _isPosting
                     ? SizedBox(
@@ -195,7 +196,8 @@ class _TournamentCommentsState extends State<TournamentComments> {
                         height: 16.h,
                         child: const CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Text('Post'),
@@ -302,7 +304,8 @@ class _TournamentCommentsState extends State<TournamentComments> {
                           ),
                         ),
                         Text(
-                          DateFormat('MMM dd, yyyy at HH:mm').format(comment.createdAt),
+                          DateFormat('MMM dd, yyyy at HH:mm')
+                              .format(comment.createdAt),
                           style: TextStyles.font12Grey400Weight.copyWith(
                             color: ColorsManager.textSecondary,
                           ),
@@ -322,7 +325,8 @@ class _TournamentCommentsState extends State<TournamentComments> {
                           value: 'edit',
                           child: Row(
                             children: [
-                              Icon(Icons.edit, size: 16.sp, color: ColorsManager.primary),
+                              Icon(Icons.edit,
+                                  size: 16.sp, color: ColorsManager.primary),
                               Gap(8.w),
                               const Text('Edit'),
                             ],
@@ -332,7 +336,8 @@ class _TournamentCommentsState extends State<TournamentComments> {
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete, size: 16.sp, color: ColorsManager.error),
+                              Icon(Icons.delete,
+                                  size: 16.sp, color: ColorsManager.error),
                               Gap(8.w),
                               const Text('Delete'),
                             ],
@@ -343,7 +348,8 @@ class _TournamentCommentsState extends State<TournamentComments> {
                           value: 'report',
                           child: Row(
                             children: [
-                              Icon(Icons.flag, size: 16.sp, color: ColorsManager.warning),
+                              Icon(Icons.flag,
+                                  size: 16.sp, color: ColorsManager.warning),
                               Gap(8.w),
                               const Text('Report'),
                             ],
@@ -364,7 +370,9 @@ class _TournamentCommentsState extends State<TournamentComments> {
               Row(
                 children: [
                   _buildActionButton(
-                    icon: comment.isLiked ? Icons.favorite : Icons.favorite_border,
+                    icon: comment.isLiked
+                        ? Icons.favorite
+                        : Icons.favorite_border,
                     label: '${comment.likes}',
                     isActive: comment.isLiked,
                     onTap: () => _toggleLike(comment),
@@ -407,13 +415,17 @@ class _TournamentCommentsState extends State<TournamentComments> {
             Icon(
               icon,
               size: 16.sp,
-              color: isActive ? ColorsManager.primary : ColorsManager.textSecondary,
+              color: isActive
+                  ? ColorsManager.primary
+                  : ColorsManager.textSecondary,
             ),
             Gap(4.w),
             Text(
               label,
               style: TextStyles.font12Grey400Weight.copyWith(
-                color: isActive ? ColorsManager.primary : ColorsManager.textSecondary,
+                color: isActive
+                    ? ColorsManager.primary
+                    : ColorsManager.textSecondary,
               ),
             ),
           ],

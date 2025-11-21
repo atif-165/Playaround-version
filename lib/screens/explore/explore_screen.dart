@@ -3,10 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
 import '../../theming/colors.dart';
-import 'tabs/venues_tab.dart';
-import 'tabs/teams_tab.dart';
 import 'tabs/players_tab.dart';
+import 'tabs/teams_tab.dart';
 import 'tabs/tournaments_tab.dart';
+import 'tabs/venues_tab.dart';
 import 'widgets/explore_search_bar.dart';
 import 'widgets/explore_filter_button.dart';
 
@@ -95,7 +95,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ],
                 ),
               ),
-              
+
               // Tab Bar
               Container(
                 color: Colors.white,
@@ -115,20 +115,20 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ),
                   tabs: const [
                     Tab(
-                      icon: Icon(Icons.location_city, size: 20),
-                      text: 'Venues',
+                      icon: Icon(Icons.person, size: 20),
+                      text: 'Players',
                     ),
                     Tab(
                       icon: Icon(Icons.groups, size: 20),
                       text: 'Teams',
                     ),
                     Tab(
-                      icon: Icon(Icons.person, size: 20),
-                      text: 'Players',
-                    ),
-                    Tab(
                       icon: Icon(Icons.emoji_events, size: 20),
                       text: 'Tournaments',
+                    ),
+                    Tab(
+                      icon: Icon(Icons.location_city, size: 20),
+                      text: 'Venues',
                     ),
                   ],
                 ),
@@ -140,7 +140,7 @@ class _ExploreScreenState extends State<ExploreScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          VenuesTab(
+          PlayersTab(
             searchQuery: _searchQuery,
             filters: _filters,
           ),
@@ -148,11 +148,11 @@ class _ExploreScreenState extends State<ExploreScreen>
             searchQuery: _searchQuery,
             filters: _filters,
           ),
-          PlayersTab(
+          TournamentsTab(
             searchQuery: _searchQuery,
             filters: _filters,
           ),
-          TournamentsTab(
+          VenuesTab(
             searchQuery: _searchQuery,
             filters: _filters,
           ),

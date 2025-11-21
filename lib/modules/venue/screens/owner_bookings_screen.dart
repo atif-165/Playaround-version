@@ -24,7 +24,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final VenueService _venueService = VenueService();
-  
+
   List<VenueModel> _ownedVenues = [];
   bool _isLoading = true;
 
@@ -184,7 +184,8 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
     );
   }
 
-  Widget _buildBookingsList(List<VenueBookingModel> bookings, {bool showOwnerActions = false}) {
+  Widget _buildBookingsList(List<VenueBookingModel> bookings,
+      {bool showOwnerActions = false}) {
     return RefreshIndicator(
       onRefresh: () async {
         setState(() {}); // Trigger rebuild to refresh streams
@@ -200,10 +201,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
               booking: booking,
               userRole: UserRole.coach, // Owner context
               onTap: () => _navigateToBookingDetail(booking),
-              onApprove: showOwnerActions && booking.status == VenueBookingStatus.pending
+              onApprove: showOwnerActions &&
+                      booking.status == VenueBookingStatus.pending
                   ? () => _approveBooking(booking)
                   : null,
-              onReject: showOwnerActions && booking.status == VenueBookingStatus.pending
+              onReject: showOwnerActions &&
+                      booking.status == VenueBookingStatus.pending
                   ? () => _rejectBooking(booking)
                   : null,
             ),
@@ -284,11 +287,13 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
     }
 
     final venueIds = _ownedVenues.map((v) => v.id).toList();
-    
+
     // This is a simplified approach - in production, you might want to use a compound query
     // For now, we'll get bookings for the first venue and filter by status
     return _venueService.getVenueBookings(venueIds.first).map((bookings) {
-      return bookings.where((booking) => booking.status == VenueBookingStatus.pending).toList();
+      return bookings
+          .where((booking) => booking.status == VenueBookingStatus.pending)
+          .toList();
     });
   }
 
@@ -298,7 +303,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen>
     }
 
     final venueIds = _ownedVenues.map((v) => v.id).toList();
-    
+
     // This is a simplified approach - in production, you might want to use a compound query
     return _venueService.getVenueBookings(venueIds.first);
   }

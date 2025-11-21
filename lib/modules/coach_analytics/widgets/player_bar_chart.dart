@@ -189,11 +189,11 @@ class _PlayerBarChartState extends State<PlayerBarChart>
       ..sort((a, b) => b.overallScore.compareTo(a.overallScore));
 
     final barGroups = <BarChartGroupData>[];
-    
+
     for (int i = 0; i < players.length; i++) {
       final player = players[i];
       final animatedScore = player.overallScore * _animation.value;
-      
+
       barGroups.add(
         BarChartGroupData(
           x: i,
@@ -235,7 +235,8 @@ class _PlayerBarChartState extends State<PlayerBarChart>
       ),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -326,7 +327,7 @@ class _PlayerBarChartState extends State<PlayerBarChart>
       const Color(0xFFBA68C8), // Purple
       const Color(0xFFFF8A65), // Orange
     ];
-    
+
     return colors[index % colors.length];
   }
 
@@ -335,11 +336,12 @@ class _PlayerBarChartState extends State<PlayerBarChart>
     if (parts.length == 1) {
       return parts[0].length > 8 ? '${parts[0].substring(0, 8)}...' : parts[0];
     }
-    
+
     // Return first name and first letter of last name
-    final firstName = parts[0].length > 6 ? '${parts[0].substring(0, 6)}...' : parts[0];
+    final firstName =
+        parts[0].length > 6 ? '${parts[0].substring(0, 6)}...' : parts[0];
     final lastInitial = parts.last.isNotEmpty ? parts.last[0] : '';
-    
+
     return '$firstName $lastInitial.';
   }
 }

@@ -15,7 +15,8 @@ class ConnectionRequestsScreen extends StatefulWidget {
   const ConnectionRequestsScreen({super.key});
 
   @override
-  State<ConnectionRequestsScreen> createState() => _ConnectionRequestsScreenState();
+  State<ConnectionRequestsScreen> createState() =>
+      _ConnectionRequestsScreenState();
 }
 
 class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
@@ -213,7 +214,8 @@ class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
                   child: AppTextButton(
                     buttonText: 'Accept',
                     textStyle: TextStyles.font14White600Weight,
-                    onPressed: () => _respondToRequest(request, ConnectionStatus.accepted),
+                    onPressed: () =>
+                        _respondToRequest(request, ConnectionStatus.accepted),
                     backgroundColor: ColorsManager.mainBlue,
                     buttonHeight: 40,
                   ),
@@ -223,7 +225,8 @@ class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
                   child: AppTextButton(
                     buttonText: 'Decline',
                     textStyle: TextStyles.font14Grey400Weight,
-                    onPressed: () => _respondToRequest(request, ConnectionStatus.rejected),
+                    onPressed: () =>
+                        _respondToRequest(request, ConnectionStatus.rejected),
                     backgroundColor: Colors.grey[200],
                     buttonHeight: 40,
                   ),
@@ -306,7 +309,8 @@ class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
                     ),
                   ),
                 ),
-                errorWidget: (context, url, error) => _buildInitialsAvatar(name),
+                errorWidget: (context, url, error) =>
+                    _buildInitialsAvatar(name),
               ),
             )
           : _buildInitialsAvatar(name),
@@ -410,7 +414,8 @@ class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
     return '${words[0][0]}${words[1][0]}'.toUpperCase();
   }
 
-  Future<void> _respondToRequest(Connection request, ConnectionStatus response) async {
+  Future<void> _respondToRequest(
+      Connection request, ConnectionStatus response) async {
     try {
       final success = await _chatService.respondToConnectionRequest(
         connectionId: request.id,
@@ -421,7 +426,7 @@ class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
         final message = response == ConnectionStatus.accepted
             ? 'Connection request accepted'
             : 'Connection request declined';
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -454,7 +459,7 @@ class _ConnectionRequestsScreenState extends State<ConnectionRequestsScreen>
     try {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
       final otherUserId = connection.getOtherUserId(currentUserId);
-      
+
       final chatRoom = await _chatService.getOrCreateDirectChat(otherUserId);
       if (chatRoom != null && mounted) {
         Navigator.of(context).pushNamed(

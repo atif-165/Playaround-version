@@ -163,9 +163,12 @@ class _CartScreenState extends State<CartScreen> {
         return AppCard(
           variant: CardVariant.outlined,
           margin: EdgeInsets.only(bottom: 12.h),
-          onTap: product != null ? () {
-            Navigator.of(context).pushNamed(Routes.shopProductDetail, arguments: product);
-          } : null,
+          onTap: product != null
+              ? () {
+                  Navigator.of(context)
+                      .pushNamed(Routes.shopProductDetail, arguments: product);
+                }
+              : null,
           child: Row(
             children: [
               // Product Image
@@ -182,7 +185,8 @@ class _CartScreenState extends State<CartScreen> {
                         child: Image.network(
                           product!.images.first,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildImagePlaceholder(product),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildImagePlaceholder(product),
                         ),
                       )
                     : _buildImagePlaceholder(product),
@@ -441,4 +445,3 @@ class _CartScreenState extends State<CartScreen> {
     }
   }
 }
-

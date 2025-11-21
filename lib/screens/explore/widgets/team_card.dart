@@ -101,9 +101,9 @@ class TeamCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        
+
                         Gap(4.h),
-                        
+
                         // Sport type with icon
                         Row(
                           children: [
@@ -119,7 +119,8 @@ class TeamCard extends StatelessWidget {
                                 vertical: 4.h,
                               ),
                               decoration: BoxDecoration(
-                                color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+                                color: ColorsManager.mainBlue
+                                    .withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Text(
@@ -184,7 +185,7 @@ class TeamCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Stats section
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
@@ -273,9 +274,9 @@ class TeamCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
+
                   Gap(12.w),
-                  
+
                   // Action button
                   Container(
                     width: 32.w,
@@ -298,7 +299,7 @@ class TeamCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildStatChip({
     required IconData icon,
     required String label,
@@ -338,16 +339,23 @@ class TeamCard extends StatelessWidget {
       ),
     );
   }
-  
+
   IconData _getSportIcon(String sportType) {
     switch (sportType.toLowerCase()) {
-      case 'cricket': return Icons.sports_cricket;
-      case 'football': return Icons.sports_soccer;
-      case 'basketball': return Icons.sports_basketball;
-      case 'volleyball': return Icons.sports_volleyball;
-      case 'tennis': return Icons.sports_tennis;
-      case 'badminton': return Icons.sports_tennis;
-      default: return Icons.sports;
+      case 'cricket':
+        return Icons.sports_cricket;
+      case 'football':
+        return Icons.sports_soccer;
+      case 'basketball':
+        return Icons.sports_basketball;
+      case 'volleyball':
+        return Icons.sports_volleyball;
+      case 'tennis':
+        return Icons.sports_tennis;
+      case 'badminton':
+        return Icons.sports_tennis;
+      default:
+        return Icons.sports;
     }
   }
 

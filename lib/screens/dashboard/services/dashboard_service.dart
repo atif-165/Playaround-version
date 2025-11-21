@@ -4,9 +4,10 @@ import '../models/dashboard_models.dart';
 
 class DashboardService {
   // Simulate API calls with mock data
-  Future<DashboardData> getDashboardData(String userId, UserRole userRole) async {
+  Future<DashboardData> getDashboardData(
+      String userId, UserRole userRole) async {
     await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-    
+
     return DashboardData(
       userProfile: _getMockUserProfile(userId, userRole),
       upcomingEvents: _getMockUpcomingEvents(),

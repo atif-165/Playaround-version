@@ -119,12 +119,12 @@ class _SkillRadarChartState extends State<SkillRadarChart>
 
   List<RadarDataSet> _buildDataSets() {
     final dataEntries = <RadarEntry>[];
-    
+
     for (int i = 0; i < SkillType.allSkills.length; i++) {
       final skillType = SkillType.allSkills[i];
       final score = widget.skillScores[skillType] ?? 0;
       final animatedScore = score * _animation.value;
-      
+
       dataEntries.add(RadarEntry(value: animatedScore));
     }
 
@@ -192,13 +192,15 @@ class SkillScoreCard extends StatelessWidget {
                   width: 40.w,
                   height: 40.h,
                   decoration: BoxDecoration(
-                    color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+                    color: Color(
+                            int.parse('0xFF${skillType.colorHex.substring(1)}'))
                         .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Icon(
                     _getSkillIcon(skillType),
-                    color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+                    color: Color(
+                        int.parse('0xFF${skillType.colorHex.substring(1)}')),
                     size: 20.sp,
                   ),
                 ),
@@ -232,7 +234,8 @@ class SkillScoreCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+                    color: Color(
+                            int.parse('0xFF${skillType.colorHex.substring(1)}'))
                         .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
@@ -241,13 +244,14 @@ class SkillScoreCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
-                      color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+                      color: Color(
+                          int.parse('0xFF${skillType.colorHex.substring(1)}')),
                     ),
                   ),
                 ),
               ],
             ),
-            
+
             if (showProgress) ...[
               SizedBox(height: 12.h),
               // Progress bar

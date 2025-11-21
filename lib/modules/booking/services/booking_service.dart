@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 
 import '../../../models/booking_model.dart';
 import '../../../models/listing_model.dart';
+import '../../../models/notification_model.dart';
 import '../../../services/rating_service.dart';
+import '../../../services/notification_service.dart';
 import '../../skill_tracking/services/automated_skill_service.dart';
 
 /// Service class for managing bookings in Firestore
@@ -13,6 +16,7 @@ class BookingService {
   final FirebaseAuth _auth;
   final AutomatedSkillService _automatedSkillService;
   final RatingService _ratingService;
+  final NotificationService _notificationService;
 
   static const String _bookingsCollection = 'bookings';
 
@@ -21,10 +25,14 @@ class BookingService {
     FirebaseAuth? auth,
     AutomatedSkillService? automatedSkillService,
     RatingService? ratingService,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance,
-       _automatedSkillService = automatedSkillService ?? AutomatedSkillService(),
-       _ratingService = ratingService ?? RatingService();
+    NotificationService? notificationService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance,
+        _automatedSkillService =
+            automatedSkillService ?? AutomatedSkillService(),
+        _ratingService = ratingService ?? RatingService(),
+        _notificationService = notificationService ??
+            NotificationService(firestore: firestore, auth: auth);
 
   /// Create a new booking
   Future<String> createBooking({
@@ -38,10 +46,8 @@ class BookingService {
       if (user == null) throw Exception('User not authenticated');
 
       // Get listing details
-      final listingDoc = await _firestore
-          .collection('listings')
-          .doc(listingId)
-          .get();
+      final listingDoc =
+          await _firestore.collection('listings').doc(listingId).get();
 
       if (!listingDoc.exists) {
         throw Exception('Listing not found');
@@ -111,10 +117,8 @@ class BookingService {
   /// Get booking by ID
   Future<BookingModel?> getBooking(String bookingId) async {
     try {
-      final doc = await _firestore
-          .collection(_bookingsCollection)
-          .doc(bookingId)
-          .get();
+      final doc =
+          await _firestore.collection(_bookingsCollection).doc(bookingId).get();
 
       if (doc.exists) {
         return BookingModel.fromFirestore(doc);
@@ -171,7 +175,8 @@ class BookingService {
   }
 
   /// Cancel booking
-  Future<void> cancelBooking(String bookingId, String cancellationReason) async {
+  Future<void> cancelBooking(
+      String bookingId, String cancellationReason) async {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
@@ -188,10 +193,7 @@ class BookingService {
         throw Exception('Booking cannot be cancelled at this time');
       }
 
-      await _firestore
-          .collection(_bookingsCollection)
-          .doc(bookingId)
-          .update({
+      await _firestore.collection(_bookingsCollection).doc(bookingId).update({
         'status': BookingStatus.cancelled.value,
         'cancellationReason': cancellationReason,
         'cancelledAt': Timestamp.fromDate(DateTime.now()),
@@ -201,6 +203,13 @@ class BookingService {
       if (kDebugMode) {
         debugPrint('✅ BookingService: Cancelled booking: $bookingId');
       }
+
+      await _notifyBookingUpdate(
+        booking: booking,
+        status: BookingStatus.cancelled,
+        triggeredByUserId: user.uid,
+        extraMessage: cancellationReason,
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ BookingService: Error cancelling booking: $e');
@@ -223,10 +232,7 @@ class BookingService {
         throw Exception('Only listing owner can mark booking as completed');
       }
 
-      await _firestore
-          .collection(_bookingsCollection)
-          .doc(bookingId)
-          .update({
+      await _firestore.collection(_bookingsCollection).doc(bookingId).update({
         'status': BookingStatus.completed.value,
         'completedAt': Timestamp.fromDate(DateTime.now()),
         'updatedAt': Timestamp.fromDate(DateTime.now()),
@@ -251,7 +257,8 @@ class BookingService {
       } catch (skillUpdateError) {
         // Log skill update error but don't fail the booking completion
         if (kDebugMode) {
-          debugPrint('⚠️ BookingService: Skill update failed: $skillUpdateError');
+          debugPrint(
+              '⚠️ BookingService: Skill update failed: $skillUpdateError');
         }
       }
 
@@ -259,7 +266,8 @@ class BookingService {
       try {
         await _ratingService.createPendingRatings(booking);
         if (kDebugMode) {
-          debugPrint('✅ BookingService: Created pending ratings for booking: $bookingId');
+          debugPrint(
+              '✅ BookingService: Created pending ratings for booking: $bookingId');
         }
       } catch (ratingError) {
         // Log rating creation error but don't fail the booking completion
@@ -271,6 +279,12 @@ class BookingService {
       if (kDebugMode) {
         debugPrint('✅ BookingService: Completed booking: $bookingId');
       }
+
+      await _notifyBookingUpdate(
+        booking: booking,
+        status: BookingStatus.completed,
+        triggeredByUserId: user.uid,
+      );
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ BookingService: Error completing booking: $e');
@@ -285,7 +299,8 @@ class BookingService {
       final startParts = timeSlot.start.split(':');
       final endParts = timeSlot.end.split(':');
 
-      final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+      final startMinutes =
+          int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
       final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
 
       return (endMinutes - startMinutes) / 60.0;
@@ -310,10 +325,9 @@ class BookingService {
           .where('listingId', isEqualTo: listingId)
           .where('selectedDate', isEqualTo: Timestamp.fromDate(selectedDate))
           .where('status', whereIn: [
-            BookingStatus.confirmed.value,
-            BookingStatus.pending.value,
-          ])
-          .get();
+        BookingStatus.confirmed.value,
+        BookingStatus.pending.value,
+      ]).get();
 
       for (final doc in existingBookings.docs) {
         final booking = BookingModel.fromFirestore(doc);
@@ -361,10 +375,8 @@ class BookingService {
   ) async {
     try {
       // Get listing details
-      final listingDoc = await _firestore
-          .collection('listings')
-          .doc(listingId)
-          .get();
+      final listingDoc =
+          await _firestore.collection('listings').doc(listingId).get();
 
       if (!listingDoc.exists) {
         throw Exception('Listing not found');
@@ -378,10 +390,9 @@ class BookingService {
           .where('listingId', isEqualTo: listingId)
           .where('selectedDate', isEqualTo: Timestamp.fromDate(selectedDate))
           .where('status', whereIn: [
-            BookingStatus.confirmed.value,
-            BookingStatus.pending.value,
-          ])
-          .get();
+        BookingStatus.confirmed.value,
+        BookingStatus.pending.value,
+      ]).get();
 
       final bookedSlots = existingBookings.docs
           .map((doc) => BookingModel.fromFirestore(doc).timeSlot)
@@ -389,7 +400,8 @@ class BookingService {
 
       // Filter out booked slots
       final availableSlots = listing.availableTimeSlots.where((slot) {
-        return !bookedSlots.any((bookedSlot) => _timeSlotsOverlap(slot, bookedSlot));
+        return !bookedSlots
+            .any((bookedSlot) => _timeSlotsOverlap(slot, bookedSlot));
       }).toList();
 
       return availableSlots;
@@ -399,5 +411,62 @@ class BookingService {
       }
       throw Exception('Failed to get available time slots: $e');
     }
+  }
+
+  Future<void> _notifyBookingUpdate({
+    required BookingModel booking,
+    required BookingStatus status,
+    required String triggeredByUserId,
+    String? extraMessage,
+  }) async {
+    try {
+      final eventDateTime =
+          _combineDateAndTime(booking.selectedDate, booking.timeSlot.start);
+      final formatter = DateFormat('EEE, MMM d • h:mm a');
+      final title = 'Booking ${status.displayName}';
+      final statusMessage = status == BookingStatus.cancelled
+          ? 'Booking for ${booking.listingTitle} was cancelled'
+          : 'Booking for ${booking.listingTitle} is ${status.displayName.toLowerCase()}';
+
+      final message = [
+        statusMessage,
+        formatter.format(eventDateTime),
+        if (extraMessage != null && extraMessage.isNotEmpty) extraMessage,
+      ].join(' • ');
+
+      final targets = <String>{booking.userId, booking.ownerId}
+        ..remove(triggeredByUserId);
+
+      for (final userId in targets) {
+        await _notificationService.createNotification(
+          userId: userId,
+          type: NotificationType.bookingUpdate,
+          title: title,
+          message: message,
+          data: {
+            'bookingId': booking.id,
+            'listingId': booking.listingId,
+            'listingTitle': booking.listingTitle,
+            'status': status.value,
+            'startTime': eventDateTime.toIso8601String(),
+            'location': booking.location,
+            'triggeredBy': triggeredByUserId,
+            if (extraMessage != null) 'notes': extraMessage,
+          },
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '⚠️ BookingService: Failed to send booking notification - $e');
+      }
+    }
+  }
+
+  DateTime _combineDateAndTime(DateTime date, String startTime) {
+    final parts = startTime.split(':');
+    final hour = int.tryParse(parts.first) ?? 0;
+    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+    return DateTime(date.year, date.month, date.day, hour, minute);
   }
 }

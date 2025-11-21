@@ -41,9 +41,23 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
   ];
 
   static const List<String> _timeOptions = [
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-    '18:00', '19:00', '20:00', '21:00', '22:00',
+    '06:00',
+    '07:00',
+    '08:00',
+    '09:00',
+    '10:00',
+    '11:00',
+    '12:00',
+    '13:00',
+    '14:00',
+    '15:00',
+    '16:00',
+    '17:00',
+    '18:00',
+    '19:00',
+    '20:00',
+    '21:00',
+    '22:00',
   ];
 
   @override
@@ -80,8 +94,8 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
               color: ColorsManager.lightShadeOfGray,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: _errorText != null 
-                    ? ColorsManager.coralRed 
+                color: _errorText != null
+                    ? ColorsManager.coralRed
                     : ColorsManager.gray93Color,
                 width: 1.3.w,
               ),
@@ -265,18 +279,17 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
                   ),
                 ),
                 items: selectedStartTime != null
-                    ? _timeOptions
-                        .where((time) {
-                          final startIndex = _timeOptions.indexOf(selectedStartTime!);
-                          final timeIndex = _timeOptions.indexOf(time);
-                          return timeIndex > startIndex;
-                        })
-                        .map((time) {
-                          return DropdownMenuItem(
-                            value: time,
-                            child: Text(time),
-                          );
-                        }).toList()
+                    ? _timeOptions.where((time) {
+                        final startIndex =
+                            _timeOptions.indexOf(selectedStartTime!);
+                        final timeIndex = _timeOptions.indexOf(time);
+                        return timeIndex > startIndex;
+                      }).map((time) {
+                        return DropdownMenuItem(
+                          value: time,
+                          child: Text(time),
+                        );
+                      }).toList()
                     : [],
                 onChanged: (value) {
                   setDialogState(() {
@@ -295,9 +308,9 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
               ),
             ),
             TextButton(
-              onPressed: selectedDay != null && 
-                         selectedStartTime != null && 
-                         selectedEndTime != null
+              onPressed: selectedDay != null &&
+                      selectedStartTime != null &&
+                      selectedEndTime != null
                   ? () {
                       _addTimeSlot(TimeSlot(
                         day: selectedDay!,
@@ -322,7 +335,8 @@ class _AppTimeSlotPickerState extends State<AppTimeSlotPicker> {
     // Check for conflicts
     final hasConflict = widget.selectedSlots.any((existing) =>
         existing.day == slot.day &&
-        _timesOverlap(existing.startTime, existing.endTime, slot.startTime, slot.endTime));
+        _timesOverlap(existing.startTime, existing.endTime, slot.startTime,
+            slot.endTime));
 
     if (hasConflict) {
       ScaffoldMessenger.of(context).showSnackBar(

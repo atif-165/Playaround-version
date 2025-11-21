@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import '../../../core/widgets/safe_cached_image.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/typography.dart';
 import '../models/product.dart';
@@ -79,16 +80,16 @@ class ProductCard extends StatelessWidget {
                     topLeft: Radius.circular(16.r),
                     topRight: Radius.circular(16.r),
                   ),
-                  child: Image.network(
-                    product.images.first,
+                  child: SafeCachedImage(
+                    imageUrl: product.images.first,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Icon(
-                        Icons.sports,
-                        size: 48.w,
-                        color: ColorsManager.onSurfaceVariant,
-                      );
-                    },
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.r),
+                      topRight: Radius.circular(16.r),
+                    ),
+                    fallbackIcon: Icons.sports,
+                    fallbackIconColor: ColorsManager.onSurfaceVariant,
+                    backgroundColor: ColorsManager.surfaceVariant,
                   ),
                 )
               : Icon(
@@ -154,7 +155,8 @@ class ProductCard extends StatelessWidget {
   Widget _buildExclusiveBadge() {
     return Positioned(
       top: 8.h,
-      left: (product.hasDiscount ? 80.w : 8.w) + (product.isFeatured ? 80.w : 0),
+      left:
+          (product.hasDiscount ? 80.w : 8.w) + (product.isFeatured ? 80.w : 0),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
         decoration: BoxDecoration(
@@ -290,10 +292,11 @@ class ProductCard extends StatelessWidget {
               Text(
                 '${product.stock} left',
                 style: AppTypography.bodySmall.copyWith(
-                  color: product.stock < 10 
-                      ? ColorsManager.error 
+                  color: product.stock < 10
+                      ? ColorsManager.error
                       : ColorsManager.onSurfaceVariant,
-                  fontWeight: product.stock < 10 ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight:
+                      product.stock < 10 ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
             ],

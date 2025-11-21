@@ -5,6 +5,7 @@ import '../../models/user_profile.dart';
 import '../../models/player_profile.dart';
 import '../../models/coach_profile.dart';
 import '../../services/dashboard_service.dart';
+import '../../modules/shop/models/product.dart';
 
 part 'dashboard_state.dart';
 
@@ -43,7 +44,8 @@ class DashboardCubit extends Cubit<DashboardState> {
       final stats = futures[0] as DashboardStats? ?? DashboardStats.empty();
       final events = futures[1] as List<DashboardEvent>? ?? <DashboardEvent>[];
       final coaches = futures[2] as List<FeaturedCoach>? ?? <FeaturedCoach>[];
-      final suggestions = futures[3] as List<MatchmakingSuggestion>? ?? <MatchmakingSuggestion>[];
+      final suggestions = futures[3] as List<MatchmakingSuggestion>? ??
+          <MatchmakingSuggestion>[];
       final products = futures[4] as List<ShopProduct>? ?? <ShopProduct>[];
 
       emit(DashboardLoaded(
@@ -82,7 +84,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       );
 
       final updatedEvents = [...currentState.nearbyEvents, ...moreEvents];
-      
+
       emit(currentState.copyWith(nearbyEvents: updatedEvents));
     } catch (e) {
       if (kDebugMode) {
@@ -104,7 +106,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       );
 
       final updatedCoaches = [...currentState.featuredCoaches, ...moreCoaches];
-      
+
       emit(currentState.copyWith(featuredCoaches: updatedCoaches));
     } catch (e) {
       if (kDebugMode) {

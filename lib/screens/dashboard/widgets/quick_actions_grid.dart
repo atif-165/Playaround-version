@@ -8,41 +8,57 @@ import '../models/dashboard_models.dart';
 class QuickActionsGrid extends StatelessWidget {
   final UserRole userRole;
   final Function(QuickActionType) onActionTap;
+  final bool showTitle;
 
   const QuickActionsGrid({
     Key? key,
     required this.userRole,
     required this.onActionTap,
+    this.showTitle = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final actions = _getActionsForRole(userRole);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quick Actions',
-          style: TextStyles.font18DarkBlueBold.copyWith(
-            color: ColorsManager.textPrimary,
+        if (showTitle) ...[
+          Text(
+            'Quick Actions',
+            style: TextStyles.font18DarkBlueBold.copyWith(
+              color: ColorsManager.textPrimary,
+            ),
           ),
-        ),
-        Gap(16.h),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16.w,
-            mainAxisSpacing: 16.h,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: actions.length,
-          itemBuilder: (context, index) {
-            final action = actions[index];
-            return _buildActionCard(action);
+          Gap(16.h),
+        ],
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.85, end: 1),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutBack,
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: scale,
+              alignment: Alignment.topCenter,
+              child: child,
+            );
           },
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16.w,
+              mainAxisSpacing: 16.h,
+              childAspectRatio: 1.05,
+            ),
+            itemCount: actions.length,
+            itemBuilder: (context, index) {
+              final action = actions[index];
+              return _buildActionCard(action);
+            },
+          ),
         ),
       ],
     );
@@ -53,15 +69,15 @@ class QuickActionsGrid extends StatelessWidget {
       case UserRole.player:
         return [
           QuickAction(
-            type: QuickActionType.bookFacility,
-            title: 'Book Facility',
-            icon: Icons.sports_tennis,
+            type: QuickActionType.userMatchmaking,
+            title: 'Matchmaking',
+            icon: Icons.people_outline,
             color: ColorsManager.primary,
           ),
           QuickAction(
-            type: QuickActionType.findCoach,
-            title: 'Find Coach',
-            icon: Icons.person_search,
+            type: QuickActionType.communityForums,
+            title: 'Community',
+            icon: Icons.forum,
             color: ColorsManager.secondary,
           ),
           QuickAction(
@@ -77,7 +93,7 @@ class QuickActionsGrid extends StatelessWidget {
             color: ColorsManager.warning,
           ),
         ];
-      
+
       case UserRole.coach:
         return [
           QuickAction(
@@ -105,7 +121,7 @@ class QuickActionsGrid extends StatelessWidget {
             color: ColorsManager.warning,
           ),
         ];
-      
+
       case UserRole.team:
         return [
           QuickAction(
@@ -133,7 +149,7 @@ class QuickActionsGrid extends StatelessWidget {
             color: ColorsManager.warning,
           ),
         ];
-      
+
       case UserRole.admin:
         return [
           QuickAction(
@@ -165,47 +181,72 @@ class QuickActionsGrid extends StatelessWidget {
   }
 
   Widget _buildActionCard(QuickAction action) {
-    return GestureDetector(
-      onTap: () => onActionTap(action.type),
-      child: Container(
-        decoration: BoxDecoration(
-          color: ColorsManager.surface,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: action.color, width: 2.w),
-          boxShadow: [
-            BoxShadow(
-              color: action.color.withOpacity(0.2),
-              blurRadius: 8.r,
-              offset: Offset(0, 4.h),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => onActionTap(action.type),
+        borderRadius: BorderRadius.circular(18.r),
+        splashColor: action.color.withValues(alpha: 0.2),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.r),
+            gradient: LinearGradient(
+              colors: [
+                action.color.withValues(alpha: 0.9),
+                action.color.withValues(alpha: 0.7),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: action.color.withOpacity(0.1),
-                shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: action.color.withValues(alpha: 0.25),
+                blurRadius: 14.r,
+                offset: Offset(0, 8.h),
               ),
-              child: Icon(
-                action.icon,
-                color: action.color,
-                size: 32.sp,
+            ],
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -24.h,
+                right: -12.w,
+                child: Icon(
+                  Icons.blur_on,
+                  size: 80.sp,
+                  color: Colors.white.withValues(alpha: 0.08),
+                ),
               ),
-            ),
-            Gap(12.h),
-            Text(
-              action.title,
-              style: TextStyles.font14DarkBlueBold.copyWith(
-                color: ColorsManager.textPrimary,
+              Padding(
+                padding: EdgeInsets.all(18.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        action.icon,
+                        color: Colors.white,
+                        size: 28.sp,
+                      ),
+                    ),
+                    Gap(12.h),
+                    Text(
+                      action.title,
+                      style: TextStyles.font16White600Weight.copyWith(
+                        height: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

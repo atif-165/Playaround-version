@@ -1,20 +1,136 @@
 rules_version = '2';
 service cloud.firestore {
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function hasRole(role) {
+    return isSignedIn() && (
+      (request.auth.token.role != null && request.auth.token.role == role) ||
+      (request.auth.token.roles != null && role in request.auth.token.roles)
+    );
+  }
+
+  function isAdmin() {
+    return (isSignedIn() && request.auth.token.admin == true) || hasRole('admin');
+  }
+
+  function isValidPaymentStatus(status) {
+    return status in [
+      'requires_payment_method',
+      'requires_confirmation',
+      'requires_action',
+      'processing',
+      'succeeded',
+      'failed',
+      'canceled'
+    ];
+  }
+
+  function isMockPayment(data) {
+    return data.mode == 'emulator' || data.provider == 'mock';
+  }
+
   match /databases/{database}/documents {
+    // Payments are restricted to the owner and admins.
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() &&
+        (isAdmin() || request.auth.uid == resource.data.userId);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.keys().hasOnly([
+          'userId',
+          'amount',
+          'currency',
+          'description',
+          'mode',
+          'provider',
+          'status',
+          'payment_method_types',
+          'paymentMethodTypes',
+          'metadata',
+          'orderId',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0 &&
+        request.resource.data.currency is string &&
+        request.resource.data.currency.size() == 3 &&
+        request.resource.data.mode in ['emulator', 'stripe'] &&
+        request.resource.data.provider in ['mock', 'stripe'] &&
+        isValidPaymentStatus(request.resource.data.status) &&
+        !(request.resource.data.mode == 'stripe' && request.resource.data.status == 'succeeded');
+
+      allow update: if isSignedIn() &&
+        request.auth.uid == resource.data.userId &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.amount == resource.data.amount &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.mode == resource.data.mode &&
+        request.resource.data.provider == resource.data.provider &&
+        request.resource.data.metadata == resource.data.metadata &&
+        request.resource.data.orderId == resource.data.orderId &&
+        request.resource.data.payment_method_types == resource.data.payment_method_types &&
+        request.resource.data.paymentMethodTypes == resource.data.paymentMethodTypes &&
+        request.resource.data.keys().hasOnly([
+          'userId',
+          'amount',
+          'currency',
+          'description',
+          'mode',
+          'provider',
+          'status',
+          'payment_method_types',
+          'paymentMethodTypes',
+          'metadata',
+          'orderId',
+          'createdAt',
+          'updatedAt',
+          'client_secret',
+          'clientSecret',
+          'stripePaymentIntentId',
+          'paymentIntentId',
+          'paymentMethodId',
+          'lastPaymentIntentStatus',
+          'amountReceived',
+          'lastClientError'
+        ]) &&
+        isValidPaymentStatus(request.resource.data.status) &&
+        (
+          request.resource.data.status == resource.data.status ||
+          (isMockPayment(resource.data) &&
+            resource.data.status in ['requires_confirmation', 'processing'] &&
+            request.resource.data.status == 'succeeded')
+        ) &&
+        (
+          !('client_secret' in request.resource.data.keys()) ||
+          isMockPayment(resource.data)
+        ) &&
+        (
+          !('clientSecret' in request.resource.data.keys()) ||
+          isMockPayment(resource.data)
+        );
+
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
     // Allow authenticated users to read/write their own cart
     match /carts/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
     
     // Allow authenticated users to read shops
     match /shops/{shopId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
     
     // Default rule for other collections
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isSignedIn();
     }
   }
 }

@@ -3,3 +3,4 @@ export 'team_model.dart';
 export 'team_join_request.dart';
 export 'team_performance.dart';
 export 'team_schedule.dart';
+export 'team_profile_models.dart';

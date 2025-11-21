@@ -6,11 +6,11 @@ class FormValidators {
     if (value == null || value.trim().isEmpty) {
       return 'Email is required';
     }
-    
+
     if (!AppRegex.isEmailValid(value.trim())) {
       return 'Please enter a valid email address';
     }
-    
+
     return null;
   }
 
@@ -19,23 +19,23 @@ class FormValidators {
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    
+
     if (!AppRegex.hasMinLength(value)) {
       return 'Password must be at least 8 characters';
     }
-    
+
     if (!AppRegex.hasUppercase(value)) {
       return 'Password must contain at least one uppercase letter';
     }
-    
+
     if (!AppRegex.hasLowercase(value)) {
       return 'Password must contain at least one lowercase letter';
     }
-    
+
     if (!AppRegex.hasNumber(value)) {
       return 'Password must contain at least one number';
     }
-    
+
     return null;
   }
 
@@ -44,11 +44,11 @@ class FormValidators {
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
     }
-    
+
     if (value != password) {
       return 'Passwords do not match';
     }
-    
+
     return null;
   }
 
@@ -57,15 +57,15 @@ class FormValidators {
     if (value == null || value.trim().isEmpty) {
       return 'Name is required';
     }
-    
+
     if (value.trim().length < 2) {
       return 'Name must be at least 2 characters';
     }
-    
+
     if (!AppRegex.isNameValid(value.trim())) {
       return 'Please enter a valid name';
     }
-    
+
     return null;
   }
 
@@ -74,11 +74,11 @@ class FormValidators {
     if (value == null || value.trim().isEmpty) {
       return 'Phone number is required';
     }
-    
+
     if (!AppRegex.isPhoneValid(value.trim())) {
       return 'Please enter a valid phone number';
     }
-    
+
     return null;
   }
 
@@ -91,24 +91,26 @@ class FormValidators {
   }
 
   /// Validate minimum length
-  static String? validateMinLength(String? value, int minLength, String fieldName) {
+  static String? validateMinLength(
+      String? value, int minLength, String fieldName) {
     if (value == null || value.isEmpty) {
       return '$fieldName is required';
     }
-    
+
     if (value.length < minLength) {
       return '$fieldName must be at least $minLength characters';
     }
-    
+
     return null;
   }
 
   /// Validate maximum length
-  static String? validateMaxLength(String? value, int maxLength, String fieldName) {
+  static String? validateMaxLength(
+      String? value, int maxLength, String fieldName) {
     if (value != null && value.length > maxLength) {
       return '$fieldName must not exceed $maxLength characters';
     }
-    
+
     return null;
   }
 
@@ -117,20 +119,20 @@ class FormValidators {
     if (value == null || value.trim().isEmpty) {
       return 'Age is required';
     }
-    
+
     final age = int.tryParse(value.trim());
     if (age == null) {
       return 'Please enter a valid age';
     }
-    
+
     if (age < 13) {
       return 'You must be at least 13 years old';
     }
-    
+
     if (age > 120) {
       return 'Please enter a valid age';
     }
-    
+
     return null;
   }
 
@@ -143,7 +145,8 @@ class FormValidators {
   }
 
   /// Validate list selection
-  static String? validateListSelection(List<dynamic>? values, String fieldName) {
+  static String? validateListSelection(
+      List<dynamic>? values, String fieldName) {
     if (values == null || values.isEmpty) {
       return '$fieldName is required';
     }
@@ -171,12 +174,12 @@ class FormValidators {
     if (value == null || value.trim().isEmpty) {
       return 'Experience years is required';
     }
-    
+
     final years = int.tryParse(value.trim());
     if (years == null || years < 0) {
       return 'Please enter valid experience years';
     }
-    
+
     return null;
   }
 
@@ -191,12 +194,12 @@ class FormValidators {
     if (value == null || value.trim().isEmpty) {
       return 'Hourly rate is required';
     }
-    
+
     final rate = double.tryParse(value.trim());
     if (rate == null || rate <= 0) {
       return 'Please enter a valid hourly rate';
     }
-    
+
     return null;
   }
 

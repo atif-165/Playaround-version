@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../services/payment_service.dart';
 
 /// Payment integration widget for tournament entry fees
 class PaymentIntegration extends StatefulWidget {
@@ -25,6 +28,13 @@ class PaymentIntegration extends StatefulWidget {
 class _PaymentIntegrationState extends State<PaymentIntegration> {
   PaymentMethod _selectedMethod = PaymentMethod.card;
   bool _isProcessing = false;
+  late final PaymentService _paymentService;
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentService = PaymentService();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -232,32 +242,78 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
     setState(() {
       _isProcessing = true;
     });
-
     widget.onPaymentProcessing(true);
 
     try {
-      // Simulate payment processing
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // In a real app, this would integrate with a payment processor like Stripe
-      // For now, we'll just simulate success
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment processed successfully!'),
-            backgroundColor: ColorsManager.success,
-          ),
+      if (_selectedMethod != PaymentMethod.card &&
+          _paymentService.environment == PaymentEnvironment.stripe) {
+        throw StateError(
+          '${_getPaymentMethodName(_selectedMethod)} is currently unavailable with Stripe. Please select card.',
         );
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Payment failed: ${e.toString()}'),
-            backgroundColor: ColorsManager.error,
-          ),
+
+      PaymentCardDetails? cardDetails;
+      if (_selectedMethod == PaymentMethod.card ||
+          _paymentService.environment == PaymentEnvironment.stripe) {
+        cardDetails = await _collectCardDetails();
+        if (cardDetails == null) {
+          return;
+        }
+      }
+
+      final session = await _paymentService.createPaymentIntent(
+        PaymentRequest(
+          amount: widget.amount,
+          currency: 'usd',
+          description:
+              'Tournament entry fee - ${DateTime.now().toIso8601String()}',
+          metadata: {
+            'flow': 'tournament_checkout',
+            'paymentMethod': _selectedMethod.name,
+          },
+        ),
+      );
+
+      String? clientSecret = session.clientSecret;
+      if (!session.isImmediateSuccess && clientSecret == null) {
+        clientSecret = await _paymentService.waitForClientSecret(
+          session.paymentId,
+          timeout: const Duration(seconds: 45),
         );
       }
+
+      final result = await _paymentService.confirmCardPayment(
+        paymentId: session.paymentId,
+        card: session.mode == PaymentEnvironment.stripe ? cardDetails : null,
+        clientSecret: clientSecret,
+      );
+
+      if (result.isSuccess) {
+        widget.onPaymentMethodSelected(
+          result.paymentIntentId ?? session.paymentId,
+        );
+        _showSnackBar(
+          'Payment processed successfully!',
+          ColorsManager.success,
+        );
+      } else if (result.requiresAction) {
+        throw StateError(
+          'Additional authentication is required to complete this payment.',
+        );
+      } else {
+        throw StateError(
+            result.errorMessage ?? 'Payment failed. Please try again.');
+      }
+    } on TimeoutException {
+      _showSnackBar(
+        'Timed out waiting for Stripe confirmation.',
+        ColorsManager.error,
+      );
+    } catch (error) {
+      _showSnackBar(
+        'Payment failed: $error',
+        ColorsManager.error,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -266,6 +322,144 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
         widget.onPaymentProcessing(false);
       }
     }
+  }
+
+  Future<PaymentCardDetails?> _collectCardDetails() async {
+    final cardController = TextEditingController();
+    final expiryController = TextEditingController();
+    final cvcController = TextEditingController();
+    final nameController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<PaymentCardDetails>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Enter Card Details'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration:
+                      const InputDecoration(labelText: 'Cardholder Name'),
+                  textCapitalization: TextCapitalization.words,
+                  validator: (value) =>
+                      (value == null || value.isEmpty) ? 'Required' : null,
+                ),
+                TextFormField(
+                  controller: cardController,
+                  decoration: const InputDecoration(labelText: 'Card Number'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    final digits = value?.replaceAll(RegExp(r'\D'), '') ?? '';
+                    if (digits.length < 16) {
+                      return 'Enter a valid card number';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: expiryController,
+                  decoration:
+                      const InputDecoration(labelText: 'Expiry (MM/YY)'),
+                  keyboardType: TextInputType.datetime,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter expiry date';
+                    }
+                    final parts = value.split('/');
+                    if (parts.length != 2) {
+                      return 'Use MM/YY format';
+                    }
+                    final month = int.tryParse(parts.first) ?? 0;
+                    final year = _normalizeExpiryYear(parts[1]);
+                    if (month < 1 || month > 12 || year < DateTime.now().year) {
+                      return 'Enter a valid expiry';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: cvcController,
+                  decoration: const InputDecoration(labelText: 'CVC'),
+                  keyboardType: TextInputType.number,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.length < 3) {
+                      return 'Enter a valid CVC';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState?.validate() ?? false) {
+                  Navigator.pop(
+                    context,
+                    PaymentCardDetails(
+                      number: cardController.text.replaceAll(RegExp(r'\D'), ''),
+                      expMonth:
+                          int.parse(expiryController.text.split('/').first),
+                      expYear: _normalizeExpiryYear(
+                        expiryController.text.split('/')[1],
+                      ),
+                      cvc: cvcController.text.replaceAll(RegExp(r'\D'), ''),
+                      name: nameController.text.trim(),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Continue'),
+            ),
+          ],
+        );
+      },
+    );
+
+    cardController.dispose();
+    expiryController.dispose();
+    cvcController.dispose();
+    nameController.dispose();
+
+    return result;
+  }
+
+  int _normalizeExpiryYear(String value) {
+    final sanitized = value.trim();
+    final parsed = int.tryParse(sanitized);
+    if (parsed == null) {
+      return 0;
+    }
+    if (sanitized.length == 2) {
+      final currentYear = DateTime.now().year % 100;
+      final century = DateTime.now().year - currentYear;
+      return parsed + (parsed >= currentYear ? century : century + 100);
+    }
+    if (sanitized.length == 4) {
+      return parsed;
+    }
+    return 0;
+  }
+
+  void _showSnackBar(String message, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+      ),
+    );
   }
 }
 

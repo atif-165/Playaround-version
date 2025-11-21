@@ -37,7 +37,7 @@ class ResponsiveLayout extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final deviceType = getDeviceType(constraints.maxWidth);
-        
+
         switch (deviceType) {
           case DeviceType.mobile:
             return mobile;
@@ -73,8 +73,8 @@ class ResponsiveHelper {
 
   static bool isTablet(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    return width >= ResponsiveBreakpoints.mobile && 
-           width < ResponsiveBreakpoints.desktop;
+    return width >= ResponsiveBreakpoints.mobile &&
+        width < ResponsiveBreakpoints.desktop;
   }
 
   static bool isDesktop(BuildContext context) {
@@ -94,7 +94,7 @@ class ResponsiveHelper {
     T? largeDesktop,
   }) {
     final deviceType = getDeviceType(context);
-    
+
     switch (deviceType) {
       case DeviceType.mobile:
         return mobile;
@@ -184,7 +184,7 @@ class ResponsiveGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final deviceType = ResponsiveLayout.getDeviceType(constraints.maxWidth);
-        
+
         int columns;
         switch (deviceType) {
           case DeviceType.mobile:
@@ -276,16 +276,19 @@ class ResponsiveContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final responsiveMaxWidth = maxWidth ?? ResponsiveHelper.getResponsiveValue<double>(
-      context: context,
-      mobile: double.infinity,
-      tablet: 600.w,
-      desktop: 800.w,
-      largeDesktop: 1000.w,
-    );
+    final responsiveMaxWidth = maxWidth ??
+        ResponsiveHelper.getResponsiveValue<double>(
+          context: context,
+          mobile: double.infinity,
+          tablet: 600.w,
+          desktop: 800.w,
+          largeDesktop: 1000.w,
+        );
 
-    final responsivePadding = padding ?? ResponsiveHelper.getResponsivePadding(context);
-    final responsiveMargin = margin ?? ResponsiveHelper.getResponsiveMargin(context);
+    final responsivePadding =
+        padding ?? ResponsiveHelper.getResponsivePadding(context);
+    final responsiveMargin =
+        margin ?? ResponsiveHelper.getResponsiveMargin(context);
 
     return Container(
       width: double.infinity,

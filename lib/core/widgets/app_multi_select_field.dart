@@ -68,8 +68,8 @@ class _AppMultiSelectFieldState extends State<AppMultiSelectField> {
             color: ColorsManager.lightShadeOfGray,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _errorText != null 
-                  ? ColorsManager.coralRed 
+              color: _errorText != null
+                  ? ColorsManager.coralRed
                   : ColorsManager.gray93Color,
               width: 1.3.w,
             ),
@@ -144,7 +144,7 @@ class _AppMultiSelectFieldState extends State<AppMultiSelectField> {
       children: widget.options.map((option) {
         final isSelected = widget.selectedValues.contains(option);
         final canSelect = widget.selectedValues.length < widget.maxSelections;
-        
+
         return GestureDetector(
           onTap: () {
             if (isSelected) {
@@ -161,16 +161,15 @@ class _AppMultiSelectFieldState extends State<AppMultiSelectField> {
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected 
-                    ? ColorsManager.mainBlue
-                    : ColorsManager.gray76,
+                color:
+                    isSelected ? ColorsManager.mainBlue : ColorsManager.gray76,
                 width: 1.w,
               ),
             ),
             child: Text(
               option,
               style: TextStyles.font12Grey400Weight.copyWith(
-                color: isSelected 
+                color: isSelected
                     ? ColorsManager.mainBlue
                     : ColorsManager.darkBlue,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -189,7 +188,8 @@ class _AppMultiSelectFieldState extends State<AppMultiSelectField> {
   }
 
   void _removeSelection(String value) {
-    final newSelection = widget.selectedValues.where((v) => v != value).toList();
+    final newSelection =
+        widget.selectedValues.where((v) => v != value).toList();
     widget.onChanged(newSelection);
     _validateSelection(newSelection);
   }
@@ -212,14 +212,16 @@ class MultiSelectValidators {
     return null;
   }
 
-  static String? validateMinSelections(List<String>? values, int minCount, String fieldName) {
+  static String? validateMinSelections(
+      List<String>? values, int minCount, String fieldName) {
     if (values == null || values.length < minCount) {
       return 'Please select at least $minCount $fieldName';
     }
     return null;
   }
 
-  static String? validateMaxSelections(List<String>? values, int maxCount, String fieldName) {
+  static String? validateMaxSelections(
+      List<String>? values, int maxCount, String fieldName) {
     if (values != null && values.length > maxCount) {
       return 'Please select no more than $maxCount $fieldName';
     }

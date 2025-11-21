@@ -10,10 +10,8 @@ class CartService {
   /// Get user's cart
   static Future<ShoppingCart?> getCart(String userId) async {
     try {
-      final doc = await _firestore
-          .collection(_cartCollection)
-          .doc(userId)
-          .get();
+      final doc =
+          await _firestore.collection(_cartCollection).doc(userId).get();
 
       if (doc.exists) {
         return ShoppingCart.fromDoc(doc);
@@ -38,9 +36,10 @@ class CartService {
 
       // Check if item already exists in cart
       final existingItemIndex = cartItems.indexWhere(
-        (item) => item.productId == product.id && 
-                  item.size == size && 
-                  item.color == color,
+        (item) =>
+            item.productId == product.id &&
+            item.size == size &&
+            item.color == color,
       );
 
       if (existingItemIndex != -1) {
@@ -67,10 +66,7 @@ class CartService {
       }
 
       // Save cart to Firestore
-      await _firestore
-          .collection(_cartCollection)
-          .doc(userId)
-          .set({
+      await _firestore.collection(_cartCollection).doc(userId).set({
         'userId': userId,
         'items': cartItems.map((item) => item.toMap()).toList(),
         'lastUpdated': Timestamp.fromDate(DateTime.now()),
@@ -98,13 +94,11 @@ class CartService {
       if (quantity <= 0) {
         cartItems.removeAt(itemIndex);
       } else {
-        cartItems[itemIndex] = cartItems[itemIndex].copyWith(quantity: quantity);
+        cartItems[itemIndex] =
+            cartItems[itemIndex].copyWith(quantity: quantity);
       }
 
-      await _firestore
-          .collection(_cartCollection)
-          .doc(userId)
-          .set({
+      await _firestore.collection(_cartCollection).doc(userId).set({
         'userId': userId,
         'items': cartItems.map((item) => item.toMap()).toList(),
         'lastUpdated': Timestamp.fromDate(DateTime.now()),
@@ -123,12 +117,10 @@ class CartService {
       final cart = await getCart(userId);
       if (cart == null) throw Exception('Cart not found');
 
-      final cartItems = cart.items.where((item) => item.id != cartItemId).toList();
+      final cartItems =
+          cart.items.where((item) => item.id != cartItemId).toList();
 
-      await _firestore
-          .collection(_cartCollection)
-          .doc(userId)
-          .set({
+      await _firestore.collection(_cartCollection).doc(userId).set({
         'userId': userId,
         'items': cartItems.map((item) => item.toMap()).toList(),
         'lastUpdated': Timestamp.fromDate(DateTime.now()),
@@ -141,10 +133,7 @@ class CartService {
   /// Clear entire cart
   static Future<void> clearCart(String userId) async {
     try {
-      await _firestore
-          .collection(_cartCollection)
-          .doc(userId)
-          .delete();
+      await _firestore.collection(_cartCollection).doc(userId).delete();
     } catch (e) {
       throw Exception('Failed to clear cart: $e');
     }
@@ -191,7 +180,8 @@ class CartService {
   }
 
   /// Get cart items by shop
-  static Future<Map<String, List<CartItem>>> getCartItemsByShop(String userId) async {
+  static Future<Map<String, List<CartItem>>> getCartItemsByShop(
+      String userId) async {
     try {
       final cart = await getCart(userId);
       if (cart == null) return {};
@@ -209,13 +199,11 @@ class CartService {
       if (cart == null) return [];
 
       final validatedItems = <CartItem>[];
-      
+
       for (var item in cart.items) {
         // Check product availability
-        final productDoc = await _firestore
-            .collection('products')
-            .doc(item.productId)
-            .get();
+        final productDoc =
+            await _firestore.collection('products').doc(item.productId).get();
 
         if (productDoc.exists) {
           final productData = productDoc.data()!;
@@ -229,10 +217,7 @@ class CartService {
       }
 
       // Update cart with validated items
-      await _firestore
-          .collection(_cartCollection)
-          .doc(userId)
-          .set({
+      await _firestore.collection(_cartCollection).doc(userId).set({
         'userId': userId,
         'items': validatedItems.map((item) => item.toMap()).toList(),
         'lastUpdated': Timestamp.fromDate(DateTime.now()),

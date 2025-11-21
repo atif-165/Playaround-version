@@ -7,7 +7,9 @@ import '../../../theming/typography.dart';
 /// Standardized chip system with consistent styling and accessibility
 
 enum ChipVariant { assist, filter, input, suggestion }
+
 enum ChipSize { small, medium, large }
+
 enum BadgeVariant { primary, secondary, success, warning, error, info }
 
 /// Base App Chip Component
@@ -127,8 +129,6 @@ class AppChip extends StatelessWidget {
     );
   }
 
-
-
   TextStyle _getBaseTextStyle() {
     switch (size) {
       case ChipSize.small:
@@ -186,7 +186,7 @@ class SkillLevelChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getSkillLevelColor();
-    
+
     return AppChip(
       label: skillLevel,
       variant: ChipVariant.assist,
@@ -239,7 +239,9 @@ class SportTypeChip extends StatelessWidget {
       avatar: Icon(
         _getSportIcon(),
         size: _getIconSize(),
-        color: selected ? ColorsManager.onSecondaryContainer : ColorsManager.onSurfaceVariant,
+        color: selected
+            ? ColorsManager.onSecondaryContainer
+            : ColorsManager.onSurfaceVariant,
       ),
     );
   }
@@ -403,7 +405,7 @@ class StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badgeVariant = variant ?? _getVariantFromStatus();
-    
+
     return AppBadge(
       label: status,
       variant: badgeVariant,

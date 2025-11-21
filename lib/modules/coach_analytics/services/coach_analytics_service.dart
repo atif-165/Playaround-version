@@ -10,7 +10,8 @@ import '../../skill_tracking/services/skill_tracking_service.dart';
 
 /// Service for handling coach analytics operations
 class CoachAnalyticsService {
-  static final CoachAnalyticsService _instance = CoachAnalyticsService._internal();
+  static final CoachAnalyticsService _instance =
+      CoachAnalyticsService._internal();
   factory CoachAnalyticsService() => _instance;
   CoachAnalyticsService._internal();
 
@@ -37,22 +38,21 @@ class CoachAnalyticsService {
           .get();
 
       final coachTeams = <Team>[];
-      
+
       for (final doc in teamsSnapshot.docs) {
         final team = Team.fromMap(doc.data());
-        
+
         // Check if user is owner
         if (team.ownerId == user.uid) {
           coachTeams.add(team);
           continue;
         }
-        
+
         // Check if user is a coach member
-        final isCoach = team.members.any((member) => 
-          member.userId == user.uid && 
-          (member.role == TeamRole.captain || member.role == TeamRole.owner)
-        );
-        
+        final isCoach = team.members.any((member) =>
+            member.userId == user.uid &&
+            (member.role == TeamRole.captain || member.role == TeamRole.owner));
+
         if (isCoach) {
           coachTeams.add(team);
         }
@@ -80,7 +80,7 @@ class CoachAnalyticsService {
       // Get player performance data for all team members
       final playerPerformances = <String, PlayerPerformanceData>{};
       final allSkillScores = <SkillType, List<int>>{};
-      
+
       // Initialize skill score lists
       for (final skillType in SkillType.allSkills) {
         allSkillScores[skillType] = [];
@@ -89,7 +89,8 @@ class CoachAnalyticsService {
       for (final member in team.members) {
         try {
           // Get player's skill analytics
-          final playerAnalytics = await _skillTrackingService.getPlayerSkillAnalytics(
+          final playerAnalytics =
+              await _skillTrackingService.getPlayerSkillAnalytics(
             member.userId,
             startDate: DateTime.now().subtract(const Duration(days: 90)),
             endDate: DateTime.now(),
@@ -112,13 +113,12 @@ class CoachAnalyticsService {
             improvementPercentages: improvementPercentages,
             overallScore: playerAnalytics.overallAverageScore,
             totalSessions: playerAnalytics.totalSessions,
-            lastActiveDate: playerAnalytics.skillLogs.isNotEmpty 
-                ? playerAnalytics.skillLogs.last.date 
+            lastActiveDate: playerAnalytics.skillLogs.isNotEmpty
+                ? playerAnalytics.skillLogs.last.date
                 : DateTime.now().subtract(const Duration(days: 30)),
             isActive: playerAnalytics.skillLogs.isNotEmpty &&
-                playerAnalytics.skillLogs.last.date.isAfter(
-                  DateTime.now().subtract(const Duration(days: 7))
-                ),
+                playerAnalytics.skillLogs.last.date
+                    .isAfter(DateTime.now().subtract(const Duration(days: 7))),
           );
 
           playerPerformances[member.userId] = playerPerformance;
@@ -137,7 +137,7 @@ class CoachAnalyticsService {
       final averageSkillScores = <SkillType, double>{};
       for (final entry in allSkillScores.entries) {
         if (entry.value.isNotEmpty) {
-          averageSkillScores[entry.key] = 
+          averageSkillScores[entry.key] =
               entry.value.reduce((a, b) => a + b) / entry.value.length;
         } else {
           averageSkillScores[entry.key] = 0.0;
@@ -146,17 +146,18 @@ class CoachAnalyticsService {
 
       // Calculate overall team score
       final overallTeamScore = averageSkillScores.values.isNotEmpty
-          ? averageSkillScores.values.reduce((a, b) => a + b) / averageSkillScores.length
+          ? averageSkillScores.values.reduce((a, b) => a + b) /
+              averageSkillScores.length
           : 0.0;
 
       // Find most improved player
       String? mostImprovedPlayerId;
       double maxImprovement = 0.0;
-      
+
       for (final entry in playerPerformances.entries) {
         final totalImprovement = entry.value.improvementPercentages.values
             .fold(0.0, (total, improvement) => total + improvement);
-        
+
         if (totalImprovement > maxImprovement) {
           maxImprovement = totalImprovement;
           mostImprovedPlayerId = entry.key;
@@ -192,7 +193,8 @@ class CoachAnalyticsService {
   }
 
   /// Get performance history for a team
-  Future<List<TeamPerformanceDataPoint>> _getTeamPerformanceHistory(String teamId) async {
+  Future<List<TeamPerformanceDataPoint>> _getTeamPerformanceHistory(
+      String teamId) async {
     try {
       // This is a simplified implementation
       // In a real app, you might store this data separately or calculate it from historical logs
@@ -202,16 +204,18 @@ class CoachAnalyticsService {
       // Generate sample data points for the last 12 weeks
       for (int i = 11; i >= 0; i--) {
         final date = now.subtract(Duration(days: i * 7));
-        
+
         // In a real implementation, you would query actual historical data
         // For now, we'll create sample data
         final skillAverages = <SkillType, double>{};
         for (final skillType in SkillType.allSkills) {
-          skillAverages[skillType] = 50.0 + (i * 2.0); // Simulated improvement over time
+          skillAverages[skillType] =
+              50.0 + (i * 2.0); // Simulated improvement over time
         }
-        
-        final averageScore = skillAverages.values.reduce((a, b) => a + b) / skillAverages.length;
-        
+
+        final averageScore =
+            skillAverages.values.reduce((a, b) => a + b) / skillAverages.length;
+
         performanceHistory.add(TeamPerformanceDataPoint(
           date: date,
           averageScore: averageScore,
@@ -228,24 +232,29 @@ class CoachAnalyticsService {
   }
 
   /// Compare two players
-  Future<PlayerComparison> comparePlayer(String player1Id, String player2Id) async {
+  Future<PlayerComparison> comparePlayer(
+      String player1Id, String player2Id) async {
     try {
       // Get analytics for both players
-      final player1Analytics = await _skillTrackingService.getPlayerSkillAnalytics(
+      final player1Analytics =
+          await _skillTrackingService.getPlayerSkillAnalytics(
         player1Id,
         startDate: DateTime.now().subtract(const Duration(days: 90)),
         endDate: DateTime.now(),
       );
 
-      final player2Analytics = await _skillTrackingService.getPlayerSkillAnalytics(
+      final player2Analytics =
+          await _skillTrackingService.getPlayerSkillAnalytics(
         player2Id,
         startDate: DateTime.now().subtract(const Duration(days: 90)),
         endDate: DateTime.now(),
       );
 
       // Get user details for both players
-      final player1Doc = await _firestore.collection('users').doc(player1Id).get();
-      final player2Doc = await _firestore.collection('users').doc(player2Id).get();
+      final player1Doc =
+          await _firestore.collection('users').doc(player1Id).get();
+      final player2Doc =
+          await _firestore.collection('users').doc(player2Id).get();
 
       if (!player1Doc.exists || !player2Doc.exists) {
         throw Exception('One or both players not found');
@@ -264,8 +273,8 @@ class CoachAnalyticsService {
         improvementPercentages: player1Analytics.skillImprovements,
         overallScore: player1Analytics.overallAverageScore,
         totalSessions: player1Analytics.totalSessions,
-        lastActiveDate: player1Analytics.skillLogs.isNotEmpty 
-            ? player1Analytics.skillLogs.last.date 
+        lastActiveDate: player1Analytics.skillLogs.isNotEmpty
+            ? player1Analytics.skillLogs.last.date
             : DateTime.now().subtract(const Duration(days: 30)),
         isActive: player1Analytics.skillLogs.isNotEmpty,
       );
@@ -279,8 +288,8 @@ class CoachAnalyticsService {
         improvementPercentages: player2Analytics.skillImprovements,
         overallScore: player2Analytics.overallAverageScore,
         totalSessions: player2Analytics.totalSessions,
-        lastActiveDate: player2Analytics.skillLogs.isNotEmpty 
-            ? player2Analytics.skillLogs.last.date 
+        lastActiveDate: player2Analytics.skillLogs.isNotEmpty
+            ? player2Analytics.skillLogs.last.date
             : DateTime.now().subtract(const Duration(days: 30)),
         isActive: player2Analytics.skillLogs.isNotEmpty,
       );
@@ -300,7 +309,7 @@ class CoachAnalyticsService {
   Future<Map<String, dynamic>> getCoachDashboardSummary() async {
     try {
       final teams = await getCoachTeams();
-      
+
       if (teams.isEmpty) {
         return {
           'totalTeams': 0,
@@ -320,16 +329,16 @@ class CoachAnalyticsService {
 
       for (final team in teams) {
         totalPlayers += team.members.length;
-        
+
         try {
           final teamAnalytics = await getTeamAnalytics(team.id);
           totalTeamScore += teamAnalytics.overallTeamScore;
-          
+
           if (teamAnalytics.improvementPercentage > maxImprovement) {
             maxImprovement = teamAnalytics.improvementPercentage;
             mostImprovedTeamId = team.id;
           }
-          
+
           if (teamAnalytics.overallTeamScore > maxScore) {
             maxScore = teamAnalytics.overallTeamScore;
             topPerformingTeamId = team.id;
@@ -339,17 +348,18 @@ class CoachAnalyticsService {
         }
       }
 
-      final averageTeamScore = teams.isNotEmpty ? totalTeamScore / teams.length : 0.0;
+      final averageTeamScore =
+          teams.isNotEmpty ? totalTeamScore / teams.length : 0.0;
 
       return {
         'totalTeams': teams.length,
         'totalPlayers': totalPlayers,
         'averageTeamScore': averageTeamScore,
-        'mostImprovedTeam': mostImprovedTeamId != null 
-            ? teams.firstWhere((t) => t.id == mostImprovedTeamId).name 
+        'mostImprovedTeam': mostImprovedTeamId != null
+            ? teams.firstWhere((t) => t.id == mostImprovedTeamId).name
             : null,
-        'topPerformingTeam': topPerformingTeamId != null 
-            ? teams.firstWhere((t) => t.id == topPerformingTeamId).name 
+        'topPerformingTeam': topPerformingTeamId != null
+            ? teams.firstWhere((t) => t.id == topPerformingTeamId).name
             : null,
       };
     } catch (e) {
@@ -366,10 +376,11 @@ class CoachAnalyticsService {
 
   /// Check if data is cached and still valid
   bool _isDataCached(String teamId) {
-    if (!_teamAnalyticsCache.containsKey(teamId) || !_cacheTimestamps.containsKey(teamId)) {
+    if (!_teamAnalyticsCache.containsKey(teamId) ||
+        !_cacheTimestamps.containsKey(teamId)) {
       return false;
     }
-    
+
     final cacheTime = _cacheTimestamps[teamId]!;
     return DateTime.now().difference(cacheTime) < _cacheExpiry;
   }

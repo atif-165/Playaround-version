@@ -17,15 +17,14 @@ class CoachesTab extends StatefulWidget {
   State<CoachesTab> createState() => _CoachesTabState();
 }
 
-class _CoachesTabState extends State<CoachesTab>
-    with TickerProviderStateMixin {
+class _CoachesTabState extends State<CoachesTab> with TickerProviderStateMixin {
   final CoachMatchingService _matchingService = CoachMatchingService();
-  
+
   List<CoachMatch> _coachMatches = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
   int _currentIndex = 0;
-  
+
   late AnimationController _cardAnimationController;
   late AnimationController _buttonAnimationController;
   late Animation<double> _cardAnimation;
@@ -50,7 +49,7 @@ class _CoachesTabState extends State<CoachesTab>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _buttonAnimationController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -89,14 +88,14 @@ class _CoachesTabState extends State<CoachesTab>
         maxDistance: 50.0,
         maxResults: 20,
       );
-      
+
       if (mounted) {
         setState(() {
           _coachMatches = matches;
           _currentIndex = 0;
           _isLoading = false;
         });
-        
+
         _cardAnimationController.forward();
       }
     } catch (e) {
@@ -104,7 +103,7 @@ class _CoachesTabState extends State<CoachesTab>
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading coaches: $e')),
         );
@@ -114,7 +113,7 @@ class _CoachesTabState extends State<CoachesTab>
 
   Future<void> _loadMoreCoachMatches() async {
     if (_isLoadingMore) return;
-    
+
     try {
       setState(() {
         _isLoadingMore = true;
@@ -129,11 +128,12 @@ class _CoachesTabState extends State<CoachesTab>
         maxDistance: 50.0,
         maxResults: 10,
       );
-      
+
       // Filter out already shown coaches
-      final filteredMatches = newMatches.where((match) => 
-        !excludeIds.contains(match.coach.uid)).toList();
-      
+      final filteredMatches = newMatches
+          .where((match) => !excludeIds.contains(match.coach.uid))
+          .toList();
+
       if (mounted) {
         setState(() {
           _coachMatches.addAll(filteredMatches);
@@ -221,7 +221,7 @@ class _CoachesTabState extends State<CoachesTab>
                       ),
                     ),
                   ),
-                
+
                 // Current card
                 if (_currentIndex < _coachMatches.length)
                   Positioned.fill(
@@ -379,7 +379,7 @@ class _CoachesTabState extends State<CoachesTab>
 
   void _handleComment() {
     if (_currentIndex >= _coachMatches.length) return;
-    
+
     final coachMatch = _coachMatches[_currentIndex];
     _showCommentDialog(coachMatch);
   }
@@ -452,7 +452,7 @@ class _CoachesTabState extends State<CoachesTab>
 
   void _showCommentDialog(CoachMatch coachMatch) {
     final commentController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -484,7 +484,7 @@ class _CoachesTabState extends State<CoachesTab>
                     toCoachId: coachMatch.coach.uid,
                     comment: commentController.text.trim(),
                   );
-                  
+
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(

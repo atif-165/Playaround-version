@@ -53,7 +53,8 @@ class _StarRatingState extends State<StarRating> {
       children: List.generate(widget.maxRating, (index) {
         return GestureDetector(
           onTap: widget.readOnly ? null : () => _handleTap(index + 1.0),
-          onPanUpdate: widget.readOnly ? null : (details) => _handlePan(details, index),
+          onPanUpdate:
+              widget.readOnly ? null : (details) => _handlePan(details, index),
           child: Icon(
             _getStarIcon(index),
             size: widget.size,
@@ -77,7 +78,7 @@ class _StarRatingState extends State<StarRating> {
 
   Color _getStarColor(int index) {
     final starValue = index + 1.0;
-    if (_currentRating >= starValue || 
+    if (_currentRating >= starValue ||
         (widget.allowHalfRating && _currentRating >= starValue - 0.5)) {
       return widget.activeColor ?? ColorsManager.warning;
     } else {
@@ -94,22 +95,22 @@ class _StarRatingState extends State<StarRating> {
 
   void _handlePan(DragUpdateDetails details, int index) {
     if (!widget.allowHalfRating) return;
-    
+
     final RenderBox box = context.findRenderObject() as RenderBox;
     final localPosition = box.globalToLocal(details.globalPosition);
     final starWidth = widget.size;
     final starIndex = (localPosition.dx / starWidth).floor();
     final starPosition = (localPosition.dx % starWidth) / starWidth;
-    
+
     double newRating;
     if (starPosition < 0.5) {
       newRating = starIndex + 0.5;
     } else {
       newRating = starIndex + 1.0;
     }
-    
+
     newRating = newRating.clamp(0.0, widget.maxRating.toDouble());
-    
+
     if (newRating != _currentRating) {
       setState(() {
         _currentRating = newRating;
@@ -325,8 +326,7 @@ class _FeedbackFormState extends State<FeedbackForm> {
             runSpacing: 8.h,
             children: [
               ..._photoUrls.map((url) => _buildPhotoThumbnail(url)),
-              if (_photoUrls.length < 5)
-                _buildAddPhotoButton(),
+              if (_photoUrls.length < 5) _buildAddPhotoButton(),
             ],
           ),
         ],

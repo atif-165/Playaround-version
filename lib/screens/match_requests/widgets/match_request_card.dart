@@ -39,10 +39,10 @@ class _MatchRequestCardState extends State<MatchRequestCard> {
 
   Future<void> _loadPlayerProfile() async {
     try {
-      final playerId = widget.isReceived 
-          ? widget.request['fromPlayerId'] 
+      final playerId = widget.isReceived
+          ? widget.request['fromPlayerId']
           : widget.request['toPlayerId'];
-      
+
       final playerDoc = await FirebaseFirestore.instance
           .collection('users')
           .doc(playerId)
@@ -93,8 +93,10 @@ class _MatchRequestCardState extends State<MatchRequestCard> {
 
     final status = widget.request['status'] as String;
     final createdAt = widget.request['createdAt'] as Timestamp?;
-    final matchScore = (widget.request['matchScore'] as num?)?.toDouble() ?? 0.0;
-    final commonSports = List<String>.from(widget.request['commonSports'] ?? []);
+    final matchScore =
+        (widget.request['matchScore'] as num?)?.toDouble() ?? 0.0;
+    final commonSports =
+        List<String>.from(widget.request['commonSports'] ?? []);
 
     return Container(
       decoration: BoxDecoration(
@@ -177,7 +179,7 @@ class _MatchRequestCardState extends State<MatchRequestCard> {
                       ),
                       Gap(2.h),
                       Text(
-                        widget.isReceived 
+                        widget.isReceived
                             ? 'wants to team up with you'
                             : 'match request sent',
                         style: TextStyle(

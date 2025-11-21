@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../theming/public_profile_theme.dart';
 import '../models/models.dart';
 import '../services/team_service.dart';
 
@@ -27,43 +28,39 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+    return DecoratedBox(
+      decoration: PublicProfileTheme.glassPanelDecoration(
+        borderRadius: 22.r,
+        shadows: PublicProfileTheme.defaultShadow(),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Team Showcase',
-            style: TextStyles.font18DarkBlue600Weight,
-          ),
-          Gap(16.h),
-          _buildWinLossRecord(),
-          Gap(20.h),
-          _buildRecentAchievements(),
-          Gap(20.h),
-          _buildTeamStats(),
-        ],
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Team Showcase',
+              style: TextStyles.font18DarkBlue600Weight
+                  .copyWith(color: Colors.white),
+            ),
+            Gap(16.h),
+            _buildWinLossRecord(),
+            Gap(20.h),
+            _buildRecentAchievements(),
+            Gap(20.h),
+            _buildTeamStats(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildWinLossRecord() {
-    return StreamBuilder<TeamPerformance?>(
-      stream: _teamService.getTeamPerformance(widget.teamId).asStream(),
+    return StreamBuilder<TeamPerformance>(
+      stream: _teamService.watchTeamPerformance(widget.teamId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildLoadingPanel();
         }
 
         final performance = snapshot.data;
@@ -71,36 +68,33 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           return _buildEmptyState(
             icon: Icons.sports_soccer,
             title: 'No Match Data',
-            subtitle: 'Win/loss record will appear here after matches',
+            subtitle: 'Win/loss record will appear here after matches.',
           );
         }
 
         return Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                ColorsManager.mainBlue.withValues(alpha: 0.1),
-                ColorsManager.success.withValues(alpha: 0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12.r),
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
           ),
           child: Column(
             children: [
               Text(
                 'Match Record',
-                style: TextStyles.font16DarkBlue600Weight,
+                style: TextStyles.font16White600Weight,
               ),
               Gap(16.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildRecordItem('Wins', '${performance.wins}', ColorsManager.success),
-                  _buildRecordItem('Losses', '${performance.losses}', ColorsManager.error),
-                  _buildRecordItem('Draws', '${performance.draws}', ColorsManager.warning),
+                  _buildRecordItem(
+                      'Wins', '${performance.wins}', ColorsManager.success),
+                  _buildRecordItem(
+                      'Losses', '${performance.losses}', ColorsManager.error),
+                  _buildRecordItem(
+                      'Draws', '${performance.draws}', ColorsManager.warning),
                 ],
               ),
               Gap(12.h),
@@ -124,10 +118,10 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
 
   Widget _buildRecentAchievements() {
     return StreamBuilder<List<TeamAchievement>>(
-      stream: _teamService.getTeamAchievements(widget.teamId),
+      stream: _teamService.watchTeamAchievements(widget.teamId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildLoadingPanel();
         }
 
         final achievements = snapshot.data ?? [];
@@ -135,7 +129,7 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           return _buildEmptyState(
             icon: Icons.emoji_events_outlined,
             title: 'No Achievements Yet',
-            subtitle: 'Team achievements will appear here',
+            subtitle: 'Team achievements will appear here soon.',
           );
         }
 
@@ -147,10 +141,11 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           children: [
             Text(
               'Recent Achievements',
-              style: TextStyles.font16DarkBlue600Weight,
+              style: TextStyles.font16White600Weight,
             ),
             Gap(12.h),
-            ...recentAchievements.map((achievement) => _buildAchievementItem(achievement)),
+            ...recentAchievements
+                .map((achievement) => _buildAchievementItem(achievement)),
           ],
         );
       },
@@ -158,11 +153,11 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
   }
 
   Widget _buildTeamStats() {
-    return StreamBuilder<TeamPerformance?>(
-      stream: _teamService.getTeamPerformance(widget.teamId).asStream(),
+    return StreamBuilder<TeamPerformance>(
+      stream: _teamService.watchTeamPerformance(widget.teamId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildLoadingPanel();
         }
 
         final performance = snapshot.data;
@@ -170,7 +165,7 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           return _buildEmptyState(
             icon: Icons.analytics_outlined,
             title: 'No Statistics',
-            subtitle: 'Team statistics will appear here',
+            subtitle: 'Team statistics will appear here soon.',
           );
         }
 
@@ -179,7 +174,7 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           children: [
             Text(
               'Team Statistics',
-              style: TextStyles.font16DarkBlue600Weight,
+              style: TextStyles.font16White600Weight,
             ),
             Gap(12.h),
             Row(
@@ -238,20 +233,22 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           width: 50.w,
           height: 50.w,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.16),
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Text(
               value,
-              style: TextStyles.font18DarkBlue600Weight.copyWith(color: color),
+              style: TextStyles.font18White600Weight.copyWith(color: color),
             ),
           ),
         ),
         Gap(8.h),
         Text(
           label,
-          style: TextStyles.font12Grey400Weight,
+          style: TextStyles.font12White500Weight.copyWith(
+            color: Colors.white70,
+          ),
         ),
       ],
     );
@@ -262,11 +259,9 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: ColorsManager.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(
-          color: ColorsManager.warning.withValues(alpha: 0.3),
-        ),
+        color: ColorsManager.warning.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: ColorsManager.warning.withOpacity(0.38)),
       ),
       child: Row(
         children: [
@@ -282,17 +277,19 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
               children: [
                 Text(
                   achievement.title,
-                  style: TextStyles.font14DarkBlue600Weight,
+                  style: TextStyles.font14White600Weight,
                 ),
                 Gap(2.h),
                 Text(
                   achievement.description,
-                  style: TextStyles.font12Grey400Weight,
+                  style:
+                      TextStyles.font12White500Weight.copyWith(color: Colors.white70),
                 ),
                 Gap(2.h),
                 Text(
                   _formatDate(achievement.achievedAt),
-                  style: TextStyles.font10Grey400Weight,
+                  style:
+                      TextStyles.font10White500Weight.copyWith(color: Colors.white54),
                 ),
               ],
             ),
@@ -302,15 +299,14 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withOpacity(0.32)),
       ),
       child: Column(
         children: [
@@ -318,15 +314,29 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
           Gap(8.h),
           Text(
             value,
-            style: TextStyles.font16DarkBlue600Weight.copyWith(color: color),
+            style: TextStyles.font16White600Weight.copyWith(color: color),
           ),
           Text(
             label,
-            style: TextStyles.font10Grey400Weight,
+            style:
+                TextStyles.font10White500Weight.copyWith(color: Colors.white70),
             textAlign: TextAlign.center,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLoadingPanel() {
+    return Container(
+      height: 120.h,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: const CircularProgressIndicator(),
     );
   }
 
@@ -338,25 +348,27 @@ class _TeamShowcaseWidgetState extends State<TeamShowcaseWidget> {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: ColorsManager.gray.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12.r),
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: Column(
         children: [
           Icon(
             icon,
             size: 32.sp,
-            color: ColorsManager.gray,
+            color: Colors.white54,
           ),
           Gap(8.h),
           Text(
             title,
-            style: TextStyles.font14DarkBlue500Weight,
+            style: TextStyles.font14White600Weight,
           ),
           Gap(4.h),
           Text(
             subtitle,
-            style: TextStyles.font12Grey400Weight,
+            style:
+                TextStyles.font12White500Weight.copyWith(color: Colors.white70),
             textAlign: TextAlign.center,
           ),
         ],

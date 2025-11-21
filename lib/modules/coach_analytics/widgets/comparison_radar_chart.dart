@@ -94,7 +94,8 @@ class _ComparisonRadarChartState extends State<ComparisonRadarChart>
                       dataSets: _buildComparisonDataSets(),
                       radarBackgroundColor: Colors.transparent,
                       borderData: FlBorderData(show: false),
-                      radarBorderData: const BorderSide(color: Colors.transparent),
+                      radarBorderData:
+                          const BorderSide(color: Colors.transparent),
                       titlePositionPercentageOffset: 0.15,
                       titleTextStyle: TextStyle(
                         color: Colors.grey[700],
@@ -106,7 +107,8 @@ class _ComparisonRadarChartState extends State<ComparisonRadarChart>
                         final player1Score = widget.player1Data[skillType] ?? 0;
                         final player2Score = widget.player2Data[skillType] ?? 0;
                         return RadarChartTitle(
-                          text: '${skillType.displayName}\n$player1Score | $player2Score',
+                          text:
+                              '${skillType.displayName}\n$player1Score | $player2Score',
                           angle: angle,
                         );
                       },
@@ -138,7 +140,7 @@ class _ComparisonRadarChartState extends State<ComparisonRadarChart>
 
   List<RadarDataSet> _buildComparisonDataSets() {
     final dataSets = <RadarDataSet>[];
-    
+
     // Player 1 dataset
     final player1Entries = <RadarEntry>[];
     for (int i = 0; i < SkillType.allSkills.length; i++) {
@@ -221,13 +223,16 @@ class _ComparisonRadarChartState extends State<ComparisonRadarChart>
   String _getShortName(String fullName) {
     final parts = fullName.split(' ');
     if (parts.length == 1) {
-      return parts[0].length > 10 ? '${parts[0].substring(0, 10)}...' : parts[0];
+      return parts[0].length > 10
+          ? '${parts[0].substring(0, 10)}...'
+          : parts[0];
     }
-    
+
     // Return first name and first letter of last name
-    final firstName = parts[0].length > 8 ? '${parts[0].substring(0, 8)}...' : parts[0];
+    final firstName =
+        parts[0].length > 8 ? '${parts[0].substring(0, 8)}...' : parts[0];
     final lastInitial = parts.last.isNotEmpty ? parts.last[0] : '';
-    
+
     return '$firstName $lastInitial.';
   }
 }
@@ -252,7 +257,8 @@ class SideBySideRadarComparison extends StatefulWidget {
   });
 
   @override
-  State<SideBySideRadarComparison> createState() => _SideBySideRadarComparisonState();
+  State<SideBySideRadarComparison> createState() =>
+      _SideBySideRadarComparisonState();
 }
 
 class _SideBySideRadarComparisonState extends State<SideBySideRadarComparison>
@@ -350,7 +356,8 @@ class _SideBySideRadarComparisonState extends State<SideBySideRadarComparison>
                     dataSets: [_buildSinglePlayerDataSet(playerData, color)],
                     radarBackgroundColor: Colors.transparent,
                     borderData: FlBorderData(show: false),
-                    radarBorderData: const BorderSide(color: Colors.transparent),
+                    radarBorderData:
+                        const BorderSide(color: Colors.transparent),
                     titlePositionPercentageOffset: 0.2,
                     titleTextStyle: TextStyle(
                       color: Colors.grey[600],
@@ -393,7 +400,7 @@ class _SideBySideRadarComparisonState extends State<SideBySideRadarComparison>
     Color color,
   ) {
     final entries = <RadarEntry>[];
-    
+
     for (int i = 0; i < SkillType.allSkills.length; i++) {
       final skillType = SkillType.allSkills[i];
       final score = (playerData[skillType] ?? 0).toDouble();
@@ -413,9 +420,11 @@ class _SideBySideRadarComparisonState extends State<SideBySideRadarComparison>
   String _getShortName(String fullName) {
     final parts = fullName.split(' ');
     if (parts.length == 1) {
-      return parts[0].length > 12 ? '${parts[0].substring(0, 12)}...' : parts[0];
+      return parts[0].length > 12
+          ? '${parts[0].substring(0, 12)}...'
+          : parts[0];
     }
-    
+
     return parts[0]; // Just return first name for side-by-side view
   }
 }

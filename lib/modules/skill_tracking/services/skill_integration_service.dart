@@ -8,7 +8,8 @@ import 'skill_tracking_service.dart';
 
 /// Central integration service for all skill tracking functionality
 class SkillIntegrationService with ActivityTrackingMixin {
-  static final SkillIntegrationService _instance = SkillIntegrationService._internal();
+  static final SkillIntegrationService _instance =
+      SkillIntegrationService._internal();
   factory SkillIntegrationService() => _instance;
   SkillIntegrationService._internal();
 
@@ -21,7 +22,8 @@ class SkillIntegrationService with ActivityTrackingMixin {
   Future<void> initialize() async {
     try {
       if (kDebugMode) {
-        debugPrint('🔄 SkillIntegrationService: Initializing skill tracking system...');
+        debugPrint(
+            '🔄 SkillIntegrationService: Initializing skill tracking system...');
       }
 
       // Initialize activity tracking
@@ -31,7 +33,8 @@ class SkillIntegrationService with ActivityTrackingMixin {
       await _skillDecayService.initialize();
 
       if (kDebugMode) {
-        debugPrint('✅ SkillIntegrationService: Skill tracking system initialized');
+        debugPrint(
+            '✅ SkillIntegrationService: Skill tracking system initialized');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -64,11 +67,13 @@ class SkillIntegrationService with ActivityTrackingMixin {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ SkillIntegrationService: Handled booking completion for user $userId');
+        debugPrint(
+            '✅ SkillIntegrationService: Handled booking completion for user $userId');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillIntegrationService: Error handling booking completion: $e');
+        debugPrint(
+            '❌ SkillIntegrationService: Error handling booking completion: $e');
       }
     }
   }
@@ -97,11 +102,13 @@ class SkillIntegrationService with ActivityTrackingMixin {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ SkillIntegrationService: Handled venue booking completion for user $userId');
+        debugPrint(
+            '✅ SkillIntegrationService: Handled venue booking completion for user $userId');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillIntegrationService: Error handling venue booking completion: $e');
+        debugPrint(
+            '❌ SkillIntegrationService: Error handling venue booking completion: $e');
       }
     }
   }
@@ -132,11 +139,13 @@ class SkillIntegrationService with ActivityTrackingMixin {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ SkillIntegrationService: Handled tournament completion for user $userId');
+        debugPrint(
+            '✅ SkillIntegrationService: Handled tournament completion for user $userId');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillIntegrationService: Error handling tournament completion: $e');
+        debugPrint(
+            '❌ SkillIntegrationService: Error handling tournament completion: $e');
       }
     }
   }
@@ -163,11 +172,13 @@ class SkillIntegrationService with ActivityTrackingMixin {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ SkillIntegrationService: Handled feedback submission for user $userId');
+        debugPrint(
+            '✅ SkillIntegrationService: Handled feedback submission for user $userId');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillIntegrationService: Error handling feedback submission: $e');
+        debugPrint(
+            '❌ SkillIntegrationService: Error handling feedback submission: $e');
       }
     }
   }
@@ -202,13 +213,15 @@ class SkillIntegrationService with ActivityTrackingMixin {
       final logId = await _skillTrackingService.addSkillLog(skillLog);
 
       if (kDebugMode) {
-        debugPrint('✅ SkillIntegrationService: Created manual skill log for player $playerId');
+        debugPrint(
+            '✅ SkillIntegrationService: Created manual skill log for player $playerId');
       }
 
       return logId;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillIntegrationService: Error creating manual skill log: $e');
+        debugPrint(
+            '❌ SkillIntegrationService: Error creating manual skill log: $e');
       }
       return null;
     }
@@ -256,11 +269,13 @@ class SkillIntegrationService with ActivityTrackingMixin {
       );
 
       // Get statistics
-      final statistics = await _skillTrackingService.getSkillLogStatistics(playerId);
+      final statistics =
+          await _skillTrackingService.getSkillLogStatistics(playerId);
 
       // Get activity info
       final lastActive = await _activityService.getLastActive(playerId);
-      final daysSinceActive = await _activityService.getDaysSinceLastActive(playerId);
+      final daysSinceActive =
+          await _activityService.getDaysSinceLastActive(playerId);
       final isInactive = await _activityService.isUserInactive(playerId);
 
       return {
@@ -272,16 +287,20 @@ class SkillIntegrationService with ActivityTrackingMixin {
             (key, value) => MapEntry(key.displayName, value),
           ),
           'totalLogs': analytics.skillLogs.length,
-          'activeGoals': analytics.skillGoals.where((g) => g.status == GoalStatus.active).length,
+          'activeGoals': analytics.skillGoals
+              .where((g) => g.status == GoalStatus.active)
+              .length,
         },
         'recentActivity': {
-          'logs': recentLogs.map((log) => {
-            'date': log.date.toIso8601String(),
-            'source': log.source.displayName,
-            'context': log.displayContext,
-            'hasPositiveChanges': log.hasPositiveChanges,
-            'hasNegativeChanges': log.hasNegativeChanges,
-          }).toList(),
+          'logs': recentLogs
+              .map((log) => {
+                    'date': log.date.toIso8601String(),
+                    'source': log.source.displayName,
+                    'context': log.displayContext,
+                    'hasPositiveChanges': log.hasPositiveChanges,
+                    'hasNegativeChanges': log.hasNegativeChanges,
+                  })
+              .toList(),
         },
         'trends': trends.map(
           (key, value) => MapEntry(key.displayName, value),
@@ -298,7 +317,8 @@ class SkillIntegrationService with ActivityTrackingMixin {
       };
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillIntegrationService: Error getting skill dashboard: $e');
+        debugPrint(
+            '❌ SkillIntegrationService: Error getting skill dashboard: $e');
       }
       return {
         'error': e.toString(),
@@ -333,13 +353,14 @@ class SkillIntegrationService with ActivityTrackingMixin {
   Future<Map<String, dynamic>> getSystemHealth() async {
     try {
       final decayStats = await _skillDecayService.getDecayStatistics();
-      
+
       return {
         'status': 'healthy',
         'timestamp': DateTime.now().toIso8601String(),
         'decaySystem': decayStats,
         'cacheStatus': {
-          'skillTrackingCacheSize': _skillTrackingService.toString(), // This would need cache size info
+          'skillTrackingCacheSize': _skillTrackingService
+              .toString(), // This would need cache size info
         },
       };
     } catch (e) {

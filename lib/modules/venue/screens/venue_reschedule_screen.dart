@@ -83,7 +83,7 @@ class _VenueRescheduleScreenState extends State<VenueRescheduleScreen> {
 
   Widget _buildCurrentBookingInfo() {
     final dateFormat = DateFormat('EEEE, MMMM dd, yyyy');
-    
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
@@ -132,7 +132,8 @@ class _VenueRescheduleScreenState extends State<VenueRescheduleScreen> {
               focusedDay: _selectedDate ?? DateTime.now(),
               selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
               onDaySelected: (selectedDay, focusedDay) {
-                if (selectedDay.isBefore(DateTime.now().subtract(const Duration(days: 1)))) {
+                if (selectedDay.isBefore(
+                    DateTime.now().subtract(const Duration(days: 1)))) {
                   return;
                 }
                 setState(() {
@@ -162,7 +163,8 @@ class _VenueRescheduleScreenState extends State<VenueRescheduleScreen> {
                 titleTextStyle: TextStyles.font16DarkBlueBold,
               ),
               enabledDayPredicate: (day) {
-                return day.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+                return day
+                    .isAfter(DateTime.now().subtract(const Duration(days: 1)));
               },
             ),
           ],
@@ -211,7 +213,8 @@ class _VenueRescheduleScreenState extends State<VenueRescheduleScreen> {
                 ),
                 child: Text(
                   'No available time slots for this date',
-                  style: TextStyles.font14DarkBlueMedium.copyWith(color: Colors.red.shade700),
+                  style: TextStyles.font14DarkBlueMedium
+                      .copyWith(color: Colors.red.shade700),
                   textAlign: TextAlign.center,
                 ),
               )
@@ -238,9 +241,12 @@ class _VenueRescheduleScreenState extends State<VenueRescheduleScreen> {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? ColorsManager.mainBlue : Colors.white,
+                        color:
+                            isSelected ? ColorsManager.mainBlue : Colors.white,
                         border: Border.all(
-                          color: isSelected ? ColorsManager.mainBlue : Colors.grey.shade300,
+                          color: isSelected
+                              ? ColorsManager.mainBlue
+                              : Colors.grey.shade300,
                         ),
                         borderRadius: BorderRadius.circular(8.r),
                       ),
@@ -319,11 +325,14 @@ class _VenueRescheduleScreenState extends State<VenueRescheduleScreen> {
             Gap(12.h),
             _buildSummaryRow('Date', dateFormat.format(_selectedDate!)),
             Gap(8.h),
-            _buildSummaryRow('Time', '${_selectedTimeSlot!.start} - ${_selectedTimeSlot!.end}'),
+            _buildSummaryRow('Time',
+                '${_selectedTimeSlot!.start} - ${_selectedTimeSlot!.end}'),
             Gap(8.h),
-            _buildSummaryRow('Duration', '${_selectedTimeSlot!.durationInHours.toStringAsFixed(1)} hours'),
+            _buildSummaryRow('Duration',
+                '${_selectedTimeSlot!.durationInHours.toStringAsFixed(1)} hours'),
             Gap(8.h),
-            _buildSummaryRow('Amount', '\$${widget.booking.totalAmount.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+                'Amount', '\$${widget.booking.totalAmount.toStringAsFixed(2)}'),
           ],
         ),
       ),

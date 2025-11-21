@@ -123,10 +123,12 @@ class ShoppingCart {
   factory ShoppingCart.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     final itemsData = data['items'] as List? ?? [];
-    
+
     return ShoppingCart(
       userId: (data['userId'] ?? '') as String,
-      items: itemsData.map((item) => CartItem.fromMap(item as Map<String, dynamic>)).toList(),
+      items: itemsData
+          .map((item) => CartItem.fromMap(item as Map<String, dynamic>))
+          .toList(),
       lastUpdated: (data['lastUpdated'] is Timestamp)
           ? (data['lastUpdated'] as Timestamp).toDate()
           : DateTime.tryParse(data['lastUpdated']?.toString() ?? '') ??
@@ -140,12 +142,13 @@ class ShoppingCart {
         'lastUpdated': Timestamp.fromDate(lastUpdated),
       };
 
-  double get totalAmount => items.fold(0.0, (total, item) => total + item.totalPrice);
-  
+  double get totalAmount =>
+      items.fold(0.0, (total, item) => total + item.totalPrice);
+
   int get totalItems => items.fold(0, (total, item) => total + item.quantity);
-  
+
   List<String> get shopIds => items.map((item) => item.shopId).toSet().toList();
-  
+
   Map<String, List<CartItem>> get itemsByShop {
     Map<String, List<CartItem>> grouped = {};
     for (var item in items) {

@@ -42,7 +42,8 @@ class CategoryChip extends StatelessWidget {
       onTap: onPressed,
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? ColorsManager.primary : ColorsManager.surfaceVariant,
+          color:
+              isSelected ? ColorsManager.primary : ColorsManager.surfaceVariant,
           borderRadius: BorderRadius.circular(16.r),
           border: isSelected
               ? Border.all(color: ColorsManager.primary, width: 2)

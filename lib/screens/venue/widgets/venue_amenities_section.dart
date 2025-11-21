@@ -21,8 +21,8 @@ class VenueAmenitiesSection extends StatelessWidget {
         Text(
           'Amenities',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 12),
         GridView.builder(
@@ -30,9 +30,9 @@ class VenueAmenitiesSection extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
+            childAspectRatio: 2.7,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
           ),
           itemCount: amenities.length,
           itemBuilder: (context, index) {
@@ -46,16 +46,16 @@ class VenueAmenitiesSection extends StatelessWidget {
 
   Widget _buildAmenityItem(BuildContext context, VenueAmenity amenity) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: amenity.isAvailable
-            ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
-            : Colors.grey.withValues(alpha: 0.1),
+            ? Theme.of(context).primaryColor.withOpacity(0.12)
+            : Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: amenity.isAvailable
-              ? Theme.of(context).primaryColor.withValues(alpha: 0.3)
-              : Colors.grey.withValues(alpha: 0.3),
+              ? Theme.of(context).primaryColor.withOpacity(0.3)
+              : Colors.white.withOpacity(0.12),
         ),
       ),
       child: Row(
@@ -76,9 +76,10 @@ class VenueAmenitiesSection extends StatelessWidget {
                 Text(
                   amenity.name,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: amenity.isAvailable ? null : Colors.grey,
-                  ),
+                        fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 1.1,
+                      ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -86,8 +87,9 @@ class VenueAmenitiesSection extends StatelessWidget {
                   Text(
                     amenity.description,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: amenity.isAvailable ? Colors.grey[600] : Colors.grey,
-                    ),
+                  color: Colors.white.withOpacity(0.75),
+                  height: 1.05,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -96,7 +98,9 @@ class VenueAmenitiesSection extends StatelessWidget {
           ),
           Icon(
             amenity.isAvailable ? Icons.check_circle : Icons.cancel,
-            color: amenity.isAvailable ? Colors.green : Colors.grey,
+          color: amenity.isAvailable
+              ? Theme.of(context).primaryColor
+              : Colors.white.withOpacity(0.5),
             size: 16,
           ),
         ],
@@ -108,8 +112,6 @@ class VenueAmenitiesSection extends StatelessWidget {
     switch (iconName.toLowerCase()) {
       case 'parking':
         return Icons.local_parking;
-      case 'wifi':
-        return Icons.wifi;
       case 'air_conditioning':
         return Icons.ac_unit;
       case 'changing_rooms':

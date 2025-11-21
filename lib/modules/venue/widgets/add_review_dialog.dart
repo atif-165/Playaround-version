@@ -319,7 +319,7 @@ class _AddReviewDialogState extends State<AddReviewDialog> {
       if (mounted) {
         Navigator.pop(context);
         widget.onReviewAdded();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Review submitted successfully!'),

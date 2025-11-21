@@ -14,10 +14,14 @@ import '../services/tournament_service.dart';
 /// Screen for updating match scores and results
 class ScoreUpdateScreen extends StatefulWidget {
   final Tournament tournament;
+  final List<TournamentMatch> initialMatches;
+  final ValueChanged<TournamentMatch>? onMatchUpdated;
 
   const ScoreUpdateScreen({
     super.key,
     required this.tournament,
+    this.initialMatches = const <TournamentMatch>[],
+    this.onMatchUpdated,
   });
 
   @override
@@ -55,12 +59,14 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
   }
 
   void _loadAvailableMatches() {
-    // Load matches that are scheduled or in progress
-    _availableMatches = widget.tournament.matches
+    final sourceMatches = widget.initialMatches.isNotEmpty
+        ? widget.initialMatches
+        : widget.tournament.matches.cast<TournamentMatch>();
+
+    _availableMatches = sourceMatches
         .where((match) =>
-          match.status == MatchStatus.scheduled ||
-          match.status == MatchStatus.inProgress
-        )
+            match.status == TournamentMatchStatus.scheduled ||
+            match.status == TournamentMatchStatus.live)
         .toList();
 
     setState(() {
@@ -274,7 +280,7 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
                 _selectedWinnerId = null;
                 _team1ScoreController.clear();
                 _team2ScoreController.clear();
-                
+
                 // Pre-fill existing scores if available
                 if (match?.team1Score != null) {
                   _team1ScoreController.text = match!.team1Score.toString();
@@ -328,7 +334,7 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
               ),
               Gap(8.w),
               Text(
-                _selectedMatch!.round,
+                _selectedMatch!.round ?? 'N/A',
                 style: TextStyles.font14DarkBlueMedium.copyWith(
                   color: ColorsManager.textPrimary,
                 ),
@@ -345,7 +351,8 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
               ),
               Gap(8.w),
               Text(
-                DateFormat('EEEE, MMM dd, yyyy at HH:mm').format(_selectedMatch!.scheduledDate),
+                DateFormat('EEEE, MMM dd, yyyy at HH:mm')
+                    .format(_selectedMatch!.scheduledDate),
                 style: TextStyles.font14Grey400Weight.copyWith(
                   color: ColorsManager.textSecondary,
                 ),
@@ -550,9 +557,8 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
               : ColorsManager.cardBackground,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isSelected
-                ? ColorsManager.success
-                : ColorsManager.dividerColor,
+            color:
+                isSelected ? ColorsManager.success : ColorsManager.dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -632,6 +638,19 @@ class _ScoreUpdateScreenState extends State<ScoreUpdateScreen> {
         winnerTeamId: winnerId,
         winnerTeamName: winnerName,
       );
+
+      final updatedMatch = _selectedMatch!.copyWith(
+        team1: _selectedMatch!.team1.copyWith(score: team1Score),
+        team2: _selectedMatch!.team2.copyWith(score: team2Score),
+        winnerTeamId: winnerId,
+        status: team1Score != team2Score
+            ? TournamentMatchStatus.completed
+            : _selectedMatch!.status,
+        result: winnerName != null
+            ? '$winnerName won $team1Score-$team2Score'
+            : 'Match drawn',
+      );
+      widget.onMatchUpdated?.call(updatedMatch);
 
       if (mounted) {
         context.showSnackBar('Match score updated successfully!');

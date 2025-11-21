@@ -21,7 +21,8 @@ class VenueBookingDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<VenueBookingDetailScreen> createState() => _VenueBookingDetailScreenState();
+  State<VenueBookingDetailScreen> createState() =>
+      _VenueBookingDetailScreenState();
 }
 
 class _VenueBookingDetailScreenState extends State<VenueBookingDetailScreen> {
@@ -129,7 +130,8 @@ class _VenueBookingDetailScreenState extends State<VenueBookingDetailScreen> {
               children: [
                 Text(
                   statusText,
-                  style: TextStyles.font16DarkBlueBold.copyWith(color: textColor),
+                  style:
+                      TextStyles.font16DarkBlueBold.copyWith(color: textColor),
                 ),
                 Gap(4.h),
                 Text(
@@ -212,13 +214,15 @@ class _VenueBookingDetailScreenState extends State<VenueBookingDetailScreen> {
             _buildInfoRow(
               icon: Icons.access_time,
               label: 'Time',
-              value: '${_currentBooking.timeSlot.start} - ${_currentBooking.timeSlot.end}',
+              value:
+                  '${_currentBooking.timeSlot.start} - ${_currentBooking.timeSlot.end}',
             ),
             Gap(8.h),
             _buildInfoRow(
               icon: Icons.schedule,
               label: 'Duration',
-              value: '${_currentBooking.timeSlot.durationInHours.toStringAsFixed(1)} hours',
+              value:
+                  '${_currentBooking.timeSlot.durationInHours.toStringAsFixed(1)} hours',
             ),
             Gap(8.h),
             _buildInfoRow(
@@ -341,7 +345,8 @@ class _VenueBookingDetailScreenState extends State<VenueBookingDetailScreen> {
                 Gap(8.w),
                 Text(
                   'Cancellation Reason',
-                  style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.red),
+                  style:
+                      TextStyles.font16DarkBlueBold.copyWith(color: Colors.red),
                 ),
               ],
             ),
@@ -426,7 +431,8 @@ class _VenueBookingDetailScreenState extends State<VenueBookingDetailScreen> {
             ],
           ),
         ],
-        if (isVenueOwner && _currentBooking.status == VenueBookingStatus.confirmed) ...[
+        if (isVenueOwner &&
+            _currentBooking.status == VenueBookingStatus.confirmed) ...[
           // Venue owner can mark as completed
           AppTextButton(
             buttonText: 'Mark as Completed',
@@ -629,7 +635,8 @@ class _VenueBookingDetailScreenState extends State<VenueBookingDetailScreen> {
 
   Future<void> _refreshBookingData() async {
     try {
-      final updatedBooking = await _venueService.getVenueBooking(_currentBooking.id);
+      final updatedBooking =
+          await _venueService.getVenueBooking(_currentBooking.id);
       if (updatedBooking != null) {
         setState(() {
           _currentBooking = updatedBooking;

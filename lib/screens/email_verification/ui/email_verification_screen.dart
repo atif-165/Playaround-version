@@ -16,7 +16,8 @@ class EmailVerificationScreen extends StatefulWidget {
   const EmailVerificationScreen({super.key});
 
   @override
-  State<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  State<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
 class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
@@ -89,7 +90,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                   dialogType: DialogType.success,
                   animType: AnimType.rightSlide,
                   title: 'Email Sent',
-                  desc: 'Verification email has been sent. Please check your inbox and spam folder.',
+                  desc:
+                      'Verification email has been sent. Please check your inbox and spam folder.',
                 ).show();
               } else if (state is AuthenticatedWithProfile) {
                 context.pop();
@@ -136,6 +138,23 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       context.read<AuthCubit>().checkEmailVerification();
                     },
                   ),
+                  // Development bypass for test accounts (only in debug mode)
+                  if (const bool.fromEnvironment('dart.vm.product', defaultValue: false) == false)
+                    Padding(
+                      padding: EdgeInsets.only(top: 16.h),
+                      child: TextButton(
+                        onPressed: () {
+                          context.read<AuthCubit>().skipEmailVerificationForTesting();
+                        },
+                        child: Text(
+                          'Skip Verification (Test Only)',
+                          style: TextStyle(
+                            color: Colors.orange.withOpacity(0.8),
+                            fontSize: 12.sp,
+                          ),
+                        ),
+                      ),
+                    ),
                   Gap(16.h),
                   AppTextButton(
                     buttonText: _isResendEnabled

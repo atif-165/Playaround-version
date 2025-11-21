@@ -52,7 +52,8 @@ class VenueCard extends StatelessWidget {
                   width: double.infinity,
                   height: 160.h,
                   fit: BoxFit.cover,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(12.r)),
                   fallbackIcon: Icons.location_city,
                   fallbackIconColor: Colors.grey[400],
                   fallbackIconSize: 40.sp,
@@ -92,7 +93,8 @@ class VenueCard extends StatelessWidget {
                             vertical: 4.h,
                           ),
                           decoration: BoxDecoration(
-                            color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+                            color:
+                                ColorsManager.mainBlue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Row(

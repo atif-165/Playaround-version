@@ -35,11 +35,13 @@ class TournamentNotificationService {
       );
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Registration notification sent to ${tournament.organizerName}');
+        debugPrint(
+            '📧 TournamentNotificationService: Registration notification sent to ${tournament.organizerName}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send registration notification - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send registration notification - $e');
       }
     }
   }
@@ -54,7 +56,8 @@ class TournamentNotificationService {
       await _notificationService.createNotification(
         userId: registration.captainId,
         title: 'Team Registration Approved! 🎉',
-        message: '${registration.teamName} has been approved for ${tournament.name}',
+        message:
+            '${registration.teamName} has been approved for ${tournament.name}',
         type: NotificationType.tournamentApproval,
         data: {
           'tournamentId': tournament.id,
@@ -70,7 +73,8 @@ class TournamentNotificationService {
           await _notificationService.createNotification(
             userId: memberId,
             title: 'Your Team Joined Tournament! 🎉',
-            message: '${registration.teamName} has been approved for ${tournament.name}',
+            message:
+                '${registration.teamName} has been approved for ${tournament.name}',
             type: NotificationType.tournamentTeamUpdate,
             data: {
               'tournamentId': tournament.id,
@@ -85,11 +89,13 @@ class TournamentNotificationService {
       }
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Approval notifications sent to ${registration.teamName}');
+        debugPrint(
+            '📧 TournamentNotificationService: Approval notifications sent to ${registration.teamName}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send approval notifications - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send approval notifications - $e');
       }
     }
   }
@@ -104,7 +110,8 @@ class TournamentNotificationService {
       await _notificationService.createNotification(
         userId: registration.captainId,
         title: 'Team Registration Declined',
-        message: 'Your registration for ${tournament.name} was not approved${reason != null ? ': $reason' : ''}',
+        message:
+            'Your registration for ${tournament.name} was not approved${reason != null ? ': $reason' : ''}',
         type: NotificationType.tournamentRejection,
         data: {
           'tournamentId': tournament.id,
@@ -116,11 +123,13 @@ class TournamentNotificationService {
       );
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Rejection notification sent to ${registration.captainName}');
+        debugPrint(
+            '📧 TournamentNotificationService: Rejection notification sent to ${registration.captainName}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send rejection notification - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send rejection notification - $e');
       }
     }
   }
@@ -136,7 +145,8 @@ class TournamentNotificationService {
       await _notificationService.createNotification(
         userId: registration.captainId,
         title: 'Team Removed from Tournament',
-        message: '${registration.teamName} has been removed from ${tournament.name}${reason != null ? ': $reason' : ''}',
+        message:
+            '${registration.teamName} has been removed from ${tournament.name}${reason != null ? ': $reason' : ''}',
         type: NotificationType.tournamentRemoval,
         data: {
           'tournamentId': tournament.id,
@@ -153,7 +163,8 @@ class TournamentNotificationService {
           await _notificationService.createNotification(
             userId: memberId,
             title: 'Team Removed from Tournament',
-            message: '${registration.teamName} has been removed from ${tournament.name}',
+            message:
+                '${registration.teamName} has been removed from ${tournament.name}',
             type: NotificationType.tournamentTeamUpdate,
             data: {
               'tournamentId': tournament.id,
@@ -167,11 +178,13 @@ class TournamentNotificationService {
       }
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Removal notifications sent to ${registration.teamName}');
+        debugPrint(
+            '📧 TournamentNotificationService: Removal notifications sent to ${registration.teamName}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send removal notifications - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send removal notifications - $e');
       }
     }
   }
@@ -189,7 +202,8 @@ class TournamentNotificationService {
         await _notificationService.createNotification(
           userId: participantId,
           title: 'Match Scheduled 📅',
-          message: '${match.team1Name} vs ${match.team2Name} in ${tournament.name}',
+          message:
+              '${match.team1Name} vs ${match.team2Name} in ${tournament.name}',
           type: NotificationType.matchScheduled,
           data: {
             'tournamentId': tournament.id,
@@ -204,11 +218,13 @@ class TournamentNotificationService {
       }
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Match schedule notifications sent for ${match.team1Name} vs ${match.team2Name}');
+        debugPrint(
+            '📧 TournamentNotificationService: Match schedule notifications sent for ${match.team1Name} vs ${match.team2Name}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send match schedule notifications - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send match schedule notifications - $e');
       }
     }
   }
@@ -220,8 +236,11 @@ class TournamentNotificationService {
     required List<String> participantIds,
   }) async {
     try {
-      final scoreText = '${match.team1Name} ${match.team1Score} - ${match.team2Score} ${match.team2Name}';
-      final winnerText = match.winnerTeamName != null ? ' • Winner: ${match.winnerTeamName}' : '';
+      final scoreText =
+          '${match.team1Name} ${match.team1Score} - ${match.team2Score} ${match.team2Name}';
+      final winnerText = match.winnerTeamName != null
+          ? ' • Winner: ${match.winnerTeamName}'
+          : '';
 
       for (final participantId in participantIds) {
         await _notificationService.createNotification(
@@ -244,11 +263,13 @@ class TournamentNotificationService {
       }
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Score update notifications sent for ${match.team1Name} vs ${match.team2Name}');
+        debugPrint(
+            '📧 TournamentNotificationService: Score update notifications sent for ${match.team1Name} vs ${match.team2Name}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send score update notifications - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send score update notifications - $e');
       }
     }
   }
@@ -278,11 +299,13 @@ class TournamentNotificationService {
       }
 
       if (kDebugMode) {
-        debugPrint('📧 TournamentNotificationService: Winner declaration notifications sent for ${tournament.name}');
+        debugPrint(
+            '📧 TournamentNotificationService: Winner declaration notifications sent for ${tournament.name}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to send winner declaration notifications - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to send winner declaration notifications - $e');
       }
     }
   }
@@ -299,7 +322,7 @@ class TournamentNotificationService {
           .get();
 
       final participantIds = <String>{};
-      
+
       for (final doc in registrationsQuery.docs) {
         final registration = TournamentTeamRegistration.fromMap(doc.data());
         participantIds.addAll(registration.teamMemberIds);
@@ -308,7 +331,8 @@ class TournamentNotificationService {
       return participantIds.toList();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentNotificationService: Failed to get participant IDs - $e');
+        debugPrint(
+            '❌ TournamentNotificationService: Failed to get participant IDs - $e');
       }
       return [];
     }

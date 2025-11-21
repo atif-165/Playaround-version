@@ -43,12 +43,17 @@ class PeopleMatchingService {
       if (!currentUserDoc.exists) throw Exception('User profile not found');
 
       final currentUserData = currentUserDoc.data() as Map<String, dynamic>;
-      final currentUserSports = List<String>.from(currentUserData['sportsOfInterest'] ?? []);
+      final currentUserSports =
+          List<String>.from(currentUserData['sportsOfInterest'] ?? []);
       final currentUserLocation = currentUserData['location'] as String?;
 
       // Get users that current user hasn't swiped on yet
       final swipedUserIds = await _getSwipedUserIds(user.uid);
-      final allExcludeIds = [...swipedUserIds, user.uid, ...(excludeUserIds ?? [])];
+      final allExcludeIds = [
+        ...swipedUserIds,
+        user.uid,
+        ...(excludeUserIds ?? [])
+      ];
 
       // Query for potential matches
       Query query = _usersCollection
@@ -66,9 +71,13 @@ class PeopleMatchingService {
         if (allExcludeIds.contains(userId)) continue;
 
         // Calculate compatibility
-        final userSports = List<String>.from(userData['sportsOfInterest'] ?? []);
-        final commonSports = currentUserSports.where((sport) => userSports.contains(sport)).toList();
-        final compatibilityScore = _calculateCompatibilityScore(currentUserData, userData);
+        final userSports =
+            List<String>.from(userData['sportsOfInterest'] ?? []);
+        final commonSports = currentUserSports
+            .where((sport) => userSports.contains(sport))
+            .toList();
+        final compatibilityScore =
+            _calculateCompatibilityScore(currentUserData, userData);
 
         // Skip if no common interests and low compatibility
         if (commonSports.isEmpty && compatibilityScore < 30) continue;
@@ -81,25 +90,28 @@ class PeopleMatchingService {
           sportsOfInterest: userSports,
           location: userData['location'] as String,
           age: userData['age'] as int,
-          skillLevel: userData['skillLevel'] != null 
+          skillLevel: userData['skillLevel'] != null
               ? SkillLevel.fromString(userData['skillLevel'] as String)
               : null,
           bio: userData['bio'] as String? ?? '',
           compatibilityScore: compatibilityScore,
           commonInterests: commonSports,
-          distance: _calculateDistance(currentUserLocation, userData['location'] as String?),
+          distance: _calculateDistance(
+              currentUserLocation, userData['location'] as String?),
         ));
 
         if (suggestions.length >= limit) break;
       }
 
       // Sort by compatibility score
-      suggestions.sort((a, b) => b.compatibilityScore.compareTo(a.compatibilityScore));
+      suggestions
+          .sort((a, b) => b.compatibilityScore.compareTo(a.compatibilityScore));
 
       return suggestions;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ PeopleMatchingService: Error getting potential matches - $e');
+        debugPrint(
+            '❌ PeopleMatchingService: Error getting potential matches - $e');
       }
       rethrow;
     }
@@ -171,7 +183,9 @@ class PeopleMatchingService {
         createdAt: DateTime.now(),
       );
 
-      await _commentsCollection.doc(commentId).set(profileComment.toFirestore());
+      await _commentsCollection
+          .doc(commentId)
+          .set(profileComment.toFirestore());
 
       // Send notification
       await _sendCommentNotification(user.uid, toUserId, comment);
@@ -194,7 +208,7 @@ class PeopleMatchingService {
 
       final today = DateTime.now();
       final moodId = DailyMood.generateMoodId(user.uid, today);
-      
+
       final dailyMood = DailyMood(
         id: moodId,
         userId: user.uid,
@@ -213,17 +227,15 @@ class PeopleMatchingService {
     }
   }
 
-
-
   /// Get list of user IDs that current user has already swiped on
   Future<List<String>> _getSwipedUserIds(String userId) async {
     try {
-      final snapshot = await _swipesCollection
-          .where('fromUserId', isEqualTo: userId)
-          .get();
+      final snapshot =
+          await _swipesCollection.where('fromUserId', isEqualTo: userId).get();
 
       return snapshot.docs
-          .map((doc) => (doc.data() as Map<String, dynamic>)['toUserId'] as String)
+          .map((doc) =>
+              (doc.data() as Map<String, dynamic>)['toUserId'] as String)
           .toList();
     } catch (e) {
       if (kDebugMode) {
@@ -257,13 +269,16 @@ class PeopleMatchingService {
       // Get user profiles
       final user1Doc = await _usersCollection.doc(userId1).get();
       final user2Doc = await _usersCollection.doc(userId2).get();
-      
+
       final user1Data = user1Doc.data() as Map<String, dynamic>;
       final user2Data = user2Doc.data() as Map<String, dynamic>;
 
-      final user1Sports = List<String>.from(user1Data['sportsOfInterest'] ?? []);
-      final user2Sports = List<String>.from(user2Data['sportsOfInterest'] ?? []);
-      final commonSports = user1Sports.where((sport) => user2Sports.contains(sport)).toList();
+      final user1Sports =
+          List<String>.from(user1Data['sportsOfInterest'] ?? []);
+      final user2Sports =
+          List<String>.from(user2Data['sportsOfInterest'] ?? []);
+      final commonSports =
+          user1Sports.where((sport) => user2Sports.contains(sport)).toList();
 
       final matchId = UserMatch.generateMatchId(userId1, userId2);
       final match = UserMatch(
@@ -290,13 +305,15 @@ class PeopleMatchingService {
   }
 
   /// Calculate compatibility score between two users
-  double _calculateCompatibilityScore(Map<String, dynamic> user1, Map<String, dynamic> user2) {
+  double _calculateCompatibilityScore(
+      Map<String, dynamic> user1, Map<String, dynamic> user2) {
     double score = 0.0;
 
     // Sports compatibility (40% weight)
     final user1Sports = List<String>.from(user1['sportsOfInterest'] ?? []);
     final user2Sports = List<String>.from(user2['sportsOfInterest'] ?? []);
-    final commonSports = user1Sports.where((sport) => user2Sports.contains(sport)).length;
+    final commonSports =
+        user1Sports.where((sport) => user2Sports.contains(sport)).length;
     final totalSports = (user1Sports.length + user2Sports.length) / 2;
     if (totalSports > 0) {
       score += (commonSports / totalSports) * 40;
@@ -319,7 +336,8 @@ class PeopleMatchingService {
     // Role compatibility (20% weight)
     final role1 = user1['role'] as String;
     final role2 = user2['role'] as String;
-    if ((role1 == 'player' && role2 == 'coach') || (role1 == 'coach' && role2 == 'player')) {
+    if ((role1 == 'player' && role2 == 'coach') ||
+        (role1 == 'coach' && role2 == 'player')) {
       score += 20; // Player-coach pairs get bonus
     } else if (role1 == role2) {
       score += 15; // Same role gets some points
@@ -355,7 +373,8 @@ class PeopleMatchingService {
       );
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ PeopleMatchingService: Error sending like notification - $e');
+        debugPrint(
+            '❌ PeopleMatchingService: Error sending like notification - $e');
       }
     }
   }
@@ -365,7 +384,7 @@ class PeopleMatchingService {
     try {
       final user1Doc = await _usersCollection.doc(userId1).get();
       final user2Doc = await _usersCollection.doc(userId2).get();
-      
+
       final user1Data = user1Doc.data() as Map<String, dynamic>;
       final user2Data = user2Doc.data() as Map<String, dynamic>;
 
@@ -394,13 +413,15 @@ class PeopleMatchingService {
       );
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ PeopleMatchingService: Error sending match notifications - $e');
+        debugPrint(
+            '❌ PeopleMatchingService: Error sending match notifications - $e');
       }
     }
   }
 
   /// Send comment notification
-  Future<void> _sendCommentNotification(String fromUserId, String toUserId, String comment) async {
+  Future<void> _sendCommentNotification(
+      String fromUserId, String toUserId, String comment) async {
     try {
       final fromUserDoc = await _usersCollection.doc(fromUserId).get();
       final fromUserData = fromUserDoc.data() as Map<String, dynamic>;
@@ -419,7 +440,8 @@ class PeopleMatchingService {
       );
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ PeopleMatchingService: Error sending comment notification - $e');
+        debugPrint(
+            '❌ PeopleMatchingService: Error sending comment notification - $e');
       }
     }
   }

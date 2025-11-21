@@ -14,10 +14,14 @@ class CoachProfile extends UserProfile {
   const CoachProfile({
     required super.uid,
     required super.fullName,
+    super.nickname,
     required super.gender,
     required super.age,
     required super.location,
+    super.latitude,
+    super.longitude,
     super.profilePictureUrl,
+    super.profilePhotos = const [],
     required super.isProfileComplete,
     super.teamId,
     required super.createdAt,
@@ -29,7 +33,7 @@ class CoachProfile extends UserProfile {
     required this.availableTimeSlots,
     required this.coachingType,
     this.bio,
-  }) : super(role: UserRole.coach);
+  }) : super(role: UserRole.coach, bio: bio);
 
   @override
   Map<String, dynamic> toFirestore() {
@@ -39,7 +43,8 @@ class CoachProfile extends UserProfile {
       'experienceYears': experienceYears,
       'certifications': certifications,
       'hourlyRate': hourlyRate,
-      'availableTimeSlots': availableTimeSlots.map((slot) => slot.toMap()).toList(),
+      'availableTimeSlots':
+          availableTimeSlots.map((slot) => slot.toMap()).toList(),
       'coachingType': coachingType.value,
       'bio': bio,
     });
@@ -49,38 +54,62 @@ class CoachProfile extends UserProfile {
   static CoachProfile? fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
     if (data == null) return null;
+    data['uid'] ??= doc.id;
+    return fromMap(data);
+  }
 
+  static CoachProfile? fromMap(Map<String, dynamic> rawData) {
     try {
+      final data = Map<String, dynamic>.from(rawData);
       final baseData = UserProfile.baseFromFirestore(data);
-      
+
       return CoachProfile(
         uid: baseData['uid'],
         fullName: baseData['fullName'],
+        nickname: baseData['nickname'],
         gender: baseData['gender'],
         age: baseData['age'],
         location: baseData['location'],
+        latitude: baseData['latitude'],
+        longitude: baseData['longitude'],
         profilePictureUrl: baseData['profilePictureUrl'],
+        profilePhotos: baseData['profilePhotos'],
         isProfileComplete: baseData['isProfileComplete'],
         createdAt: baseData['createdAt'],
         updatedAt: baseData['updatedAt'],
-        specializationSports: List<String>.from(data['specializationSports'] ?? []),
+        specializationSports:
+            List<String>.from(data['specializationSports'] ?? []),
         experienceYears: data['experienceYears'] as int? ?? 0,
-        certifications: data['certifications'] != null 
-            ? (data['certifications'] is List 
-                ? List<String>.from(data['certifications']) 
+        certifications: data['certifications'] != null
+            ? (data['certifications'] is List
+                ? List<String>.from(data['certifications'])
                 : [data['certifications'].toString()])
             : null,
         hourlyRate: (data['hourlyRate'] as num?)?.toDouble() ?? 0.0,
         availableTimeSlots: (data['availableTimeSlots'] as List<dynamic>?)
-                ?.map((slot) => TimeSlot.fromMap(slot as Map<String, dynamic>))
+                ?.map((slot) {
+                  if (slot is Map<String, dynamic>) {
+                    return TimeSlot.fromMap(slot);
+                  }
+                  if (slot is Map) {
+                    return TimeSlot.fromMap(
+                      slot.map(
+                        (key, value) =>
+                            MapEntry(key.toString(), value),
+                      ),
+                    );
+                  }
+                  return null;
+                })
+                .whereType<TimeSlot>()
                 .toList() ??
-            [],
+            const [],
         coachingType: TrainingType.fromString(
           data['coachingType'] as String? ?? 'in_person',
         ),
         bio: data['bio'] as String?,
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -135,7 +164,8 @@ class CoachProfile extends UserProfile {
         other.location == location &&
         other.profilePictureUrl == profilePictureUrl &&
         other.isProfileComplete == isProfileComplete &&
-        other.specializationSports.toString() == specializationSports.toString() &&
+        other.specializationSports.toString() ==
+            specializationSports.toString() &&
         other.experienceYears == experienceYears &&
         other.certifications == certifications &&
         other.hourlyRate == hourlyRate &&

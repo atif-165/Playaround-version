@@ -37,7 +37,7 @@ class _TeamSelectorState extends State<TeamSelector> {
     // TODO: Load user's teams from service
     // For now, we'll simulate some data
     await Future.delayed(const Duration(seconds: 1));
-    
+
     setState(() {
       _userTeams = [
         // Mock teams - replace with actual data
@@ -141,7 +141,7 @@ class _TeamSelectorState extends State<TeamSelector> {
 
   Widget _buildTeamCard(team.Team team) {
     final isSelected = widget.selectedTeamId == team.id;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       child: RadioListTile<String>(
@@ -198,15 +198,14 @@ class _TeamSelectorState extends State<TeamSelector> {
           ],
         ),
         activeColor: ColorsManager.primary,
-        tileColor: isSelected 
+        tileColor: isSelected
             ? ColorsManager.primary.withOpacity(0.1)
             : ColorsManager.cardBackground,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r),
           side: BorderSide(
-            color: isSelected 
-                ? ColorsManager.primary
-                : ColorsManager.dividerColor,
+            color:
+                isSelected ? ColorsManager.primary : ColorsManager.dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),

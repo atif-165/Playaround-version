@@ -97,10 +97,10 @@ class _BookingFilterWidgetState extends State<BookingFilterWidget> {
               onTap: () => widget.onStatusChanged(null),
             ),
             ...BookingStatus.values.map((status) => _buildFilterChip(
-              label: status.displayName,
-              isSelected: widget.selectedStatus == status,
-              onTap: () => widget.onStatusChanged(status),
-            )),
+                  label: status.displayName,
+                  isSelected: widget.selectedStatus == status,
+                  onTap: () => widget.onStatusChanged(status),
+                )),
           ],
         ),
       ],
@@ -126,10 +126,10 @@ class _BookingFilterWidgetState extends State<BookingFilterWidget> {
               onTap: () => widget.onSportChanged(null),
             ),
             ...SportType.values.map((sport) => _buildFilterChip(
-              label: sport.displayName,
-              isSelected: widget.selectedSport == sport,
-              onTap: () => widget.onSportChanged(sport),
-            )),
+                  label: sport.displayName,
+                  isSelected: widget.selectedSport == sport,
+                  onTap: () => widget.onSportChanged(sport),
+                )),
           ],
         ),
       ],
@@ -262,8 +262,8 @@ class _BookingFilterWidgetState extends State<BookingFilterWidget> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: ColorsManager.mainBlue,
-            ),
+                  primary: ColorsManager.mainBlue,
+                ),
           ),
           child: child!,
         );

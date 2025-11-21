@@ -21,19 +21,32 @@ void main() {
       });
 
       test('should return false for non-http(s) URLs', () {
-        expect(ImageUtils.isValidImageUrl('ftp://example.com/image.jpg'), false);
+        expect(
+            ImageUtils.isValidImageUrl('ftp://example.com/image.jpg'), false);
       });
 
       test('should return true for valid image URLs with extensions', () {
-        expect(ImageUtils.isValidImageUrl('https://example.com/image.jpg'), true);
-        expect(ImageUtils.isValidImageUrl('https://example.com/image.png'), true);
-        expect(ImageUtils.isValidImageUrl('http://example.com/image.gif'), true);
+        expect(
+            ImageUtils.isValidImageUrl('https://example.com/image.jpg'), true);
+        expect(
+            ImageUtils.isValidImageUrl('https://example.com/image.png'), true);
+        expect(
+            ImageUtils.isValidImageUrl('http://example.com/image.gif'), true);
       });
 
       test('should return true for known image hosting services', () {
-        expect(ImageUtils.isValidImageUrl('https://res.cloudinary.com/demo/image/upload/sample.jpg'), true);
-        expect(ImageUtils.isValidImageUrl('https://firebasestorage.googleapis.com/v0/b/project/o/image'), true);
-        expect(ImageUtils.isValidImageUrl('https://lh3.googleusercontent.com/profile-pic'), true);
+        expect(
+            ImageUtils.isValidImageUrl(
+                'https://res.cloudinary.com/demo/image/upload/sample.jpg'),
+            true);
+        expect(
+            ImageUtils.isValidImageUrl(
+                'https://firebasestorage.googleapis.com/v0/b/project/o/image'),
+            true);
+        expect(
+            ImageUtils.isValidImageUrl(
+                'https://lh3.googleusercontent.com/profile-pic'),
+            true);
       });
     });
 
@@ -51,8 +64,8 @@ void main() {
       });
 
       test('should trim whitespace from valid URLs', () {
-        expect(ImageUtils.sanitizeImageUrl('  https://example.com/image.jpg  '), 
-               'https://example.com/image.jpg');
+        expect(ImageUtils.sanitizeImageUrl('  https://example.com/image.jpg  '),
+            'https://example.com/image.jpg');
       });
     });
 

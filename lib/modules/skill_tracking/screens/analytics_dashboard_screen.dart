@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/models.dart';
@@ -18,16 +19,18 @@ class AnalyticsDashboardScreen extends StatefulWidget {
   });
 
   @override
-  State<AnalyticsDashboardScreen> createState() => _AnalyticsDashboardScreenState();
+  State<AnalyticsDashboardScreen> createState() =>
+      _AnalyticsDashboardScreenState();
 }
 
 class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
     with TickerProviderStateMixin {
   final SkillTrackingService _skillService = SkillTrackingService();
   late TabController _tabController;
-  
-  SkillAnalytics? _analytics;
+
+  SkillRecord? _analytics;
   bool _isLoading = true;
+  bool _isExporting = false;
   String _selectedPeriod = '3M'; // 1M, 3M, 6M, 1Y
 
   @override
@@ -45,27 +48,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
 
   Future<void> _loadAnalytics() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final now = DateTime.now();
-      DateTime startDate;
-      
-      switch (_selectedPeriod) {
-        case '1M':
-          startDate = now.subtract(const Duration(days: 30));
-          break;
-        case '3M':
-          startDate = now.subtract(const Duration(days: 90));
-          break;
-        case '6M':
-          startDate = now.subtract(const Duration(days: 180));
-          break;
-        case '1Y':
-          startDate = now.subtract(const Duration(days: 365));
-          break;
-        default:
-          startDate = now.subtract(const Duration(days: 90));
-      }
+      final startDate = _resolveSelectedPeriodStart(now);
 
       final analytics = await _skillService.getPlayerSkillAnalytics(
         widget.playerId,
@@ -104,7 +90,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
       elevation: 0,
       title: Text(
         'Performance Analytics',
-        style: TextStyles.font18DarkBlue600Weight.copyWith(fontSize: 20.sp, color: Colors.white),
+        style: TextStyles.font18DarkBlue600Weight
+            .copyWith(fontSize: 20.sp, color: Colors.white),
       ),
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
@@ -115,6 +102,21 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
         ),
       ),
       actions: [
+        IconButton(
+          tooltip: 'Export CSV',
+          onPressed: _isExporting ? null : _handleExport,
+          icon: _isExporting
+              ? SizedBox(
+                  width: 20.w,
+                  height: 20.h,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  Icons.ios_share,
+                  color: ColorsManager.mainBlue,
+                  size: 22.sp,
+                ),
+        ),
         _buildPeriodSelector(),
         Gap(8.w),
       ],
@@ -151,7 +153,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
       ],
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-        decoration: BoxDecoration( 
+        decoration: BoxDecoration(
           color: ColorsManager.mainBlue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8.r),
         ),
@@ -202,7 +204,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           // Key metrics cards
           _buildKeyMetricsSection(),
           Gap(24.h),
-          
+
           // Current skill levels radar chart
           Text(
             'Current Skill Levels',
@@ -217,7 +219,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
             ),
           ),
           Gap(24.h),
-          
+
           // Recent performance trend
           Text(
             'Overall Performance Trend',
@@ -241,7 +243,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
             style: TextStyles.font18DarkBlue600Weight,
           ),
           Gap(16.h),
-          
+
           // Individual skill trend charts
           for (final skillType in SkillType.allSkills) ...[
             Builder(
@@ -275,11 +277,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           // Performance insights
           _buildPerformanceInsights(),
           Gap(24.h),
-          
+
           // Goal progress
           _buildGoalProgressSection(),
           Gap(24.h),
-          
+
           // Improvement recommendations
           _buildRecommendationsSection(),
         ],
@@ -320,13 +322,14 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
     );
   }
 
-  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
+  Widget _buildMetricCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.black,
         borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [ 
+        boxShadow: [
           BoxShadow(
             color: Colors.white.withOpacity(0.1),
             blurRadius: 8.r,
@@ -362,7 +365,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
 
   Widget _buildOverallTrendChart() {
     final trendData = _analytics!.overallTrend;
-    
+
     if (trendData.isEmpty) {
       return _buildEmptyChartState('No trend data available');
     }
@@ -373,7 +376,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [ 
+        boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8.r,
@@ -394,8 +397,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           ),
           titlesData: FlTitlesData(
             show: true,
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -442,17 +447,22 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           lineBarsData: [
             LineChartBarData(
               spots: trendData.asMap().entries.map((entry) {
-                return FlSpot(entry.key.toDouble(), entry.value.score.toDouble());
+                return FlSpot(
+                    entry.key.toDouble(), entry.value.score.toDouble());
               }).toList(),
               isCurved: true,
               gradient: LinearGradient(
-                colors: [ColorsManager.mainBlue, ColorsManager.mainBlue.withOpacity(0.7)],
+                colors: [
+                  ColorsManager.mainBlue,
+                  ColorsManager.mainBlue.withOpacity(0.7)
+                ],
               ),
               barWidth: 3.w,
               isStrokeCapRound: true,
               dotData: FlDotData(
                 show: true,
-                getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                getDotPainter: (spot, percent, barData, index) =>
+                    FlDotCirclePainter(
                   radius: 4.r,
                   color: Colors.white,
                   strokeWidth: 2.w,
@@ -490,7 +500,6 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           style: TextStyles.font18DarkBlue600Weight,
         ),
         Gap(12.h),
-        
         if (strongestSkill != null)
           _buildInsightCard(
             'Strongest Skill',
@@ -499,9 +508,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
             Icons.star,
             Colors.amber[600]!,
           ),
-        
         Gap(12.h),
-        
         if (weakestSkill != null)
           _buildInsightCard(
             'Area for Improvement',
@@ -510,9 +517,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
             Icons.trending_down,
             Colors.orange[600]!,
           ),
-        
         Gap(12.h),
-        
         if (mostImproved != null)
           _buildInsightCard(
             'Most Improved',
@@ -537,7 +542,6 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           style: TextStyles.font18DarkBlue600Weight,
         ),
         Gap(12.h),
-        
         if (!hasActiveGoals) ...[
           _buildEmptyGoalsInsight(),
         ] else ...[
@@ -566,25 +570,27 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
           style: TextStyles.font18DarkBlue600Weight,
         ),
         Gap(12.h),
-        
+
         // Generate recommendations based on analytics
-        for (final rec in _generateRecommendations()) _buildRecommendationCard(rec),
+        for (final rec in _generateRecommendations())
+          _buildRecommendationCard(rec),
       ],
     );
   }
 
-  Widget _buildInsightCard(String title, String value, String subtitle, IconData icon, Color color) {
+  Widget _buildInsightCard(
+      String title, String value, String subtitle, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white, 
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         children: [
           Container(
-            width: 40.w, 
+            width: 40.w,
             height: 40.h,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
@@ -657,7 +663,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
                   value: goal.progressPercentage / 100,
                   backgroundColor: Colors.grey[200],
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}')),
+                    Color(int.parse(
+                        '0xFF${goal.skillType.colorHex.substring(1)}')),
                   ),
                 ),
               ],
@@ -669,7 +676,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
             style: TextStyle(
               fontSize: 12.sp,
               fontWeight: FontWeight.bold,
-              color: Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}')),
+              color: Color(
+                  int.parse('0xFF${goal.skillType.colorHex.substring(1)}')),
             ),
           ),
         ],
@@ -782,6 +790,64 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
     return const Center(child: CircularProgressIndicator());
   }
 
+  Future<void> _handleExport() async {
+    setState(() => _isExporting = true);
+    final now = DateTime.now();
+    final startDate = _resolveSelectedPeriodStart(now);
+
+    try {
+      final exportFile = await _skillService.exportSkillAnalyticsCsv(
+        playerId: widget.playerId,
+        startDate: startDate,
+        endDate: now,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isExporting = false);
+
+      if (exportFile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('No analytics data available to export')),
+        );
+        return;
+      }
+
+      await Share.shareXFiles(
+        [XFile(exportFile.path)],
+        text: 'Skill analytics report',
+        subject: 'Skill analytics export',
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() => _isExporting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export analytics: $e')),
+      );
+    }
+  }
+
+  DateTime _resolveSelectedPeriodStart(DateTime reference) {
+    switch (_selectedPeriod) {
+      case '1M':
+        return reference.subtract(const Duration(days: 30));
+      case '3M':
+        return reference.subtract(const Duration(days: 90));
+      case '6M':
+        return reference.subtract(const Duration(days: 180));
+      case '1Y':
+        return reference.subtract(const Duration(days: 365));
+      default:
+        return reference.subtract(const Duration(days: 90));
+    }
+  }
+
   double _getOverallImprovement() {
     if (_analytics == null) return 0.0;
     final improvements = _analytics!.skillImprovements.values;
@@ -791,30 +857,34 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen>
 
   List<String> _generateRecommendations() {
     if (_analytics == null) return [];
-    
+
     final recommendations = <String>[];
-    
+
     // Recommendation based on weakest skill
     final weakestSkill = _analytics!.weakestSkill;
     if (weakestSkill != null) {
-      recommendations.add('Focus on improving ${weakestSkill.displayName} - it\'s currently your lowest scoring skill.');
+      recommendations.add(
+          'Focus on improving ${weakestSkill.displayName} - it\'s currently your lowest scoring skill.');
     }
-    
+
     // Recommendation based on improvement trends
     if (!_analytics!.isImproving) {
-      recommendations.add('Consider increasing training frequency or intensity to see better improvement trends.');
+      recommendations.add(
+          'Consider increasing training frequency or intensity to see better improvement trends.');
     }
-    
+
     // Recommendation based on goals
     if (_analytics!.goalsCompletionRate < 50) {
-      recommendations.add('Review your goals - they might be too ambitious. Consider setting smaller, achievable milestones.');
+      recommendations.add(
+          'Review your goals - they might be too ambitious. Consider setting smaller, achievable milestones.');
     }
-    
+
     // Recommendation based on consistency
     if (_analytics!.totalSessions < 10) {
-      recommendations.add('Consistency is key! Try to maintain regular training sessions for better progress tracking.');
+      recommendations.add(
+          'Consistency is key! Try to maintain regular training sessions for better progress tracking.');
     }
-    
+
     return recommendations;
   }
 }

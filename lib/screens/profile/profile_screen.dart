@@ -94,8 +94,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadTournaments() async {
     try {
-      final pastTournaments = await _profileDataService.getUserPastTournaments();
-      final upcomingTournaments = await _profileDataService.getUserUpcomingTournaments();
+      final pastTournaments =
+          await _profileDataService.getUserPastTournaments();
+      final upcomingTournaments =
+          await _profileDataService.getUserUpcomingTournaments();
 
       if (mounted) {
         setState(() {
@@ -275,7 +277,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _buildInfoRow(Icons.wc, 'Gender', profile.gender.displayName),
           _buildInfoRow(Icons.location_on, 'Location', profile.location),
           _buildInfoRow(Icons.badge, 'Role', profile.role.displayName),
-
           if (profile is PlayerProfile) ...[
             Gap(12.h),
             Divider(color: Colors.grey[300]),
@@ -301,7 +302,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               profile.preferredTrainingType.displayName,
             ),
           ],
-
           if (profile is CoachProfile) ...[
             Gap(12.h),
             Divider(color: Colors.grey[300]),
@@ -326,7 +326,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Hourly Rate',
               '\$${profile.hourlyRate.toStringAsFixed(0)}/hour',
             ),
-            if (profile.certifications != null && profile.certifications!.isNotEmpty)
+            if (profile.certifications != null &&
+                profile.certifications!.isNotEmpty)
               _buildInfoRow(
                 Icons.verified,
                 'Certifications',
@@ -421,7 +422,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         ),
         // Show earnings dashboard for coaches
-        if (profile.role == UserRole.coach || profile.role == UserRole.admin) ...[
+        if (profile.role == UserRole.coach ||
+            profile.role == UserRole.admin) ...[
           Gap(16.h),
           AppTextButton(
             buttonText: 'Earnings Dashboard',

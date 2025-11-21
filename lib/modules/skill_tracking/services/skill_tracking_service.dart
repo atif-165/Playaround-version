@@ -1,41 +1,46 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/models.dart';
-import '../repositories/skill_tracking_repository.dart';
+import '../repositories/skill_repository.dart';
 
 /// Service layer for skill tracking business logic
 class SkillTrackingService {
-  final SkillTrackingRepository _repository;
-  
+  final SkillRepository _repository;
+
   // Cache for frequently accessed data
-  final Map<String, List<SkillLog>> _skillLogsCache = {};
-  final Map<String, List<SkillGoal>> _skillGoalsCache = {};
+  final Map<String, List<SessionLog>> _sessionLogsCache = {};
+  final Map<String, List<Goal>> _goalsCache = {};
   final Map<String, DateTime> _cacheTimestamps = {};
-  
+
   // Cache duration (5 minutes)
   static const Duration _cacheDuration = Duration(minutes: 5);
 
-  SkillTrackingService({SkillTrackingRepository? repository})
-      : _repository = repository ?? SkillTrackingRepository();
+  SkillTrackingService({SkillRepository? repository})
+      : _repository = repository ?? SkillRepository();
 
   /// Get skill logs stream with caching
-  Stream<List<SkillLog>> getPlayerSkillLogsStream(String playerId) {
-    return _repository.getPlayerSkillLogsStream(playerId).map((logs) {
-      _updateSkillLogsCache(playerId, logs);
+  Stream<List<SessionLog>> getPlayerSkillLogsStream(String playerId) {
+    return _repository.getPlayerSessionLogsStream(playerId).map((logs) {
+      _updateSessionLogsCache(playerId, logs);
       return logs;
     }).asBroadcastStream();
   }
 
   /// Get skill goals stream with caching
-  Stream<List<SkillGoal>> getPlayerSkillGoalsStream(String playerId) {
-    return _repository.getPlayerSkillGoalsStream(playerId).map((goals) {
-      _updateSkillGoalsCache(playerId, goals);
+  Stream<List<Goal>> getPlayerSkillGoalsStream(String playerId) {
+    return _repository.getPlayerGoalsStream(playerId).map((goals) {
+      _updateGoalsCache(playerId, goals);
       return goals;
     }).asBroadcastStream();
   }
 
   /// Get cached skill logs or fetch from repository
-  Future<List<SkillLog>> getPlayerSkillLogs(
+  Future<List<SessionLog>> getPlayerSkillLogs(
     String playerId, {
     DateTime? startDate,
     DateTime? endDate,
@@ -43,45 +48,45 @@ class SkillTrackingService {
     bool forceRefresh = false,
   }) async {
     final cacheKey = '${playerId}_logs';
-    
+
     if (!forceRefresh && _isCacheValid(cacheKey)) {
-      final cachedLogs = _skillLogsCache[cacheKey] ?? [];
+      final cachedLogs = _sessionLogsCache[cacheKey] ?? [];
       return _filterSkillLogs(cachedLogs, startDate, endDate, limit);
     }
 
-    final logs = await _repository.getPlayerSkillLogs(
+    final logs = await _repository.getPlayerSessionLogs(
       playerId,
       startDate: startDate,
       endDate: endDate,
       limit: limit,
     );
 
-    _updateSkillLogsCache(playerId, logs);
+    _updateSessionLogsCache(playerId, logs);
     return logs;
   }
 
   /// Get cached skill goals or fetch from repository
-  Future<List<SkillGoal>> getPlayerSkillGoals(
+  Future<List<Goal>> getPlayerSkillGoals(
     String playerId, {
     GoalStatus? status,
     bool forceRefresh = false,
   }) async {
     final cacheKey = '${playerId}_goals';
-    
+
     if (!forceRefresh && _isCacheValid(cacheKey)) {
-      final cachedGoals = _skillGoalsCache[cacheKey] ?? [];
-      return status != null 
+      final cachedGoals = _goalsCache[cacheKey] ?? [];
+      return status != null
           ? cachedGoals.where((goal) => goal.status == status).toList()
           : cachedGoals;
     }
 
-    final goals = await _repository.getPlayerSkillGoals(playerId, status: status);
-    _updateSkillGoalsCache(playerId, goals);
+    final goals = await _repository.getPlayerGoals(playerId, status: status);
+    _updateGoalsCache(playerId, goals);
     return goals;
   }
 
   /// Add skill log with validation
-  Future<String?> addSkillLog(SkillLog skillLog) async {
+  Future<String?> addSkillLog(SessionLog skillLog) async {
     // Validate skill log
     final validationError = _validateSkillLog(skillLog);
     if (validationError != null) {
@@ -89,7 +94,7 @@ class SkillTrackingService {
       return null;
     }
 
-    final result = await _repository.addSkillLog(skillLog);
+    final result = await _repository.addSessionLog(skillLog);
     if (result != null) {
       _invalidateCache('${skillLog.playerId}_logs');
       _invalidateCache('${skillLog.playerId}_goals');
@@ -98,14 +103,14 @@ class SkillTrackingService {
   }
 
   /// Update skill log with validation
-  Future<bool> updateSkillLog(SkillLog skillLog) async {
+  Future<bool> updateSkillLog(SessionLog skillLog) async {
     final validationError = _validateSkillLog(skillLog);
     if (validationError != null) {
       debugPrint('Skill log validation failed: $validationError');
       return false;
     }
 
-    final result = await _repository.updateSkillLog(skillLog);
+    final result = await _repository.updateSessionLog(skillLog);
     if (result) {
       _invalidateCache('${skillLog.playerId}_logs');
       _invalidateCache('${skillLog.playerId}_goals');
@@ -115,7 +120,7 @@ class SkillTrackingService {
 
   /// Delete skill log
   Future<bool> deleteSkillLog(String skillLogId, String playerId) async {
-    final result = await _repository.deleteSkillLog(skillLogId);
+    final result = await _repository.deleteSessionLog(skillLogId);
     if (result) {
       _invalidateCache('${playerId}_logs');
     }
@@ -123,7 +128,7 @@ class SkillTrackingService {
   }
 
   /// Add skill goal with validation
-  Future<String?> addSkillGoal(SkillGoal skillGoal) async {
+  Future<String?> addSkillGoal(Goal skillGoal) async {
     // Validate skill goal
     final validationError = _validateSkillGoal(skillGoal);
     if (validationError != null) {
@@ -142,11 +147,12 @@ class SkillTrackingService {
     );
 
     if (hasActiveGoal) {
-      debugPrint('Player already has an active goal for ${skillGoal.skillType.displayName}');
+      debugPrint(
+          'Player already has an active goal for ${skillGoal.skillType.displayName}');
       return null;
     }
 
-    final result = await _repository.addSkillGoal(skillGoal);
+    final result = await _repository.addGoal(skillGoal);
     if (result != null) {
       _invalidateCache('${skillGoal.playerId}_goals');
     }
@@ -154,14 +160,14 @@ class SkillTrackingService {
   }
 
   /// Update skill goal with validation
-  Future<bool> updateSkillGoal(SkillGoal skillGoal) async {
+  Future<bool> updateSkillGoal(Goal skillGoal) async {
     final validationError = _validateSkillGoal(skillGoal);
     if (validationError != null) {
       debugPrint('Skill goal validation failed: $validationError');
       return false;
     }
 
-    final result = await _repository.updateSkillGoal(skillGoal);
+    final result = await _repository.updateGoal(skillGoal);
     if (result) {
       _invalidateCache('${skillGoal.playerId}_goals');
     }
@@ -170,7 +176,7 @@ class SkillTrackingService {
 
   /// Delete skill goal
   Future<bool> deleteSkillGoal(String skillGoalId, String playerId) async {
-    final result = await _repository.deleteSkillGoal(skillGoalId);
+    final result = await _repository.deleteGoal(skillGoalId);
     if (result) {
       _invalidateCache('${playerId}_goals');
     }
@@ -178,12 +184,12 @@ class SkillTrackingService {
   }
 
   /// Get comprehensive skill analytics
-  Future<SkillAnalytics> getPlayerSkillAnalytics(
+  Future<SkillRecord> getPlayerSkillAnalytics(
     String playerId, {
     DateTime? startDate,
     DateTime? endDate,
   }) async {
-    return await _repository.getPlayerSkillAnalytics(
+    return await _repository.getPlayerSkillRecord(
       playerId,
       startDate: startDate,
       endDate: endDate,
@@ -196,12 +202,12 @@ class SkillTrackingService {
   }
 
   /// Create a new skill log for coach logging
-  SkillLog createSkillLog({
+  SessionLog createSkillLog({
     required String playerId,
     required String coachId,
     required Map<SkillType, int> skillScores,
     Map<SkillType, int>? skillChanges,
-    SkillLogSource source = SkillLogSource.manual,
+    SessionLogSource source = SessionLogSource.manual,
     String? context,
     DateTime? date,
     String? notes,
@@ -219,7 +225,7 @@ class SkillTrackingService {
       }
     }
 
-    return SkillLog(
+    return SessionLog(
       id: '', // Will be set by Firestore
       playerId: playerId,
       loggedBy: coachId,
@@ -236,7 +242,7 @@ class SkillTrackingService {
   }
 
   /// Create a new skill goal for player
-  SkillGoal createSkillGoal({
+  Goal createSkillGoal({
     required String playerId,
     required SkillType skillType,
     required int currentScore,
@@ -245,7 +251,7 @@ class SkillTrackingService {
     String? description,
   }) {
     final now = DateTime.now();
-    return SkillGoal(
+    return Goal(
       id: '', // Will be set by Firestore
       playerId: playerId,
       skillType: skillType,
@@ -260,22 +266,23 @@ class SkillTrackingService {
   }
 
   /// Validate skill log data
-  String? _validateSkillLog(SkillLog skillLog) {
+  String? _validateSkillLog(SessionLog skillLog) {
     if (skillLog.playerId.isEmpty) return 'Player ID is required';
     if (skillLog.loggedBy.isEmpty) return 'Logger ID is required';
-    if (skillLog.skillScores.isEmpty) return 'At least one skill score is required';
-    
+    if (skillLog.skillScores.isEmpty)
+      return 'At least one skill score is required';
+
     for (final entry in skillLog.skillScores.entries) {
       if (entry.value < 0 || entry.value > 100) {
         return 'Skill scores must be between 0 and 100';
       }
     }
-    
+
     return null;
   }
 
   /// Validate skill goal data
-  String? _validateSkillGoal(SkillGoal skillGoal) {
+  String? _validateSkillGoal(Goal skillGoal) {
     if (skillGoal.playerId.isEmpty) return 'Player ID is required';
     if (skillGoal.currentScore < 0 || skillGoal.currentScore > 100) {
       return 'Current score must be between 0 and 100';
@@ -289,20 +296,20 @@ class SkillTrackingService {
     if (skillGoal.targetDate.isBefore(DateTime.now())) {
       return 'Target date must be in the future';
     }
-    
+
     return null;
   }
 
   /// Cache management methods
-  void _updateSkillLogsCache(String playerId, List<SkillLog> logs) {
+  void _updateSessionLogsCache(String playerId, List<SessionLog> logs) {
     final cacheKey = '${playerId}_logs';
-    _skillLogsCache[cacheKey] = logs;
+    _sessionLogsCache[cacheKey] = logs;
     _cacheTimestamps[cacheKey] = DateTime.now();
   }
 
-  void _updateSkillGoalsCache(String playerId, List<SkillGoal> goals) {
+  void _updateGoalsCache(String playerId, List<Goal> goals) {
     final cacheKey = '${playerId}_goals';
-    _skillGoalsCache[cacheKey] = goals;
+    _goalsCache[cacheKey] = goals;
     _cacheTimestamps[cacheKey] = DateTime.now();
   }
 
@@ -313,13 +320,13 @@ class SkillTrackingService {
   }
 
   void _invalidateCache(String cacheKey) {
-    _skillLogsCache.remove(cacheKey);
-    _skillGoalsCache.remove(cacheKey);
+    _sessionLogsCache.remove(cacheKey);
+    _goalsCache.remove(cacheKey);
     _cacheTimestamps.remove(cacheKey);
   }
 
-  List<SkillLog> _filterSkillLogs(
-    List<SkillLog> logs,
+  List<SessionLog> _filterSkillLogs(
+    List<SessionLog> logs,
     DateTime? startDate,
     DateTime? endDate,
     int? limit,
@@ -328,13 +335,16 @@ class SkillTrackingService {
 
     if (startDate != null) {
       filteredLogs = filteredLogs
-          .where((log) => log.date.isAfter(startDate) || log.date.isAtSameMomentAs(startDate))
+          .where((log) =>
+              log.date.isAfter(startDate) ||
+              log.date.isAtSameMomentAs(startDate))
           .toList();
     }
 
     if (endDate != null) {
       filteredLogs = filteredLogs
-          .where((log) => log.date.isBefore(endDate) || log.date.isAtSameMomentAs(endDate))
+          .where((log) =>
+              log.date.isBefore(endDate) || log.date.isAtSameMomentAs(endDate))
           .toList();
     }
 
@@ -347,19 +357,19 @@ class SkillTrackingService {
 
   /// Clear all caches
   void clearCache() {
-    _skillLogsCache.clear();
-    _skillGoalsCache.clear();
+    _sessionLogsCache.clear();
+    _goalsCache.clear();
     _cacheTimestamps.clear();
   }
 
   /// Get skill logs by source type
-  Future<List<SkillLog>> getSkillLogsBySource(
+  Future<List<SessionLog>> getSkillLogsBySource(
     String playerId,
-    SkillLogSource source, {
+    SessionLogSource source, {
     int limit = 50,
   }) async {
     try {
-      final logs = await _repository.getSkillLogs(playerId, limit: limit);
+      final logs = await _repository.getSessionLogs(playerId, limit: limit);
       return logs.where((log) => log.source == source).toList();
     } catch (e) {
       debugPrint('Error getting skill logs by source: $e');
@@ -374,7 +384,7 @@ class SkillTrackingService {
     DateTime endDate,
   ) async {
     try {
-      final logs = await _repository.getSkillLogsByDateRange(
+      final logs = await _repository.getSessionLogsByDateRange(
         playerId,
         startDate,
         endDate,
@@ -411,7 +421,7 @@ class SkillTrackingService {
     DateTime endDate,
   ) async {
     try {
-      final logs = await _repository.getSkillLogsByDateRange(
+      final logs = await _repository.getSessionLogsByDateRange(
         playerId,
         startDate,
         endDate,
@@ -445,7 +455,8 @@ class SkillTrackingService {
         for (final entry in log.skillChanges.entries) {
           if (entry.value != 0) {
             final skillName = entry.key.displayName;
-            changesBySkill[skillName] = (changesBySkill[skillName] ?? 0) + entry.value.abs();
+            changesBySkill[skillName] =
+                (changesBySkill[skillName] ?? 0) + entry.value.abs();
           }
         }
       }
@@ -477,7 +488,7 @@ class SkillTrackingService {
     DateTime endDate,
   ) async {
     try {
-      final logs = await _repository.getSkillLogsByDateRange(
+      final logs = await _repository.getSessionLogsByDateRange(
         playerId,
         startDate,
         endDate,
@@ -539,7 +550,7 @@ class SkillTrackingService {
   /// Get skill log statistics
   Future<Map<String, dynamic>> getSkillLogStatistics(String playerId) async {
     try {
-      final allLogs = await _repository.getSkillLogs(playerId, limit: 1000);
+      final allLogs = await _repository.getSessionLogs(playerId, limit: 1000);
 
       if (allLogs.isEmpty) {
         return {
@@ -561,7 +572,8 @@ class SkillTrackingService {
       // Calculate average scores
       final Map<String, double> averageScores = {};
       for (final skillType in SkillType.values) {
-        final scores = allLogs.map((log) => log.getSkillScore(skillType)).toList();
+        final scores =
+            allLogs.map((log) => log.getSkillScore(skillType)).toList();
         if (scores.isNotEmpty) {
           averageScores[skillType.displayName] =
               scores.reduce((a, b) => a + b) / scores.length.toDouble();
@@ -577,7 +589,8 @@ class SkillTrackingService {
         'averageScores': averageScores,
         'lastLogDate': allLogs.last.date.toIso8601String(),
         'firstLogDate': allLogs.first.date.toIso8601String(),
-        'trackingPeriodDays': allLogs.last.date.difference(allLogs.first.date).inDays,
+        'trackingPeriodDays':
+            allLogs.last.date.difference(allLogs.first.date).inDays,
       };
     } catch (e) {
       debugPrint('Error getting skill log statistics: $e');
@@ -588,21 +601,21 @@ class SkillTrackingService {
   }
 
   /// Get skill analytics for a player
-  Future<SkillAnalytics> getSkillAnalytics(
+  Future<SkillRecord> getSkillAnalytics(
     String playerId,
     DateTime periodStart,
     DateTime periodEnd,
   ) async {
     try {
-      final skillLogs = await _repository.getSkillLogsByDateRange(
+      final skillLogs = await _repository.getSessionLogsByDateRange(
         playerId,
         periodStart,
         periodEnd,
       );
 
-      final skillGoals = await _repository.getSkillGoals(playerId);
+      final skillGoals = await _repository.getPlayerGoals(playerId);
 
-      return SkillAnalytics(
+      return SkillRecord(
         playerId: playerId,
         skillLogs: skillLogs,
         skillGoals: skillGoals,
@@ -612,7 +625,7 @@ class SkillTrackingService {
     } catch (e) {
       debugPrint('Error getting skill analytics: $e');
       // Return empty analytics on error
-      return SkillAnalytics(
+      return SkillRecord(
         playerId: playerId,
         skillLogs: [],
         skillGoals: [],
@@ -622,10 +635,76 @@ class SkillTrackingService {
     }
   }
 
-  /// Get skill logs for a player with limit
-  Future<List<SkillLog>> getSkillLogs(String playerId, {int limit = 50}) async {
+  /// Export analytics to a CSV file stored in the temporary directory.
+  Future<File?> exportSkillAnalyticsCsv({
+    required String playerId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
-      return await _repository.getSkillLogs(playerId, limit: limit);
+      final analytics = await getPlayerSkillAnalytics(
+        playerId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+
+      if (analytics.skillLogs.isEmpty) {
+        return null;
+      }
+
+      final rows = <List<dynamic>>[
+        [
+          'Date',
+          'Source',
+          'Notes',
+          'Speed',
+          'Stamina',
+          'Accuracy',
+        ]
+      ];
+
+      final formatter = DateFormat('yyyy-MM-dd');
+
+      for (final log in analytics.skillLogs) {
+        rows.add([
+          formatter.format(log.date),
+          log.source.displayName,
+          log.notes ?? log.context ?? '',
+          log.getSkillScore(SkillType.speed),
+          log.getSkillScore(SkillType.endurance),
+          log.getSkillScore(SkillType.accuracy),
+        ]);
+      }
+
+      final averages = analytics.currentSkillScores;
+      rows.add([
+        'Averages',
+        '',
+        '',
+        averages[SkillType.speed] ?? 0,
+        averages[SkillType.endurance] ?? 0,
+        averages[SkillType.accuracy] ?? 0,
+      ]);
+
+      final csv = const ListToCsvConverter().convert(rows);
+      final tempDir = await getTemporaryDirectory();
+      final fileName =
+          'skill_analytics_${playerId}_${DateTime.now().millisecondsSinceEpoch}.csv';
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsString(csv);
+      return file;
+    } catch (e, stackTrace) {
+      debugPrint('Error exporting skill analytics CSV: $e');
+      debugPrint(stackTrace.toString());
+      return null;
+    }
+  }
+
+  /// Get skill logs for a player with limit
+  Future<List<SessionLog>> getSkillLogs(String playerId,
+      {int limit = 50}) async {
+    try {
+      return await _repository.getSessionLogs(playerId, limit: limit);
     } catch (e) {
       debugPrint('Error getting skill logs: $e');
       return [];

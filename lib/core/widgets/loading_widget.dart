@@ -15,31 +15,57 @@ class LoadingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: size ?? 40.w,
-            height: size ?? 40.w,
-            child: const CircularProgressIndicator(
-              color: ColorsManager.primary,
-              strokeWidth: 3.0,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final targetSize = size ?? 40.w;
+        final shouldScaleWidth = constraints.maxWidth.isFinite &&
+            constraints.maxWidth < targetSize;
+        final shouldScaleHeight = constraints.maxHeight.isFinite &&
+            constraints.maxHeight < targetSize;
+        final shouldScaleDown = shouldScaleWidth || shouldScaleHeight;
+
+        Widget indicator = SizedBox(
+          width: targetSize,
+          height: targetSize,
+          child: const CircularProgressIndicator(
+            color: ColorsManager.primary,
+            strokeWidth: 3.0,
           ),
-          if (message != null) ...[
-            SizedBox(height: 16.h),
-            Text(
-              message!,
-              style: TextStyle(
-                color: ColorsManager.textSecondary,
-                fontSize: 14.sp,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
-      ),
+        );
+
+        if (shouldScaleDown) {
+          indicator = FittedBox(
+            fit: BoxFit.scaleDown,
+            child: indicator,
+          );
+        }
+
+        final hasMessage = message != null && message!.isNotEmpty;
+        final canShowMessage = hasMessage &&
+            (!constraints.maxHeight.isFinite ||
+                constraints.maxHeight >= (targetSize + 24.h));
+
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              indicator,
+              if (canShowMessage) ...[
+                SizedBox(height: 16.h),
+                Text(
+                  message!,
+                  style: TextStyle(
+                    color: ColorsManager.textSecondary,
+                    fontSize: 14.sp,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

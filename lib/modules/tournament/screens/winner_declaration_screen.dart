@@ -20,7 +20,8 @@ class WinnerDeclarationScreen extends StatefulWidget {
   });
 
   @override
-  State<WinnerDeclarationScreen> createState() => _WinnerDeclarationScreenState();
+  State<WinnerDeclarationScreen> createState() =>
+      _WinnerDeclarationScreenState();
 }
 
 class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
@@ -181,7 +182,8 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
               color: ColorsManager.textSecondary,
             ),
           ),
-          if (widget.tournament.winningPrize != null && widget.tournament.winningPrize! > 0) ...[
+          if (widget.tournament.winningPrize != null &&
+              widget.tournament.winningPrize! > 0) ...[
             Gap(4.h),
             Text(
               'Winning Prize: \$${widget.tournament.winningPrize!.toStringAsFixed(2)}',
@@ -248,14 +250,13 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
         margin: EdgeInsets.only(bottom: 12.h),
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? ColorsManager.success.withValues(alpha: 0.1)
               : ColorsManager.cardBackground,
           borderRadius: BorderRadius.circular(16.r),
           border: Border.all(
-            color: isSelected 
-                ? ColorsManager.success
-                : ColorsManager.dividerColor,
+            color:
+                isSelected ? ColorsManager.success : ColorsManager.dividerColor,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -264,16 +265,14 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: isSelected 
+                color: isSelected
                     ? ColorsManager.success
                     : ColorsManager.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Icon(
                 isSelected ? Icons.emoji_events : Icons.groups,
-                color: isSelected 
-                    ? Colors.white
-                    : ColorsManager.primary,
+                color: isSelected ? Colors.white : ColorsManager.primary,
                 size: 24.sp,
               ),
             ),
@@ -285,7 +284,7 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
                   Text(
                     team.teamName,
                     style: TextStyles.font16DarkBlueBold.copyWith(
-                      color: isSelected 
+                      color: isSelected
                           ? ColorsManager.success
                           : ColorsManager.textPrimary,
                     ),
@@ -324,7 +323,9 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
         AppTextButton(
           buttonText: _isLoading ? 'Declaring Winner...' : 'Declare Winner',
           textStyle: TextStyles.font16WhiteSemiBold,
-          onPressed: _isLoading || _selectedWinnerTeamId == null ? null : _declareWinner,
+          onPressed: _isLoading || _selectedWinnerTeamId == null
+              ? null
+              : _declareWinner,
         ),
         Gap(16.h),
         Text(
@@ -390,7 +391,8 @@ class _WinnerDeclarationScreenState extends State<WinnerDeclarationScreen> {
     });
 
     try {
-      final winnerTeam = _registeredTeams.firstWhere((t) => t.teamId == _selectedWinnerTeamId);
+      final winnerTeam =
+          _registeredTeams.firstWhere((t) => t.teamId == _selectedWinnerTeamId);
 
       await _tournamentService.declareWinner(
         tournamentId: widget.tournament.id,

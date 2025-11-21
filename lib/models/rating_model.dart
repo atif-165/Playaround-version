@@ -59,7 +59,7 @@ class RatingModel {
   /// Create from Firestore document
   factory RatingModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     return RatingModel(
       id: doc.id,
       bookingId: data['bookingId'] as String,
@@ -112,7 +112,8 @@ class RatingModel {
       ratingType: ratingType ?? this.ratingType,
       ratedBy: ratedBy ?? this.ratedBy,
       ratedByName: ratedByName ?? this.ratedByName,
-      ratedByProfilePicture: ratedByProfilePicture ?? this.ratedByProfilePicture,
+      ratedByProfilePicture:
+          ratedByProfilePicture ?? this.ratedByProfilePicture,
       stars: stars ?? this.stars,
       feedback: feedback ?? this.feedback,
       timestamp: timestamp ?? this.timestamp,
@@ -171,7 +172,7 @@ class RatingStats {
   /// Create from Firestore document
   factory RatingStats.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     return RatingStats(
       entityId: doc.id,
       ratingType: RatingType.fromString(data['ratingType'] as String),
@@ -210,7 +211,7 @@ class RatingStats {
     final newTotal = totalRatings + 1;
     final newSum = (averageRating * totalRatings) + newStars;
     final newAverage = newSum / newTotal;
-    
+
     final newDistribution = Map<int, int>.from(starDistribution);
     newDistribution[newStars] = (newDistribution[newStars] ?? 0) + 1;
 
@@ -269,7 +270,7 @@ class PendingRatingModel {
   /// Create from Firestore document
   factory PendingRatingModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     return PendingRatingModel(
       id: doc.id,
       bookingId: data['bookingId'] as String,

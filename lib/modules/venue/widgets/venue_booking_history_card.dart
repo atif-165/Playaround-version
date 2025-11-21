@@ -195,7 +195,7 @@ class VenueBookingHistoryCard extends StatelessWidget {
 
   Widget _buildFooter() {
     final dateFormat = DateFormat('MMM dd, HH:mm');
-    
+
     return Row(
       children: [
         Expanded(
@@ -245,7 +245,8 @@ class VenueBookingHistoryCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onReject,
                     icon: Icon(Icons.close, size: 16.sp),
-                    label: Text('Reject', style: TextStyles.font14DarkBlueMedium),
+                    label:
+                        Text('Reject', style: TextStyles.font14DarkBlueMedium),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
@@ -282,7 +283,8 @@ class VenueBookingHistoryCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onCancel,
                     icon: Icon(Icons.cancel_outlined, size: 16.sp),
-                    label: Text('Cancel', style: TextStyles.font14DarkBlueMedium),
+                    label:
+                        Text('Cancel', style: TextStyles.font14DarkBlueMedium),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
@@ -297,7 +299,8 @@ class VenueBookingHistoryCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: onReschedule,
                     icon: Icon(Icons.schedule, size: 16.sp),
-                    label: Text('Reschedule', style: TextStyles.font14DarkBlueMedium),
+                    label: Text('Reschedule',
+                        style: TextStyles.font14DarkBlueMedium),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: ColorsManager.mainBlue,
                       side: const BorderSide(color: ColorsManager.mainBlue),
@@ -312,7 +315,8 @@ class VenueBookingHistoryCard extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: onComplete,
                     icon: Icon(Icons.check_circle, size: 16.sp),
-                    label: Text('Complete', style: TextStyles.font12WhiteMedium),
+                    label:
+                        Text('Complete', style: TextStyles.font12WhiteMedium),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
@@ -329,21 +333,23 @@ class VenueBookingHistoryCard extends StatelessWidget {
   }
 
   bool _shouldShowActionButtons() {
-    return _canCancel() || _canReschedule() || _canComplete() || _canApprove() || _canReject();
+    return _canCancel() ||
+        _canReschedule() ||
+        _canComplete() ||
+        _canApprove() ||
+        _canReject();
   }
 
   bool _canApprove() {
-    return onApprove != null &&
-           booking.status == VenueBookingStatus.pending;
+    return onApprove != null && booking.status == VenueBookingStatus.pending;
   }
 
   bool _canReject() {
-    return onReject != null &&
-           booking.status == VenueBookingStatus.pending;
+    return onReject != null && booking.status == VenueBookingStatus.pending;
   }
 
   bool _canCancel() {
-    if (booking.status == VenueBookingStatus.completed || 
+    if (booking.status == VenueBookingStatus.completed ||
         booking.status == VenueBookingStatus.cancelled) {
       return false;
     }
@@ -362,7 +368,7 @@ class VenueBookingHistoryCard extends StatelessWidget {
   }
 
   bool _canReschedule() {
-    if (booking.status == VenueBookingStatus.completed || 
+    if (booking.status == VenueBookingStatus.completed ||
         booking.status == VenueBookingStatus.cancelled) {
       return false;
     }

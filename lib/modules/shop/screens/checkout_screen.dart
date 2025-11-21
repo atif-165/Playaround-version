@@ -19,17 +19,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     // For simplicity, we fetch cart items and create order items with priceAtPurchase resolved at confirmation page.
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final items = await CartService.getCartItems(userId);
-    final orderItems = items.map((e) => OrderItem(
-      productId: e.productId,
-      productName: e.productName,
-      price: e.price,
-      quantity: e.quantity,
-      imageUrl: e.productImage,
-    )).toList();
+    final orderItems = items
+        .map((e) => OrderItem(
+              productId: e.productId,
+              productName: e.productName,
+              price: e.price,
+              quantity: e.quantity,
+              imageUrl: e.productImage,
+            ))
+        .toList();
     await _orders.placeOrder(orderItems, widget.total);
     await CartService.clearCart(userId);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order placed')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Order placed')));
     if (Navigator.canPop(context)) {
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
@@ -56,4 +59,3 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 }
-

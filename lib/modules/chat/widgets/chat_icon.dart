@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-
 import '../services/chat_service.dart';
 import '../screens/chat_list_screen.dart';
 
@@ -28,7 +27,7 @@ class ChatIcon extends StatelessWidget {
             unreadCount += room.getUnreadCount('current_user_id') as int;
           }
         }
-        
+
         return Stack(
           children: [
             IconButton(

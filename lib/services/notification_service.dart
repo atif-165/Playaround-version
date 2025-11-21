@@ -1,19 +1,68 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/notification_model.dart';
+import 'local_notification_service.dart';
 
 /// Service for managing notifications
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal();
+  NotificationService._internal({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    LocalNotificationService? localNotificationService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance,
+        _localNotificationService =
+            localNotificationService ?? LocalNotificationService();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  static NotificationService? _instance;
+  factory NotificationService({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    LocalNotificationService? localNotificationService,
+  }) {
+    _instance ??= NotificationService._internal(
+      firestore: firestore,
+      auth: auth,
+      localNotificationService: localNotificationService,
+    );
+    return _instance!;
+  }
+
+  final FirebaseFirestore _firestore;
+  final FirebaseAuth _auth;
+  final LocalNotificationService _localNotificationService;
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
+      _realtimeSubscription;
+  bool _processedInitialSnapshot = false;
+  final Set<String> _deliveredNotificationIds = <String>{};
+
+  @visibleForTesting
+  static void resetInstance() {
+    _instance?._dispose();
+    _instance = null;
+  }
+
+  void _dispose() {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = null;
+    _processedInitialSnapshot = false;
+    _deliveredNotificationIds.clear();
+  }
 
   // Collection reference
-  CollectionReference get _notificationsCollection => _firestore.collection('notifications');
+  CollectionReference<Map<String, dynamic>> get _notificationsCollection =>
+      _firestore
+          .collection('notifications')
+          .withConverter<Map<String, dynamic>>(
+            fromFirestore: (snapshot, _) => Map<String, dynamic>.from(
+                snapshot.data() ?? <String, dynamic>{}),
+            toFirestore: (value, _) => value,
+          );
 
   /// Create a new notification
   Future<String> createNotification({
@@ -35,7 +84,9 @@ class NotificationService {
         createdAt: DateTime.now(),
       );
 
-      await _notificationsCollection.doc(notificationId).set(notification.toFirestore());
+      await _notificationsCollection
+          .doc(notificationId)
+          .set(notification.toFirestore());
       return notificationId;
     } catch (e) {
       throw Exception('Failed to create notification: $e');
@@ -48,7 +99,7 @@ class NotificationService {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      Query query = _notificationsCollection
+      Query<Map<String, dynamic>> query = _notificationsCollection
           .where('userId', isEqualTo: user.uid)
           .orderBy('createdAt', descending: true);
 
@@ -57,7 +108,8 @@ class NotificationService {
       }
 
       return query.snapshots().map((snapshot) => snapshot.docs
-          .map((doc) => NotificationModel.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+              NotificationModel.fromMap(Map<String, dynamic>.from(doc.data())))
           .toList());
     } catch (e) {
       throw Exception('Failed to get notifications: $e');
@@ -207,9 +259,90 @@ class NotificationService {
   /// Send notification (alias for createNotification with NotificationModel)
   Future<void> sendNotification(NotificationModel notification) async {
     try {
-      await _notificationsCollection.doc(notification.id).set(notification.toFirestore());
+      await _notificationsCollection
+          .doc(notification.id)
+          .set(notification.toFirestore());
     } catch (e) {
       throw Exception('Failed to send notification: $e');
     }
   }
+
+  /// Start listening to Firestore notifications and mirror them as local notifications.
+  Future<void> startRealtimeListener(
+      {bool forceRestart = false, String? testUserId}) async {
+    if (!forceRestart && _realtimeSubscription != null) return;
+
+    final user = _auth.currentUser;
+    final effectiveUserId = user?.uid ?? testUserId;
+    if (effectiveUserId == null) throw Exception('User not authenticated');
+
+    if (forceRestart) {
+      await _realtimeSubscription?.cancel();
+      _processedInitialSnapshot = false;
+      _deliveredNotificationIds.clear();
+    }
+
+    await _localNotificationService.initialize();
+
+    final query = _notificationsCollection
+        .where('userId', isEqualTo: effectiveUserId)
+        .orderBy('createdAt', descending: true)
+        .limit(25);
+
+    _realtimeSubscription = query.snapshots().listen((snapshot) {
+      if (!_processedInitialSnapshot) {
+        for (final doc in snapshot.docs) {
+          _deliveredNotificationIds.add(doc.id);
+        }
+        _processedInitialSnapshot = true;
+        return;
+      }
+
+      for (final change in snapshot.docChanges) {
+        if (change.type != DocumentChangeType.added) continue;
+        if (change.doc.metadata.hasPendingWrites) continue;
+
+        final data = change.doc.data();
+        if (data == null) continue;
+
+        try {
+          final notification = NotificationModel.fromMap(
+            Map<String, dynamic>.from(data),
+          );
+          if (_deliveredNotificationIds.contains(notification.id)) {
+            continue;
+          }
+          _deliveredNotificationIds.add(notification.id);
+
+          unawaited(_localNotificationService.showNotification(
+            id: notification.id.hashCode,
+            title: notification.title,
+            body: notification.message,
+            payload: {
+              'notificationId': notification.id,
+              'type': notification.type.value,
+              'createdAt': notification.createdAt.toIso8601String(),
+              if (notification.data != null) 'data': notification.data,
+            },
+          ));
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint(
+                'NotificationService: failed to deliver local notification - $e');
+          }
+        }
+      }
+    });
+  }
+
+  /// Stop listening to realtime Firestore notifications.
+  Future<void> stopRealtimeListener() async {
+    await _realtimeSubscription?.cancel();
+    _realtimeSubscription = null;
+    _processedInitialSnapshot = false;
+    _deliveredNotificationIds.clear();
+  }
+
+  @visibleForTesting
+  bool get isListening => _realtimeSubscription != null;
 }

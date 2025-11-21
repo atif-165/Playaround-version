@@ -54,7 +54,7 @@ class _TeamFilterSheetState extends State<TeamFilterSheet> {
 
   final List<String> _availableSports = [
     'Football',
-    'Cricket', 
+    'Cricket',
     'Basketball',
     'Tennis',
     'Badminton',
@@ -63,7 +63,7 @@ class _TeamFilterSheetState extends State<TeamFilterSheet> {
 
   final List<String> _availableTimeSlots = [
     'Morning (6-12)',
-    'Afternoon (12-18)', 
+    'Afternoon (12-18)',
     'Evening (18-24)',
   ];
 
@@ -76,7 +76,8 @@ class _TeamFilterSheetState extends State<TeamFilterSheet> {
       (widget.currentFilters['maxSkill'] ?? 100).toDouble(),
     );
     _radiusKm = widget.currentFilters['radiusKm'] ?? 20.0;
-    _selectedTimeSlots = List<String>.from(widget.currentFilters['timeSlots'] ?? []);
+    _selectedTimeSlots =
+        List<String>.from(widget.currentFilters['timeSlots'] ?? []);
   }
 
   @override

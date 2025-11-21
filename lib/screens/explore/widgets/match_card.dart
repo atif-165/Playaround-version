@@ -48,7 +48,8 @@ class MatchCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _getMatchScoreColor(match.matchScore).withValues(alpha: 0.3),
+                      color: _getMatchScoreColor(match.matchScore)
+                          .withValues(alpha: 0.3),
                       width: 3,
                     ),
                   ),
@@ -140,7 +141,8 @@ class MatchCard extends StatelessWidget {
                     vertical: 8.h,
                   ),
                   decoration: BoxDecoration(
-                    color: _getMatchScoreColor(match.matchScore).withValues(alpha: 0.1),
+                    color: _getMatchScoreColor(match.matchScore)
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Column(
@@ -217,30 +219,30 @@ class MatchCard extends StatelessWidget {
                 ),
               ),
               Gap(8.h),
-              ...match.matchReasons.take(3).map((reason) =>
-                Padding(
-                  padding: EdgeInsets.only(bottom: 4.h),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle,
-                        size: 14.sp,
-                        color: Colors.green,
-                      ),
-                      Gap(8.w),
-                      Expanded(
-                        child: Text(
-                          reason,
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey[700],
+              ...match.matchReasons.take(3).map(
+                    (reason) => Padding(
+                      padding: EdgeInsets.only(bottom: 4.h),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            size: 14.sp,
+                            color: Colors.green,
                           ),
-                        ),
+                          Gap(8.w),
+                          Expanded(
+                            child: Text(
+                              reason,
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
               Gap(16.h),
             ],
 

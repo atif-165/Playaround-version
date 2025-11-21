@@ -15,13 +15,16 @@ class PasswordValidations extends StatelessWidget {
       children: [
         buildValidationRow('At least 8 characters', password.length >= 8),
         Gap(2.h),
-        buildValidationRow('One uppercase letter', RegExp(r'(?=.*[A-Z])').hasMatch(password)),
+        buildValidationRow(
+            'One uppercase letter', RegExp(r'(?=.*[A-Z])').hasMatch(password)),
         Gap(2.h),
-        buildValidationRow('One lowercase letter', RegExp(r'(?=.*[a-z])').hasMatch(password)),
+        buildValidationRow(
+            'One lowercase letter', RegExp(r'(?=.*[a-z])').hasMatch(password)),
         Gap(2.h),
         buildValidationRow('One digit', RegExp(r'(?=.*\d)').hasMatch(password)),
         Gap(2.h),
-        buildValidationRow('One special character (@\$!%*?&)', RegExp(r'(?=.*[@$!%*?&])').hasMatch(password)),
+        buildValidationRow('One special character (@\$!%*?&)',
+            RegExp(r'(?=.*[@$!%*?&])').hasMatch(password)),
       ],
     );
   }

@@ -110,11 +110,16 @@ class TournamentPreviewScreen extends StatelessWidget {
         _buildDetailRow('Sport', tournament.sportType.displayName),
         _buildDetailRow('Format', tournament.format.displayName),
         _buildDetailRow('Max Teams', '${tournament.maxTeams}'),
-        _buildDetailRow('Entry Fee', '\$${tournament.entryFee?.toStringAsFixed(2) ?? '0.00'}'),
-        _buildDetailRow('Prize Pool', '\$${tournament.winningPrize?.toStringAsFixed(2) ?? '0.00'}'),
-        _buildDetailRow('Venue', tournament.venueName ?? tournament.location ?? 'TBD'),
-        _buildDetailRow('Start Date', DateFormat('MMM dd, yyyy at HH:mm').format(tournament.startDate)),
-        _buildDetailRow('Registration Deadline', DateFormat('MMM dd, yyyy').format(tournament.registrationEndDate)),
+        _buildDetailRow('Entry Fee',
+            '\$${tournament.entryFee?.toStringAsFixed(2) ?? '0.00'}'),
+        _buildDetailRow('Prize Pool',
+            '\$${tournament.winningPrize?.toStringAsFixed(2) ?? '0.00'}'),
+        _buildDetailRow(
+            'Venue', tournament.venueName ?? tournament.location ?? 'TBD'),
+        _buildDetailRow('Start Date',
+            DateFormat('MMM dd, yyyy at HH:mm').format(tournament.startDate)),
+        _buildDetailRow('Registration Deadline',
+            DateFormat('MMM dd, yyyy').format(tournament.registrationEndDate)),
       ],
     );
   }
@@ -166,26 +171,28 @@ class TournamentPreviewScreen extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: tournament.rules.map((rule) => Padding(
-              padding: EdgeInsets.only(bottom: 8.h),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '• ',
-                    style: TextStyles.font14DarkBlueMedium.copyWith(
-                      color: ColorsManager.primary,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      rule,
-                      style: TextStyles.font14DarkBlueMedium,
-                    ),
-                  ),
-                ],
-              ),
-            )).toList(),
+            children: tournament.rules
+                .map((rule) => Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '• ',
+                            style: TextStyles.font14DarkBlueMedium.copyWith(
+                              color: ColorsManager.primary,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              rule,
+                              style: TextStyles.font14DarkBlueMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ))
+                .toList(),
           ),
         ),
       ],
@@ -213,7 +220,8 @@ class TournamentPreviewScreen extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: tournament.qualifyingQuestions.asMap().entries.map((entry) {
+            children:
+                tournament.qualifyingQuestions.asMap().entries.map((entry) {
               final index = entry.key + 1;
               final question = entry.value;
               return Padding(

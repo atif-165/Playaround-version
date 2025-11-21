@@ -12,23 +12,60 @@ import '../models/chat_room.dart';
 class ChatRoomCard extends StatelessWidget {
   final ChatRoom chatRoom;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback onDelete;
   final String? currentUserId;
+  final bool isSelectionMode;
+  final bool isSelected;
 
   const ChatRoomCard({
     super.key,
     required this.chatRoom,
     required this.onTap,
+    this.onLongPress,
     required this.onDelete,
     this.currentUserId,
+    this.isSelectionMode = false,
+    this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final userId = currentUserId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
+    final userId =
+        currentUserId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
     final displayName = chatRoom.getDisplayName(userId);
     final displayImage = chatRoom.getDisplayImage(userId);
     final unreadCount = chatRoom.getUnreadCount(userId);
+    Map<String, dynamic>? nonConnectionMeta;
+    if (chatRoom.metadata != null) {
+      final raw = chatRoom.metadata!['nonConnection'];
+      if (raw is Map<String, dynamic>) {
+        nonConnectionMeta = Map<String, dynamic>.from(raw);
+      }
+    }
+    final status =
+        (nonConnectionMeta?['status'] as String?)?.toLowerCase() ?? 'none';
+    final initiatorId = nonConnectionMeta?['initiatorId'] as String?;
+    final bool isPending = status == 'pending';
+    final bool isPendingRequest =
+        isPending && initiatorId != null && initiatorId != userId;
+    final bool isPendingInitiator =
+        isPending && initiatorId != null && initiatorId == userId;
+    final bool hasUnread = unreadCount > 0;
+
+    String subtitle = chatRoom.lastMessage ?? 'No messages yet';
+    if (isPending) {
+      subtitle = isPendingInitiator
+          ? 'Message request sent'
+          : 'Message request pending';
+    }
+
+    final TextStyle subtitleStyle = isPending
+        ? TextStyles.font14DarkBlue600Weight
+            .copyWith(color: ColorsManager.warning)
+        : (hasUnread
+            ? TextStyles.font14DarkBlue600Weight
+            : TextStyles.font14Grey400Weight);
 
     return Dismissible(
       key: Key(chatRoom.id),
@@ -48,74 +85,99 @@ class ChatRoomCard extends StatelessWidget {
         ),
         child: InkWell(
           onTap: onTap,
+          onLongPress: onLongPress,
           borderRadius: BorderRadius.circular(12.r),
-          child: Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Row(
-              children: [
-                _buildAvatar(displayImage, displayName),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              displayName,
-                              style: TextStyles.font16DarkBlue600Weight,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+          child: Container(
+            decoration: isSelected
+                ? BoxDecoration(
+                    color: ColorsManager.neonBlue.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12.r),
+                  )
+                : null,
+            child: Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Row(
+                children: [
+                  _buildAvatar(displayImage, displayName),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                displayName,
+                                style: TextStyles.font16DarkBlue600Weight,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          if (chatRoom.lastMessageAt != null)
-                            Text(
-                              _formatTime(chatRoom.lastMessageAt!),
-                              style: TextStyles.font12Grey400Weight,
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              chatRoom.lastMessage ?? 'No messages yet',
-                              style: unreadCount > 0
-                                  ? TextStyles.font14DarkBlue600Weight
-                                  : TextStyles.font14Grey400Weight,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (unreadCount > 0) ...[
-                            SizedBox(width: 8.w),
-                            _buildUnreadBadge(unreadCount),
+                            if (chatRoom.lastMessageAt != null)
+                              Text(
+                                _formatTime(chatRoom.lastMessageAt!),
+                                style: TextStyles.font12Grey400Weight,
+                              ),
                           ],
-                        ],
-                      ),
-                      if (chatRoom.type == ChatType.group) ...[
+                        ),
                         SizedBox(height: 4.h),
                         Row(
                           children: [
-                            Icon(
-                              Icons.group,
-                              size: 14.sp,
-                              color: ColorsManager.gray,
+                            Expanded(
+                              child: Text(
+                                subtitle,
+                                style: subtitleStyle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              '${chatRoom.participants.length} members',
-                              style: TextStyles.font12Grey400Weight,
-                            ),
+                            if (hasUnread) ...[
+                              SizedBox(width: 8.w),
+                              _buildUnreadBadge(unreadCount),
+                            ],
                           ],
                         ),
+                        if (isPendingRequest) ...[
+                          SizedBox(height: 6.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.mail_outline,
+                                size: 14.sp,
+                                color: ColorsManager.warning,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                'Message request',
+                                style: TextStyles.font12Grey400Weight
+                                    .copyWith(color: ColorsManager.warning),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (chatRoom.type == ChatType.group) ...[
+                          SizedBox(height: 4.h),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.group,
+                                size: 14.sp,
+                                color: ColorsManager.gray,
+                              ),
+                              SizedBox(width: 4.w),
+                              Text(
+                                '${chatRoom.participants.length} members',
+                                style: TextStyles.font12Grey400Weight,
+                              ),
+                            ],
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -152,7 +214,8 @@ class ChatRoomCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                errorWidget: (context, url, error) => _buildInitialsAvatar(name),
+                errorWidget: (context, url, error) =>
+                    _buildInitialsAvatar(name),
               ),
             )
           : _buildInitialsAvatar(name),

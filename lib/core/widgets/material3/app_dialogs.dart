@@ -46,7 +46,8 @@ class AppConfirmationDialog extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: (iconColor ?? ColorsManager.primary).withValues(alpha: 0.1),
+                color:
+                    (iconColor ?? ColorsManager.primary).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Icon(

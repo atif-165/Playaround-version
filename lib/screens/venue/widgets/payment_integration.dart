@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+
+import 'package:playaround/services/payment_service.dart';
 
 class PaymentIntegration extends StatefulWidget {
   final double amount;
@@ -25,8 +29,15 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
   final _cvvController = TextEditingController();
   final _nameController = TextEditingController();
 
+  late final PaymentService _paymentService;
   bool _isProcessing = false;
   String _selectedPaymentMethod = 'card';
+
+  @override
+  void initState() {
+    super.initState();
+    _paymentService = PaymentService();
+  }
 
   @override
   void dispose() {
@@ -45,8 +56,8 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
         Text(
           'Payment Method',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 16),
         // Payment Method Selection
@@ -99,7 +110,7 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
     String subtitle,
   ) {
     final isSelected = _selectedPaymentMethod == value;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -135,14 +146,14 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
                   Text(
                     title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
+                          fontWeight: FontWeight.w500,
+                        ),
                   ),
                   Text(
                     subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                          color: Colors.grey[600],
+                        ),
                   ),
                 ],
               ),
@@ -297,8 +308,8 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
             Text(
               title,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
             const Spacer(),
             const Icon(Icons.arrow_forward_ios, size: 16),
@@ -351,15 +362,15 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
               Text(
                 'Total',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               Text(
                 '\$${widget.amount.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
               ),
             ],
           ),
@@ -372,7 +383,7 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isProcessing ? null : _processPayment,
+        onPressed: _isProcessing ? null : () => _processPayment(),
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
@@ -387,8 +398,13 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
     );
   }
 
-  Future<void> _processPayment() async {
-    if (_selectedPaymentMethod == 'card' && !_formKey.currentState!.validate()) {
+  Future<void> _processPayment({
+    String? overrideMethod,
+    Map<String, dynamic>? extraMetadata,
+  }) async {
+    final method = overrideMethod ?? _selectedPaymentMethod;
+
+    if (method == 'card' && !_formKey.currentState!.validate()) {
       return;
     }
 
@@ -397,15 +413,94 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
     });
 
     try {
-      // Simulate payment processing
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // In a real app, you would integrate with Stripe, PayPal, or other payment providers
-      final paymentIntentId = 'pi_${DateTime.now().millisecondsSinceEpoch}';
-      
-      widget.onPaymentSuccess(paymentIntentId);
-    } catch (e) {
-      widget.onPaymentError(e.toString());
+      if (method != 'card' &&
+          _paymentService.environment == PaymentEnvironment.stripe) {
+        throw StateError(
+          'The selected payment method is not yet supported in Stripe mode. Please use a card.',
+        );
+      }
+
+      final metadata = <String, dynamic>{
+        'flow': 'venue_booking',
+        'paymentMethod': method,
+        if (extraMetadata != null) ...extraMetadata,
+      };
+
+      final session = await _paymentService.createPaymentIntent(
+        PaymentRequest(
+          amount: widget.amount,
+          currency: widget.currency.toLowerCase(),
+          description:
+              'Venue booking payment - ${DateTime.now().toIso8601String()}',
+          metadata: metadata,
+        ),
+      );
+
+      String? clientSecret = session.clientSecret;
+      if (!session.isImmediateSuccess && clientSecret == null) {
+        clientSecret = await _paymentService.waitForClientSecret(
+          session.paymentId,
+          timeout: const Duration(seconds: 45),
+        );
+      }
+
+      PaymentResult result;
+      if (session.mode == PaymentEnvironment.emulator) {
+        result = await _paymentService.confirmCardPayment(
+          paymentId: session.paymentId,
+          clientSecret: clientSecret,
+        );
+      } else {
+        final cardDetails = method == 'card'
+            ? _buildCardDetails()
+            : throw StateError(
+                'Unsupported payment method $method for Stripe processing',
+              );
+        result = await _paymentService.confirmCardPayment(
+          paymentId: session.paymentId,
+          card: cardDetails,
+          clientSecret: clientSecret,
+        );
+      }
+
+      if (result.isSuccess) {
+        final paymentIntentId = result.paymentIntentId ??
+            session.paymentIntentId ??
+            session.paymentId;
+        widget.onPaymentSuccess(paymentIntentId);
+        _showSnackBar(
+          context,
+          'Payment successful',
+          Theme.of(context).colorScheme.primary,
+        );
+      } else if (result.requiresAction) {
+        widget.onPaymentError(
+          result.errorMessage ?? 'Additional authentication required.',
+        );
+        _showSnackBar(
+          context,
+          'Payment requires additional authentication. Please follow the prompts in the Stripe dialog.',
+          Colors.orange,
+        );
+      } else {
+        throw StateError(
+            result.errorMessage ?? 'Payment failed. Please try again.');
+      }
+    } on TimeoutException {
+      widget
+          .onPaymentError('Timed out while waiting for payment confirmation.');
+      _showSnackBar(
+        context,
+        'Timed out waiting for payment confirmation.',
+        Colors.red,
+      );
+    } catch (error) {
+      widget.onPaymentError(error.toString());
+      _showSnackBar(
+        context,
+        'Payment failed: $error',
+        Colors.red,
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -415,26 +510,66 @@ class _PaymentIntegrationState extends State<PaymentIntegration> {
     }
   }
 
-  Future<void> _processWalletPayment(String walletType) async {
-    setState(() {
-      _isProcessing = true;
-    });
+  Future<void> _processWalletPayment(String walletType) {
+    return _processPayment(
+      overrideMethod: 'wallet',
+      extraMetadata: {'walletType': walletType},
+    );
+  }
 
-    try {
-      // Simulate wallet payment processing
-      await Future.delayed(const Duration(seconds: 2));
-      
-      final paymentIntentId = 'pi_${walletType}_${DateTime.now().millisecondsSinceEpoch}';
-      
-      widget.onPaymentSuccess(paymentIntentId);
-    } catch (e) {
-      widget.onPaymentError(e.toString());
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+  PaymentCardDetails _buildCardDetails() {
+    final number = _cardNumberController.text.replaceAll(RegExp(r'\D'), '');
+    final parts = _expiryController.text.split('/');
+    final month = parts.isNotEmpty ? int.tryParse(parts.first) ?? 0 : 0;
+    final yearRaw = parts.length > 1 ? parts[1].trim() : '';
+    final year = _normalizeExpiryYear(yearRaw);
+    final cvc = _cvvController.text.replaceAll(RegExp(r'\D'), '');
+
+    if (month < 1 || month > 12 || year < DateTime.now().year) {
+      throw const FormatException('Invalid expiry date.');
     }
+
+    if (cvc.length < 3) {
+      throw const FormatException('Invalid security code.');
+    }
+
+    return PaymentCardDetails(
+      number: number,
+      expMonth: month,
+      expYear: year,
+      cvc: cvc,
+      name: _nameController.text.trim().isEmpty
+          ? null
+          : _nameController.text.trim(),
+    );
+  }
+
+  int _normalizeExpiryYear(String value) {
+    final parsed = int.tryParse(value);
+    if (parsed == null) {
+      return 0;
+    }
+
+    if (value.length == 2) {
+      final currentYear = DateTime.now().year % 100;
+      final century = DateTime.now().year - currentYear;
+      return parsed + (parsed >= currentYear ? century : century + 100);
+    }
+
+    if (value.length == 4) {
+      return parsed;
+    }
+
+    return 0;
+  }
+
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+      ),
+    );
   }
 }

@@ -55,8 +55,8 @@ class ChatParticipant {
       imageUrl: map['imageUrl'] as String?,
       role: map['role'] as String? ?? 'member',
       joinedAt: (map['joinedAt'] as Timestamp).toDate(),
-      lastReadAt: map['lastReadAt'] != null 
-          ? (map['lastReadAt'] as Timestamp).toDate() 
+      lastReadAt: map['lastReadAt'] != null
+          ? (map['lastReadAt'] as Timestamp).toDate()
           : null,
       isActive: map['isActive'] as bool? ?? true,
     );
@@ -98,8 +98,11 @@ class ChatRoom {
   final DateTime updatedAt;
   final bool isActive;
   final Map<String, int> unreadCounts; // userId -> unread count
-  final String? relatedEntityType; // 'team', 'tournament' for auto-created groups
+  final String?
+      relatedEntityType; // 'team', 'tournament' for auto-created groups
   final String? relatedEntityId;
+  final Map<String, dynamic>?
+      metadata; // Additional metadata (e.g., booking info)
 
   const ChatRoom({
     required this.id,
@@ -117,6 +120,7 @@ class ChatRoom {
     this.unreadCounts = const {},
     this.relatedEntityType,
     this.relatedEntityId,
+    this.metadata,
   });
 
   /// Get display name for the chat room
@@ -124,7 +128,7 @@ class ChatRoom {
     if (type == ChatType.group) {
       return name ?? 'Group Chat';
     }
-    
+
     // For direct chats, return the other participant's name
     final otherParticipant = participants.firstWhere(
       (p) => p.userId != currentUserId,
@@ -138,7 +142,7 @@ class ChatRoom {
     if (type == ChatType.group) {
       return imageUrl;
     }
-    
+
     // For direct chats, return the other participant's image
     final otherParticipant = participants.firstWhere(
       (p) => p.userId != currentUserId,
@@ -152,9 +156,14 @@ class ChatRoom {
     return unreadCounts[userId] ?? 0;
   }
 
+  /// Convenience getters for chat type checks
+  bool get isGroupChat => type == ChatType.group;
+  bool get isDirectChat => type == ChatType.direct;
+
   /// Check if user is admin (for group chats)
   bool isUserAdmin(String userId) {
-    final participant = participants.where((p) => p.userId == userId).firstOrNull;
+    final participant =
+        participants.where((p) => p.userId == userId).firstOrNull;
     return participant?.role == 'admin';
   }
 
@@ -172,16 +181,19 @@ class ChatRoom {
       'imageUrl': imageUrl,
       'description': description,
       'participants': participants.map((p) => p.toMap()).toList(),
-      'participantIds': participants.map((p) => p.userId).toList(), // Simple array for rules
+      'participantIds':
+          participants.map((p) => p.userId).toList(), // Simple array for rules
       'lastMessage': lastMessage,
       'lastMessageSenderId': lastMessageSenderId,
-      'lastMessageAt': lastMessageAt != null ? Timestamp.fromDate(lastMessageAt!) : null,
+      'lastMessageAt':
+          lastMessageAt != null ? Timestamp.fromDate(lastMessageAt!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
       'unreadCounts': unreadCounts,
       'relatedEntityType': relatedEntityType,
       'relatedEntityId': relatedEntityId,
+      'metadata': metadata,
     };
   }
 
@@ -202,8 +214,8 @@ class ChatRoom {
             [],
         lastMessage: data['lastMessage'] as String?,
         lastMessageSenderId: data['lastMessageSenderId'] as String?,
-        lastMessageAt: data['lastMessageAt'] != null 
-            ? (data['lastMessageAt'] as Timestamp).toDate() 
+        lastMessageAt: data['lastMessageAt'] != null
+            ? (data['lastMessageAt'] as Timestamp).toDate()
             : null,
         createdAt: (data['createdAt'] as Timestamp).toDate(),
         updatedAt: (data['updatedAt'] as Timestamp).toDate(),
@@ -211,6 +223,7 @@ class ChatRoom {
         unreadCounts: Map<String, int>.from(data['unreadCounts'] ?? {}),
         relatedEntityType: data['relatedEntityType'] as String?,
         relatedEntityId: data['relatedEntityId'] as String?,
+        metadata: data['metadata'] as Map<String, dynamic>?,
       );
     } catch (e) {
       return null;

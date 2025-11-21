@@ -35,7 +35,7 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
   late AnimationController _animationController;
   late AnimationController _dragAnimationController;
   late Animation<double> _rotationAnimation;
-  
+
   Offset _dragOffset = Offset.zero;
 
   @override
@@ -45,7 +45,7 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _dragAnimationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -70,7 +70,7 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
   @override
   Widget build(BuildContext context) {
     final coach = widget.coachMatch.coach;
-    
+
     return GestureDetector(
       onPanStart: _onPanStart,
       onPanUpdate: _onPanUpdate,
@@ -99,13 +99,13 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                     children: [
                       // Background image
                       _buildBackgroundImage(coach),
-                      
+
                       // Gradient overlay
                       _buildGradientOverlay(),
-                      
+
                       // Content
                       _buildContent(coach),
-                      
+
                       // Action overlays
                       _buildActionOverlays(),
                     ],
@@ -121,35 +121,36 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
 
   Widget _buildBackgroundImage(CoachProfile coach) {
     return Positioned.fill(
-      child: coach.profilePictureUrl != null && coach.profilePictureUrl!.isNotEmpty
-          ? CachedNetworkImage(
-              imageUrl: coach.profilePictureUrl!,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: ColorsManager.outline.withValues(alpha: 0.1),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: ColorsManager.primary,
+      child:
+          coach.profilePictureUrl != null && coach.profilePictureUrl!.isNotEmpty
+              ? CachedNetworkImage(
+                  imageUrl: coach.profilePictureUrl!,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: ColorsManager.outline.withValues(alpha: 0.1),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: ColorsManager.primary,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: ColorsManager.outline.withValues(alpha: 0.1),
+                    child: Icon(
+                      Icons.person,
+                      size: 80.sp,
+                      color: ColorsManager.outline,
+                    ),
+                  ),
+                )
+              : Container(
+                  color: ColorsManager.outline.withValues(alpha: 0.1),
+                  child: Icon(
+                    Icons.person,
+                    size: 80.sp,
+                    color: ColorsManager.outline,
                   ),
                 ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: ColorsManager.outline.withValues(alpha: 0.1),
-                child: Icon(
-                  Icons.person,
-                  size: 80.sp,
-                  color: ColorsManager.outline,
-                ),
-              ),
-            )
-          : Container(
-              color: ColorsManager.outline.withValues(alpha: 0.1),
-              child: Icon(
-                Icons.person,
-                size: 80.sp,
-                color: ColorsManager.outline,
-              ),
-            ),
     );
   }
 
@@ -202,7 +203,8 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                   decoration: BoxDecoration(
                     color: _getCompatibilityColor(widget.coachMatch.matchScore),
                     borderRadius: BorderRadius.circular(20.r),
@@ -214,9 +216,9 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                 ),
               ],
             ),
-            
+
             Spacer(),
-            
+
             // Specializations
             if (coach.specializationSports.isNotEmpty) ...[
               Text(
@@ -229,7 +231,8 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                 runSpacing: 4.h,
                 children: coach.specializationSports.take(3).map((sport) {
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color: ColorsManager.primary.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(12.r),
@@ -243,7 +246,7 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
               ),
               Gap(16.h),
             ],
-            
+
             // Bio
             if (coach.bio != null && coach.bio!.isNotEmpty) ...[
               Text(
@@ -254,7 +257,7 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
               ),
               Gap(16.h),
             ],
-            
+
             // Bottom info
             Row(
               children: [
@@ -281,9 +284,9 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                 ],
               ],
             ),
-            
+
             Gap(8.h),
-            
+
             // Rate and availability
             Row(
               children: [
@@ -305,7 +308,9 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                 ),
                 Gap(4.w),
                 Text(
-                  coach.availableTimeSlots.isNotEmpty ? 'Available' : 'Not available',
+                  coach.availableTimeSlots.isNotEmpty
+                      ? 'Available'
+                      : 'Not available',
                   style: TextStyles.font14White600Weight,
                 ),
               ],
@@ -341,9 +346,9 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
                 ),
               ),
             ),
-          
+
           Spacer(),
-          
+
           // Right overlay (Like)
           if (_dragOffset.dx > 50)
             Container(
@@ -396,7 +401,7 @@ class _CoachSwipeableCardState extends State<CoachSwipeableCard>
     if (_dragOffset.dx.abs() > threshold) {
       // Trigger swipe action
       final action = _dragOffset.dx > 0 ? SwipeAction.like : SwipeAction.pass;
-      
+
       // Animate card off screen
       _animationController.forward().then((_) {
         widget.onSwipe(action);

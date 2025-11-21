@@ -1,0 +1,120 @@
+{
+  "guest": {
+    "headline": "Welcome to PlayAround",
+    "stats": [],
+    "events": [],
+    "highlights": [
+      "Sign in to personalize your dashboard"
+    ],
+    "actions": [
+      "Create Account",
+      "Browse Public Events"
+    ]
+  },
+  "player": {
+    "headline": "Ready for the next session?",
+    "stats": [
+      { "label": "Match Wins", "value": "12", "delta": 0.18 },
+      { "label": "Training Streak", "value": "7 days", "delta": 0.07 },
+      { "label": "Skill Rating", "value": "4.3", "delta": 0.03 }
+    ],
+    "events": [
+      { "title": "City League Semi-finals", "date": "Nov 14", "location": "Arena 5", "status": "upcoming" },
+      { "title": "Night Practice", "date": "Nov 15", "location": "Court 2", "status": "scheduled" }
+    ],
+    "highlights": [
+      "Coach Aria reviewed your last match",
+      "2 new teams scouted your profile"
+    ],
+    "actions": [
+      "Find Scrimmage",
+      "Book Training",
+      "Share Highlights"
+    ]
+  },
+  "coach": {
+    "headline": "Coach dashboard",
+    "stats": [
+      { "label": "Active Players", "value": "28", "delta": 0.12 },
+      { "label": "Retention", "value": "92%", "delta": 0.04 },
+      { "label": "Sessions this week", "value": "14", "delta": 0.09 }
+    ],
+    "events": [
+      { "title": "Academy Skills Lab", "date": "Nov 13", "location": "Main Arena", "status": "in-progress" },
+      { "title": "1:1 with Miles", "date": "Nov 16", "location": "Court 4", "status": "upcoming" }
+    ],
+    "highlights": [
+      "Team morale up 9% after last meetup",
+      "3 new player applications pending review"
+    ],
+    "actions": [
+      "Review Applications",
+      "Assign Drills",
+      "Share Team Update"
+    ]
+  },
+  "team_owner": {
+    "headline": "Team performance spotlight",
+    "stats": [
+      { "label": "Roster Health", "value": "87%", "delta": -0.02 },
+      { "label": "Sponsorships", "value": "3 active", "delta": 0.1 },
+      { "label": "Community Growth", "value": "1.4k", "delta": 0.22 }
+    ],
+    "events": [
+      { "title": "Board Strategy Call", "date": "Nov 18", "location": "Virtual", "status": "upcoming" },
+      { "title": "Community Fan Night", "date": "Nov 20", "location": "Arena Lounge", "status": "planning" }
+    ],
+    "highlights": [
+      "Merch drop sold out in 2 hours",
+      "Top fans redeemed 45 loyalty rewards this week"
+    ],
+    "actions": [
+      "Plan Merch Drop",
+      "Schedule Media Day",
+      "Review Sponsorship Deck"
+    ]
+  },
+  "admin": {
+    "headline": "Organization health",
+    "stats": [
+      { "label": "Active Users", "value": "24.8k", "delta": 0.14 },
+      { "label": "Retention", "value": "88%", "delta": 0.05 },
+      { "label": "Compliance", "value": "100%", "delta": 0.0 }
+    ],
+    "events": [
+      { "title": "Monthly Ops Review", "date": "Nov 12", "location": "HQ", "status": "in-progress" },
+      { "title": "Security Audit Follow-up", "date": "Nov 17", "location": "Virtual", "status": "upcoming" }
+    ],
+    "highlights": [
+      "No incidents reported in the last 30 days",
+      "New onboarding sequence increased completion by 16%"
+    ],
+    "actions": [
+      "View Incident Reports",
+      "Review Feature Flags",
+      "Sync With Support"
+    ]
+  },
+  "mvp": {
+    "headline": "MVP leaderboard insights",
+    "stats": [
+      { "label": "Global Rank", "value": "#7", "delta": 0.02 },
+      { "label": "Engagement Score", "value": "96", "delta": 0.11 },
+      { "label": "Community Impact", "value": "Top 3%", "delta": 0.08 }
+    ],
+    "events": [
+      { "title": "Elite Showcase", "date": "Nov 22", "location": "Arena Prime", "status": "invited" },
+      { "title": "MVP Strategy Summit", "date": "Nov 25", "location": "Innovation Hub", "status": "upcoming" }
+    ],
+    "highlights": [
+      "Your highlight reel reached 12.4k views",
+      "4 invites to mentorship sessions awaiting confirmation"
+    ],
+    "actions": [
+      "Share Highlight Reel",
+      "Confirm Mentorships",
+      "Explore Sponsorships"
+    ]
+  }
+}
+

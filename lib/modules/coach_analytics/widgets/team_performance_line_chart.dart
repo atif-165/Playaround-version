@@ -22,7 +22,8 @@ class TeamPerformanceLineChart extends StatefulWidget {
   });
 
   @override
-  State<TeamPerformanceLineChart> createState() => _TeamPerformanceLineChartState();
+  State<TeamPerformanceLineChart> createState() =>
+      _TeamPerformanceLineChartState();
 }
 
 class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
@@ -144,7 +145,8 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
                     ),
                     SizedBox(width: 8.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                       decoration: BoxDecoration(
                         color: isImproving ? Colors.green[50] : Colors.red[50],
                         borderRadius: BorderRadius.circular(4.r),
@@ -153,9 +155,13 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isImproving ? Icons.trending_up : Icons.trending_down,
+                            isImproving
+                                ? Icons.trending_up
+                                : Icons.trending_down,
                             size: 12.sp,
-                            color: isImproving ? Colors.green[600] : Colors.red[600],
+                            color: isImproving
+                                ? Colors.green[600]
+                                : Colors.red[600],
                           ),
                           SizedBox(width: 2.w),
                           Text(
@@ -163,7 +169,9 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w500,
-                              color: isImproving ? Colors.green[600] : Colors.red[600],
+                              color: isImproving
+                                  ? Colors.green[600]
+                                  : Colors.red[600],
                             ),
                           ),
                         ],
@@ -223,7 +231,7 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
 
   LineChartData _buildLineChartData() {
     final spots = <FlSpot>[];
-    
+
     for (int i = 0; i < widget.performanceHistory.length; i++) {
       final point = widget.performanceHistory[i];
       final animatedScore = point.averageScore * _animation.value;
@@ -231,7 +239,8 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
     }
 
     // Calculate min and max values for better scaling
-    final scores = widget.performanceHistory.map((p) => p.averageScore).toList();
+    final scores =
+        widget.performanceHistory.map((p) => p.averageScore).toList();
     final minScore = scores.reduce((a, b) => a < b ? a : b);
     final maxScore = scores.reduce((a, b) => a > b ? a : b);
     final padding = (maxScore - minScore) * 0.1;
@@ -250,7 +259,8 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
       ),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -364,12 +374,12 @@ class _TeamPerformanceLineChartState extends State<TeamPerformanceLineChart>
 
   double _calculateImprovement() {
     if (widget.performanceHistory.length < 2) return 0.0;
-    
+
     final firstScore = widget.performanceHistory.first.averageScore;
     final lastScore = widget.performanceHistory.last.averageScore;
-    
+
     if (firstScore == 0) return 0.0;
-    
+
     return ((lastScore - firstScore) / firstScore) * 100;
   }
 }

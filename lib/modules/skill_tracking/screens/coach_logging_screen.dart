@@ -57,7 +57,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
 
   Future<void> _loadLatestScores() async {
     try {
-      final latestScores = await _skillService.getLatestSkillScores(widget.playerId);
+      final latestScores =
+          await _skillService.getLatestSkillScores(widget.playerId);
       if (latestScores.isNotEmpty && mounted) {
         setState(() {
           _skillScores = Map.from(latestScores);
@@ -233,14 +234,15 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
           ),
         ),
         Gap(16.h),
-        for (final skillType in SkillType.allSkills) _buildSkillScoreSlider(skillType),
+        for (final skillType in SkillType.allSkills)
+          _buildSkillScoreSlider(skillType),
       ],
     );
   }
 
   Widget _buildSkillScoreSlider(SkillType skillType) {
     final score = _skillScores[skillType] ?? 50;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 20.h),
       padding: EdgeInsets.all(16.w),
@@ -248,7 +250,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
-          color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.3),
+          color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+              .withOpacity(0.3),
         ),
       ),
       child: Column(
@@ -260,12 +263,15 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
                 width: 32.w,
                 height: 32.h,
                 decoration: BoxDecoration(
-                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.1),
+                  color:
+                      Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+                          .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
                   _getSkillIcon(skillType),
-                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+                  color: Color(
+                      int.parse('0xFF${skillType.colorHex.substring(1)}')),
                   size: 16.sp,
                 ),
               ),
@@ -295,7 +301,9 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: BoxDecoration(
-                  color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.1),
+                  color:
+                      Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+                          .withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Text(
@@ -303,7 +311,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
                   style: TextStyle(
                     fontSize: 16.sp,
                     fontWeight: FontWeight.bold,
-                    color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+                    color: Color(
+                        int.parse('0xFF${skillType.colorHex.substring(1)}')),
                   ),
                 ),
               ),
@@ -312,10 +321,16 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
           Gap(16.h),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
-              inactiveTrackColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.2),
-              thumbColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
-              overlayColor: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')).withOpacity(0.2),
+              activeTrackColor:
+                  Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+              inactiveTrackColor:
+                  Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+                      .withOpacity(0.2),
+              thumbColor:
+                  Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+              overlayColor:
+                  Color(int.parse('0xFF${skillType.colorHex.substring(1)}'))
+                      .withOpacity(0.2),
               trackHeight: 6.h,
             ),
             child: Slider(
@@ -334,9 +349,12 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('0', style: TextStyle(fontSize: 10.sp, color: Colors.grey[500])),
-              Text('50', style: TextStyle(fontSize: 10.sp, color: Colors.grey[500])),
-              Text('100', style: TextStyle(fontSize: 10.sp, color: Colors.grey[500])),
+              Text('0',
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey[500])),
+              Text('50',
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey[500])),
+              Text('100',
+                  style: TextStyle(fontSize: 10.sp, color: Colors.grey[500])),
             ],
           ),
         ],
@@ -364,7 +382,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
         TextFormField(
           controller: _notesController,
           decoration: InputDecoration(
-            hintText: 'e.g., "Great improvement in sprint technique. Focus on endurance next session."',
+            hintText:
+                'e.g., "Great improvement in sprint technique. Focus on endurance next session."',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
             ),
@@ -378,13 +397,14 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
   }
 
   Widget _buildSummaryCard() {
-    final averageScore = _skillScores.values.isEmpty 
-        ? 0.0 
-        : _skillScores.values.reduce((a, b) => a + b) / _skillScores.values.length;
+    final averageScore = _skillScores.values.isEmpty
+        ? 0.0
+        : _skillScores.values.reduce((a, b) => a + b) /
+            _skillScores.values.length;
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration( 
+      decoration: BoxDecoration(
         color: ColorsManager.mainBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: ColorsManager.mainBlue.withOpacity(0.2)),
@@ -414,10 +434,12 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
           Row(
             children: [
               Expanded(
-                child: _buildSummaryItem('Date', DateFormat('MMM d, y').format(_selectedDate)),
+                child: _buildSummaryItem(
+                    'Date', DateFormat('MMM d, y').format(_selectedDate)),
               ),
               Expanded(
-                child: _buildSummaryItem('Average Score', averageScore.toStringAsFixed(1)),
+                child: _buildSummaryItem(
+                    'Average Score', averageScore.toStringAsFixed(1)),
               ),
             ],
           ),
@@ -467,7 +489,7 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow( 
+          BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10.r,
             offset: Offset(0, -2.h),
@@ -516,8 +538,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: ColorsManager.mainBlue,
-            ),
+                  primary: ColorsManager.mainBlue,
+                ),
           ),
           child: child!,
         );
@@ -560,8 +582,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
         coachId: widget.coachId,
         skillScores: Map.from(_skillScores),
         date: _selectedDate,
-        notes: _notesController.text.trim().isEmpty 
-            ? null 
+        notes: _notesController.text.trim().isEmpty
+            ? null
             : _notesController.text.trim(),
       );
 
@@ -603,7 +625,8 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Unsaved Changes'),
-        content: const Text('You have unsaved changes. Do you want to discard them?'),
+        content: const Text(
+            'You have unsaved changes. Do you want to discard them?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -622,13 +645,15 @@ class _CoachLoggingScreenState extends State<CoachLoggingScreen> {
 
   String _getHighestSkill() {
     if (_skillScores.isEmpty) return 'N/A';
-    final highest = _skillScores.entries.reduce((a, b) => a.value > b.value ? a : b);
+    final highest =
+        _skillScores.entries.reduce((a, b) => a.value > b.value ? a : b);
     return '${highest.key.displayName} (${highest.value})';
   }
 
   String _getLowestSkill() {
     if (_skillScores.isEmpty) return 'N/A';
-    final lowest = _skillScores.entries.reduce((a, b) => a.value < b.value ? a : b);
+    final lowest =
+        _skillScores.entries.reduce((a, b) => a.value < b.value ? a : b);
     return '${lowest.key.displayName} (${lowest.value})';
   }
 

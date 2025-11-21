@@ -44,7 +44,8 @@ class _CoachesPageState extends State<CoachesPage>
       appBar: AppBar(
         title: Text(
           'Discover',
-          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
+          style:
+              TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
         backgroundColor: Colors.black,
         elevation: 0,

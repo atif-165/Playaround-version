@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:flutter/foundation.dart';
 
 import '../../../models/user_profile.dart';
 import '../../../repositories/user_repository.dart';
-import '../../../services/cloudinary_service.dart';
 import '../models/chat_message.dart';
 import '../models/chat_room.dart';
 import '../models/connection.dart';
@@ -19,17 +20,64 @@ class ChatService {
   factory ChatService() => _instance;
   ChatService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final UserRepository _userRepository = UserRepository();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
-  final ChatNotificationService _notificationService = ChatNotificationService();
+  Timer? _debounceTimer;
+
+  @visibleForTesting
+  void overrideDependencies({
+    FirebaseFirestore? firestore,
+    FirebaseAuth? auth,
+    FirebaseMessaging? messaging,
+    FirebaseStorage? storage,
+    ChatNotificationService? notificationService,
+    UserRepository? userRepository,
+  }) {
+    if (firestore != null) _firestore = firestore;
+    if (auth != null) _auth = auth;
+    if (messaging != null) _messaging = messaging;
+    if (storage != null) _storage = storage;
+    if (notificationService != null) _notificationService = notificationService;
+    if (userRepository != null) _userRepository = userRepository;
+  }
+
+  /// Utility to build canonical team chat id.
+  String teamChatId(String teamId) => 'team_$teamId';
+
+  @visibleForTesting
+  void resetDependencies() {
+    _firestore = FirebaseFirestore.instance;
+    _auth = FirebaseAuth.instance;
+    _messaging = FirebaseMessaging.instance;
+    _storage = FirebaseStorage.instance;
+    _notificationService = ChatNotificationService();
+    _userRepository = UserRepository();
+  }
+
+  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  UserRepository _userRepository = UserRepository();
+  FirebaseStorage _storage = FirebaseStorage.instance;
+  ChatNotificationService _notificationService = ChatNotificationService();
 
   // Collection references
-  CollectionReference get _chatsCollection => _firestore.collection('chats');
-  CollectionReference get _connectionsCollection => _firestore.collection('connections');
-  CollectionReference get _usersCollection => _firestore.collection('users');
+  CollectionReference<Map<String, dynamic>> get _chatsCollection =>
+      _firestore.collection('chats').withConverter<Map<String, dynamic>>(
+            fromFirestore: (snapshot, _) =>
+                Map<String, dynamic>.from(snapshot.data() ?? const {}),
+            toFirestore: (value, _) => value,
+          );
+  CollectionReference<Map<String, dynamic>> get _connectionsCollection =>
+      _firestore.collection('connections').withConverter<Map<String, dynamic>>(
+            fromFirestore: (snapshot, _) =>
+                Map<String, dynamic>.from(snapshot.data() ?? const {}),
+            toFirestore: (value, _) => value,
+          );
+  CollectionReference<Map<String, dynamic>> get _usersCollection =>
+      _firestore.collection('users').withConverter<Map<String, dynamic>>(
+            fromFirestore: (snapshot, _) =>
+                Map<String, dynamic>.from(snapshot.data() ?? const {}),
+            toFirestore: (value, _) => value,
+          );
 
   /// Initialize chat service and request notification permissions
   Future<void> initialize() async {
@@ -80,13 +128,90 @@ class ChatService {
     }
   }
 
+  Map<String, dynamic>? _getNonConnectionMetadata(ChatRoom chatRoom) {
+    final metadata = chatRoom.metadata;
+    if (metadata == null) return null;
+    final nonConnection = metadata['nonConnection'];
+    if (nonConnection is Map<String, dynamic>) {
+      return Map<String, dynamic>.from(nonConnection);
+    }
+    return null;
+  }
+
+  String? _validateNonConnectionSend(ChatRoom chatRoom, String senderId) {
+    final meta = _getNonConnectionMetadata(chatRoom);
+    if (meta == null) return null;
+
+    final status = (meta['status'] as String?)?.toLowerCase() ?? 'pending';
+    final initiatorId = meta['initiatorId'] as String?;
+    final allowedMessages =
+        meta['allowedMessages'] is int ? meta['allowedMessages'] as int : 1;
+    final sentCount = meta['initiatorMessageCount'] is int
+        ? meta['initiatorMessageCount'] as int
+        : 0;
+
+    switch (status) {
+      case 'accepted':
+        return null;
+      case 'pending':
+        if (initiatorId == null) return 'invalid_metadata';
+        if (senderId == initiatorId) {
+          if (allowedMessages <= 0) return 'initiator_limit_reached';
+          if (sentCount >= allowedMessages) {
+            return 'initiator_limit_reached';
+          }
+          return null;
+        }
+        return 'receiver_not_allowed';
+      case 'blocked':
+        return 'chat_blocked';
+      case 'reported':
+        return 'chat_reported';
+      default:
+        return null;
+    }
+  }
+
+  Future<void> _recordNonConnectionMessageSend(
+      ChatRoom chatRoom, String senderId) async {
+    final meta = _getNonConnectionMetadata(chatRoom);
+    if (meta == null) return;
+    final status = (meta['status'] as String?)?.toLowerCase() ?? 'pending';
+    if (status != 'pending') return;
+
+    final initiatorId = meta['initiatorId'] as String?;
+    if (initiatorId == null) return;
+
+    try {
+      final updateData = <String, dynamic>{
+        'metadata.nonConnection.lastMessageAt': FieldValue.serverTimestamp(),
+      };
+
+      if (senderId == initiatorId) {
+        updateData['metadata.nonConnection.initiatorMessageCount'] =
+            FieldValue.increment(1);
+      }
+
+      await _chatsCollection.doc(chatRoom.id).update(updateData);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '❌ ChatService: Error recording non-connection message send - $e');
+      }
+    }
+  }
+
   /// Create a direct chat room between two users (alias for getOrCreateDirectChat)
   Future<ChatRoom?> createDirectChat(String otherUserId) async {
     return getOrCreateDirectChat(otherUserId);
   }
 
   /// Get or create a direct chat room between two users
-  Future<ChatRoom?> getOrCreateDirectChat(String otherUserId) async {
+  Future<ChatRoom?> getOrCreateDirectChat(
+    String otherUserId, {
+    String? otherUserName,
+    String? otherUserImageUrl,
+  }) async {
     try {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return null;
@@ -101,27 +226,28 @@ class ChatService {
       }
 
       // Get user profiles
-      final currentUserProfile = await _userRepository.getUserProfile(currentUser.uid);
-      final otherUserProfile = await _userRepository.getUserProfile(otherUserId);
+      final currentUserProfile =
+          await _userRepository.getUserProfile(currentUser.uid);
+      final otherUserProfile =
+          await _userRepository.getUserProfile(otherUserId);
 
-      if (currentUserProfile == null || otherUserProfile == null) {
-        throw Exception('User profiles not found');
-      }
-
-      // Create new chat room
       final now = DateTime.now();
       final participants = [
-        ChatParticipant(
+        _buildParticipant(
           userId: currentUser.uid,
-          name: currentUserProfile.fullName,
-          imageUrl: currentUserProfile.profilePictureUrl,
+          profile: currentUserProfile,
+          fallbackName: currentUser.displayName ?? currentUser.email ?? 'You',
+          fallbackImageUrl: currentUser.photoURL,
           joinedAt: now,
+          defaultName: 'You',
         ),
-        ChatParticipant(
+        _buildParticipant(
           userId: otherUserId,
-          name: otherUserProfile.fullName,
-          imageUrl: otherUserProfile.profilePictureUrl,
+          profile: otherUserProfile,
+          fallbackName: otherUserName,
+          fallbackImageUrl: otherUserImageUrl,
           joinedAt: now,
+          defaultName: 'Player',
         ),
       ];
 
@@ -138,6 +264,67 @@ class ChatService {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ ChatService: Error creating direct chat - $e');
+      }
+      return null;
+    }
+  }
+
+  Future<ChatRoom?> startNonConnectionChat(
+    String otherUserId, {
+    String? otherUserName,
+    String? otherUserImageUrl,
+  }) async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return null;
+
+      final chatRoom = await getOrCreateDirectChat(
+        otherUserId,
+        otherUserName: otherUserName,
+        otherUserImageUrl: otherUserImageUrl,
+      );
+      if (chatRoom == null) return null;
+
+      final existingMeta = _getNonConnectionMetadata(chatRoom);
+      final chatRef = _chatsCollection.doc(chatRoom.id);
+
+      if (existingMeta == null) {
+        await chatRef.update({
+          'metadata.nonConnection': {
+            'status': 'pending',
+            'initiatorId': currentUser.uid,
+            'allowedMessages': 1,
+            'initiatorMessageCount': 0,
+            'createdAt': FieldValue.serverTimestamp(),
+          },
+        });
+      } else {
+        final status =
+            (existingMeta['status'] as String?)?.toLowerCase() ?? 'pending';
+        final initiatorId = existingMeta['initiatorId'] as String?;
+        final allowedMessages = existingMeta['allowedMessages'] is int
+            ? existingMeta['allowedMessages'] as int
+            : 1;
+
+        if (status == 'accepted' && initiatorId != null) {
+          return chatRoom;
+        }
+
+        if (initiatorId != currentUser.uid || status != 'pending') {
+          await chatRef.update({
+            'metadata.nonConnection.status': 'pending',
+            'metadata.nonConnection.initiatorId': currentUser.uid,
+            'metadata.nonConnection.allowedMessages': allowedMessages,
+            'metadata.nonConnection.initiatorMessageCount': 0,
+            'metadata.nonConnection.createdAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
+      return await getChatRoom(chatRoom.id) ?? chatRoom;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error starting non-connection chat - $e');
       }
       return null;
     }
@@ -161,31 +348,58 @@ class ChatService {
       final userProfile = await _userRepository.getUserProfile(currentUser.uid);
       if (userProfile == null) return false;
 
+      final chatRoom = await getChatRoom(chatId);
+      if (chatRoom == null) return false;
+
+      final restriction = _validateNonConnectionSend(chatRoom, currentUser.uid);
+      if (restriction != null) {
+        if (kDebugMode) {
+          debugPrint(
+              '⚠️ ChatService: Text message blocked ($restriction) for chat $chatId');
+        }
+        return false;
+      }
+
       final messageId = _firestore.collection('temp').doc().id;
       final now = DateTime.now();
+      final targetUserId = chatRoom.isGroupChat
+          ? null
+          : chatRoom.participants
+              .where((participant) => participant.userId != currentUser.uid)
+              .firstOrNull
+              ?.userId;
 
       final message = ChatMessage(
         id: messageId,
         chatId: chatId,
-        senderId: currentUser.uid,
+        fromId: currentUser.uid,
+        toId: targetUserId,
+        groupId: chatRoom.isGroupChat ? chatRoom.id : null,
         senderName: userProfile.fullName,
         senderImageUrl: userProfile.profilePictureUrl,
         type: MessageType.text,
         text: text,
-        timestamp: now,
+        attachments: const [],
+        createdAt: now,
+        readBy: [currentUser.uid],
       );
 
-
+      final messageData = message.toFirestore();
+      messageData['createdAt'] = FieldValue.serverTimestamp();
+      messageData['timestamp'] = FieldValue.serverTimestamp();
+      messageData['readBy'] = [currentUser.uid];
 
       // Add message to subcollection
       await _chatsCollection
           .doc(chatId)
           .collection('messages')
           .doc(messageId)
-          .set(message.toFirestore());
+          .set(messageData);
 
       // Update chat room with last message
       await _updateChatRoomLastMessage(chatId, text, currentUser.uid, now);
+
+      await _recordNonConnectionMessageSend(chatRoom, currentUser.uid);
 
       // Send push notifications
       await _sendMessageNotifications(message, chatId);
@@ -211,35 +425,64 @@ class ChatService {
       final userProfile = await _userRepository.getUserProfile(currentUser.uid);
       if (userProfile == null) return false;
 
-      // Upload image to Cloudinary
-      final imageUrl = await _cloudinaryService.uploadImage(
-        imageFile,
-        folder: 'chat_images',
-      );
+      final chatRoom = await getChatRoom(chatId);
+      if (chatRoom == null) return false;
+
+      final restriction = _validateNonConnectionSend(chatRoom, currentUser.uid);
+      if (restriction != null) {
+        if (kDebugMode) {
+          debugPrint(
+              '⚠️ ChatService: Image message blocked ($restriction) for chat $chatId');
+        }
+        return false;
+      }
 
       final messageId = _firestore.collection('temp').doc().id;
       final now = DateTime.now();
+      final attachment = await _uploadImageAttachment(
+        chatId: chatId,
+        messageId: messageId,
+        imageFile: imageFile,
+      );
+
+      if (attachment == null) return false;
 
       final message = ChatMessage(
         id: messageId,
         chatId: chatId,
-        senderId: currentUser.uid,
+        fromId: currentUser.uid,
+        toId: chatRoom.isGroupChat
+            ? null
+            : chatRoom.participants
+                .where((participant) => participant.userId != currentUser.uid)
+                .firstOrNull
+                ?.userId,
+        groupId: chatRoom.isGroupChat ? chatRoom.id : null,
         senderName: userProfile.fullName,
         senderImageUrl: userProfile.profilePictureUrl,
         type: MessageType.image,
-        imageUrl: imageUrl,
-        timestamp: now,
+        attachments: [attachment],
+        createdAt: now,
+        readBy: [currentUser.uid],
       );
+
+      final messageData = message.toFirestore();
+      messageData['createdAt'] = FieldValue.serverTimestamp();
+      messageData['timestamp'] = FieldValue.serverTimestamp();
+      messageData['readBy'] = [currentUser.uid];
 
       // Add message to subcollection
       await _chatsCollection
           .doc(chatId)
           .collection('messages')
           .doc(messageId)
-          .set(message.toFirestore());
+          .set(messageData);
 
       // Update chat room with last message
-      await _updateChatRoomLastMessage(chatId, '📷 Image', currentUser.uid, now);
+      await _updateChatRoomLastMessage(
+          chatId, '📷 Image', currentUser.uid, now);
+
+      await _recordNonConnectionMessageSend(chatRoom, currentUser.uid);
 
       // Send push notifications
       await _sendMessageNotifications(message, chatId);
@@ -265,26 +508,51 @@ class ChatService {
       final userProfile = await _userRepository.getUserProfile(currentUser.uid);
       if (userProfile == null) return false;
 
+      final chatRoom = await getChatRoom(chatId);
+      if (chatRoom == null) return false;
+
+      final restriction = _validateNonConnectionSend(chatRoom, currentUser.uid);
+      if (restriction != null) {
+        if (kDebugMode) {
+          debugPrint(
+              '⚠️ ChatService: Entity message blocked ($restriction) for chat $chatId');
+        }
+        return false;
+      }
+
       final messageId = _firestore.collection('temp').doc().id;
       final now = DateTime.now();
 
       final message = ChatMessage(
         id: messageId,
         chatId: chatId,
-        senderId: currentUser.uid,
+        fromId: currentUser.uid,
+        toId: chatRoom.isGroupChat
+            ? null
+            : chatRoom.participants
+                .where((participant) => participant.userId != currentUser.uid)
+                .firstOrNull
+                ?.userId,
+        groupId: chatRoom.isGroupChat ? chatRoom.id : null,
         senderName: userProfile.fullName,
         senderImageUrl: userProfile.profilePictureUrl,
         type: MessageType.entity,
         sharedEntity: entity,
-        timestamp: now,
+        createdAt: now,
+        readBy: [currentUser.uid],
       );
+
+      final messageData = message.toFirestore();
+      messageData['createdAt'] = FieldValue.serverTimestamp();
+      messageData['timestamp'] = FieldValue.serverTimestamp();
+      messageData['readBy'] = [currentUser.uid];
 
       // Add message to subcollection
       await _chatsCollection
           .doc(chatId)
           .collection('messages')
           .doc(messageId)
-          .set(message.toFirestore());
+          .set(messageData);
 
       // Update chat room with last message
       await _updateChatRoomLastMessage(
@@ -293,6 +561,8 @@ class ChatService {
         currentUser.uid,
         now,
       );
+
+      await _recordNonConnectionMessageSend(chatRoom, currentUser.uid);
 
       // Send push notifications
       await _sendMessageNotifications(message, chatId);
@@ -304,6 +574,51 @@ class ChatService {
       }
       return false;
     }
+  }
+
+  Future<ChatAttachment?> _uploadImageAttachment({
+    required String chatId,
+    required String messageId,
+    required File imageFile,
+  }) async {
+    try {
+      final fileName = imageFile.uri.pathSegments.isNotEmpty
+          ? imageFile.uri.pathSegments.last
+          : '$messageId.jpg';
+      final sanitizedFileName =
+          fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+      final reference = _storage
+          .ref()
+          .child('chat_media/$chatId/$messageId/$sanitizedFileName');
+
+      final contentType = _inferImageContentType(fileName);
+
+      final uploadTask = await reference.putFile(
+        imageFile,
+        SettableMetadata(contentType: contentType),
+      );
+
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      return ChatAttachment(
+        type: AttachmentType.image,
+        url: downloadUrl,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error uploading image attachment - $e');
+      }
+      return null;
+    }
+  }
+
+  String _inferImageContentType(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+    return 'image/jpeg';
   }
 
   /// Update chat room's last message info
@@ -340,97 +655,151 @@ class ChatService {
     try {
       return _chatsCollection
           .where('participantIds', arrayContains: currentUser.uid)
-          .orderBy('updatedAt', descending: true)
           .snapshots()
           .handleError((error) {
-            if (kDebugMode) {
-              debugPrint('❌ ChatService: Error in getUserChatRooms stream - $error');
-            }
-          })
-          .map((snapshot) {
-            try {
-              return snapshot.docs
-                  .map((doc) {
-                    try {
-                      return ChatRoom.fromFirestore(doc);
-                    } catch (e) {
-                      if (kDebugMode) {
-                        debugPrint('❌ ChatService: Error parsing chat room ${doc.id} - $e');
-                      }
-                      return null;
-                    }
-                  })
-                  .where((room) => room != null)
-                  .cast<ChatRoom>()
-                  .toList();
-            } catch (e) {
-              if (kDebugMode) {
-                debugPrint('❌ ChatService: Error processing chat rooms snapshot - $e');
-              }
-              return <ChatRoom>[];
-            }
-          });
+        if (kDebugMode) {
+          debugPrint(
+              '❌ ChatService: Error in getUserChatRooms stream - $error');
+        }
+      }).asyncMap((snapshot) async {
+        if (_debounceTimer != null && _debounceTimer!.isActive) {
+          _debounceTimer!.cancel();
+        }
+        final completer = Completer<QuerySnapshot<Map<String, dynamic>>>();
+        _debounceTimer = Timer(const Duration(milliseconds: 250), () {
+          if (!completer.isCompleted) {
+            completer.complete(snapshot);
+          }
+        });
+        final debouncedSnapshot = await completer.future;
+
+        try {
+          final rooms = debouncedSnapshot.docs
+              .map((doc) {
+                try {
+                  return ChatRoom.fromFirestore(doc);
+                } catch (e) {
+                  if (kDebugMode) {
+                    debugPrint(
+                        '❌ ChatService: Error parsing chat room ${doc.id} - $e');
+                  }
+                  return null;
+                }
+              })
+              .where((room) => room != null)
+              .cast<ChatRoom>()
+              .toList();
+
+          rooms.sort(
+            (a, b) => b.updatedAt.compareTo(a.updatedAt),
+          );
+          return rooms;
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint(
+                '❌ ChatService: Error processing chat rooms snapshot - $e');
+          }
+          return <ChatRoom>[];
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error setting up getUserChatRooms stream - $e');
+        debugPrint(
+            '❌ ChatService: Error setting up getUserChatRooms stream - $e');
       }
       return Stream.value([]);
     }
   }
 
-  /// Get messages for a specific chat
-  Stream<List<ChatMessage>> getChatMessages(String chatId) {
+  /// Get messages for a specific chat (latest [limit] messages by default)
+  Stream<List<ChatMessage>> getChatMessages(String chatId, {int limit = 50}) {
     try {
       return _chatsCollection
           .doc(chatId)
           .collection('messages')
           .orderBy('timestamp', descending: true)
+          .limit(limit)
           .snapshots()
           .handleError((error) {
-            if (kDebugMode) {
-              debugPrint('❌ ChatService: Error in getChatMessages stream for chat $chatId - $error');
-            }
-          })
-          .map((snapshot) {
-            try {
-              return snapshot.docs
-                  .map((doc) {
-                    try {
-                      return ChatMessage.fromFirestore(doc);
-                    } catch (e) {
-                      if (kDebugMode) {
-                        debugPrint('❌ ChatService: Error parsing message ${doc.id} - $e');
-                      }
-                      return null;
-                    }
-                  })
-                  .where((message) => message != null && !message.isDeleted)
-                  .cast<ChatMessage>()
-                  .toList();
-            } catch (e) {
-              if (kDebugMode) {
-                debugPrint('❌ ChatService: Error processing messages snapshot for chat $chatId - $e');
-              }
-              return <ChatMessage>[];
-            }
-          });
+        if (kDebugMode) {
+          debugPrint(
+              '❌ ChatService: Error in getChatMessages stream for chat $chatId - $error');
+        }
+      }).map((snapshot) {
+        try {
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return ChatMessage.fromFirestore(doc);
+                } catch (e) {
+                  if (kDebugMode) {
+                    debugPrint(
+                        '❌ ChatService: Error parsing message ${doc.id} - $e');
+                  }
+                  return null;
+                }
+              })
+              .where((message) => message != null && !message.isDeleted)
+              .cast<ChatMessage>()
+              .toList();
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint(
+                '❌ ChatService: Error processing messages snapshot for chat $chatId - $e');
+          }
+          return <ChatMessage>[];
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error setting up getChatMessages stream for chat $chatId - $e');
+        debugPrint(
+            '❌ ChatService: Error setting up getChatMessages stream for chat $chatId - $e');
       }
       return Stream.value([]);
+    }
+  }
+
+  /// Fetch older messages for pagination
+  Future<List<ChatMessage>> fetchOlderMessages(
+    String chatId,
+    ChatMessage lastMessage, {
+    int limit = 50,
+  }) async {
+    try {
+      final snapshot = await _chatsCollection
+          .doc(chatId)
+          .collection('messages')
+          .orderBy('timestamp', descending: true)
+          .startAfter([Timestamp.fromDate(lastMessage.createdAt)])
+          .limit(limit)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => ChatMessage.fromFirestore(doc))
+          .where((message) => message != null && !message!.isDeleted)
+          .cast<ChatMessage>()
+          .toList();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+            '❌ ChatService: Error fetching older messages for chat $chatId - $e');
+      }
+      return [];
     }
   }
 
   /// Mark message as read
   Future<void> markMessageAsRead(String chatId, String messageId) async {
     try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return;
+
       await _chatsCollection
           .doc(chatId)
           .collection('messages')
           .doc(messageId)
           .update({
-        'readAt': FieldValue.serverTimestamp(),
+        'readBy': FieldValue.arrayUnion([currentUser.uid]),
       });
     } catch (e) {
       if (kDebugMode) {
@@ -460,7 +829,8 @@ class ChatService {
   }
 
   /// Send push notifications for a new message
-  Future<void> _sendMessageNotifications(ChatMessage message, String chatId) async {
+  Future<void> _sendMessageNotifications(
+      ChatMessage message, String chatId) async {
     try {
       // Get chat room to find participants
       final chatDoc = await _chatsCollection.doc(chatId).get();
@@ -470,18 +840,39 @@ class ChatService {
 
       // Get participant user IDs (excluding sender)
       final participantIds = chatRoom.participants
-          .where((p) => p.userId != message.senderId)
+          .where((p) => p.userId != message.fromId)
           .map((p) => p.userId)
           .toList();
 
       if (participantIds.isEmpty) return;
 
       // Get FCM tokens for participants
-      final tokens = await _notificationService.getParticipantTokens(participantIds);
+      final tokens =
+          await _notificationService.getParticipantTokens(participantIds);
+
+      var notificationMessage = message;
+      final nonConnectionMeta = _getNonConnectionMetadata(chatRoom);
+      final status =
+          (nonConnectionMeta?['status'] as String?)?.toLowerCase() ?? 'none';
+      final initiatorId = nonConnectionMeta?['initiatorId'] as String?;
+      if (status == 'pending' && initiatorId == message.fromId) {
+        if (message.type == MessageType.text) {
+          final base = message.text != null && message.text!.isNotEmpty
+              ? message.text!
+              : 'New message';
+          notificationMessage = message.copyWith(
+            text: 'Message request: $base',
+          );
+        } else {
+          notificationMessage = message.copyWith(
+            text: 'Message request from ${message.senderName}',
+          );
+        }
+      }
 
       if (tokens.isNotEmpty) {
         await _notificationService.sendMessageNotification(
-          message: message,
+          message: notificationMessage,
           chatRoom: chatRoom,
           recipientTokens: tokens,
         );
@@ -490,6 +881,100 @@ class ChatService {
       if (kDebugMode) {
         debugPrint('❌ ChatService: Error sending message notifications - $e');
       }
+    }
+  }
+
+  Future<bool> acceptNonConnectionChat(String chatId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return false;
+
+    try {
+      await _chatsCollection.doc(chatId).update({
+        'metadata.nonConnection.status': 'accepted',
+        'metadata.nonConnection.acceptedBy': currentUser.uid,
+        'metadata.nonConnection.acceptedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error accepting non-connection chat - $e');
+      }
+      return false;
+    }
+  }
+
+  Future<bool> blockNonConnectionChat({
+    required String chatId,
+    required String otherUserId,
+  }) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return false;
+
+    try {
+      final batch = _firestore.batch();
+      final chatRef = _chatsCollection.doc(chatId);
+
+      batch.update(chatRef, {
+        'metadata.nonConnection.status': 'blocked',
+        'metadata.nonConnection.closedBy': currentUser.uid,
+        'metadata.nonConnection.closedAt': FieldValue.serverTimestamp(),
+      });
+
+      final blockRef = _firestore
+          .collection('user_blocks')
+          .doc(currentUser.uid)
+          .collection('blocked')
+          .doc(otherUserId);
+
+      batch.set(
+        blockRef,
+        {
+          'blockedUserId': otherUserId,
+          'blockedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      await batch.commit();
+      await _deleteChatDocument(chatId);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error blocking non-connection chat - $e');
+      }
+      return false;
+    }
+  }
+
+  Future<bool> reportNonConnectionChat({
+    required String chatId,
+    required String otherUserId,
+  }) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return false;
+
+    try {
+      await _firestore.collection('user_reports').add({
+        'chatId': chatId,
+        'reportedUserId': otherUserId,
+        'reporterUserId': currentUser.uid,
+        'reason': 'non_connection_message',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await _chatsCollection.doc(chatId).update({
+        'metadata.nonConnection.status': 'reported',
+        'metadata.nonConnection.closedBy': currentUser.uid,
+        'metadata.nonConnection.closedAt': FieldValue.serverTimestamp(),
+      });
+
+      await _deleteChatDocument(chatId);
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error reporting non-connection chat - $e');
+      }
+      return false;
     }
   }
 
@@ -504,14 +989,16 @@ class ChatService {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return false;
 
-      final currentUserProfile = await _userRepository.getUserProfile(currentUser.uid);
+      final currentUserProfile =
+          await _userRepository.getUserProfile(currentUser.uid);
       final targetUserProfile = await _userRepository.getUserProfile(toUserId);
 
       if (currentUserProfile == null || targetUserProfile == null) {
         return false;
       }
 
-      final connectionId = ConnectionHelper.generateConnectionId(currentUser.uid, toUserId);
+      final connectionId =
+          ConnectionHelper.generateConnectionId(currentUser.uid, toUserId);
       final now = DateTime.now();
 
       final connection = Connection(
@@ -528,13 +1015,39 @@ class ChatService {
         updatedAt: now,
       );
 
-      await _connectionsCollection.doc(connectionId).set(connection.toFirestore());
+      await _connectionsCollection
+          .doc(connectionId)
+          .set(connection.toFirestore());
       return true;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ ChatService: Error sending connection request - $e');
       }
       return false;
+    }
+  }
+
+  Future<void> _deleteChatDocument(String chatId) async {
+    const batchSize = 100;
+    try {
+      while (true) {
+        final snapshot = await _chatsCollection
+            .doc(chatId)
+            .collection('messages')
+            .limit(batchSize)
+            .get();
+        if (snapshot.docs.isEmpty) break;
+        final batch = _firestore.batch();
+        for (final doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      }
+      await _chatsCollection.doc(chatId).delete();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error deleting chat document - $e');
+      }
     }
   }
 
@@ -553,7 +1066,8 @@ class ChatService {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error responding to connection request - $e');
+        debugPrint(
+            '❌ ChatService: Error responding to connection request - $e');
       }
       return false;
     }
@@ -565,7 +1079,8 @@ class ChatService {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return null;
 
-      final connectionId = ConnectionHelper.generateConnectionId(currentUser.uid, otherUserId);
+      final connectionId =
+          ConnectionHelper.generateConnectionId(currentUser.uid, otherUserId);
       final doc = await _connectionsCollection.doc(connectionId).get();
 
       return Connection.fromFirestore(doc);
@@ -582,53 +1097,120 @@ class ChatService {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: No authenticated user for getUserConnections');
+        debugPrint(
+            '❌ ChatService: No authenticated user for getUserConnections');
       }
       return Stream.value([]);
     }
 
     try {
-      return _connectionsCollection
+      // Create streams for both fromUserId and toUserId queries
+      final fromStream = _connectionsCollection
           .where('status', isEqualTo: ConnectionStatus.accepted.value)
           .where('fromUserId', isEqualTo: currentUser.uid)
           .snapshots()
           .handleError((error) {
-            if (kDebugMode) {
-              debugPrint('❌ ChatService: Error in getUserConnections stream - $error');
-            }
-          })
-          .asyncMap((fromSnapshot) async {
-            try {
-              final toSnapshot = await _connectionsCollection
-                  .where('status', isEqualTo: ConnectionStatus.accepted.value)
-                  .where('toUserId', isEqualTo: currentUser.uid)
-                  .get();
+        if (kDebugMode) {
+          debugPrint(
+              '❌ ChatService: Error in getUserConnections fromUserId stream - $error');
+        }
+      });
 
-              final allDocs = [...fromSnapshot.docs, ...toSnapshot.docs];
-              return allDocs
-                  .map((doc) {
-                    try {
-                      return Connection.fromFirestore(doc);
-                    } catch (e) {
-                      if (kDebugMode) {
-                        debugPrint('❌ ChatService: Error parsing connection ${doc.id} - $e');
-                      }
-                      return null;
-                    }
-                  })
-                  .where((connection) => connection != null)
-                  .cast<Connection>()
-                  .toList();
-            } catch (e) {
-              if (kDebugMode) {
-                debugPrint('❌ ChatService: Error processing connections - $e');
+      final toStream = _connectionsCollection
+          .where('status', isEqualTo: ConnectionStatus.accepted.value)
+          .where('toUserId', isEqualTo: currentUser.uid)
+          .snapshots()
+          .handleError((error) {
+        if (kDebugMode) {
+          debugPrint(
+              '❌ ChatService: Error in getUserConnections toUserId stream - $error');
+        }
+      });
+
+      // Combine both streams
+      StreamController<List<Connection>>? controller;
+      StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? fromSub;
+      StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? toSub;
+
+      controller = StreamController<List<Connection>>.broadcast(
+        onListen: () {
+          final Map<String, Connection> connectionsMap = {};
+          QuerySnapshot<Map<String, dynamic>>? lastFromSnapshot;
+          QuerySnapshot<Map<String, dynamic>>? lastToSnapshot;
+
+          void updateConnections() {
+            // Merge both snapshots
+            final allDocs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+            
+            if (lastFromSnapshot != null) {
+              for (final doc in lastFromSnapshot!.docs) {
+                allDocs[doc.id] = doc;
               }
-              return <Connection>[];
+              if (kDebugMode) {
+                debugPrint(
+                    '✅ ChatService: Found ${lastFromSnapshot!.docs.length} connections where user is sender');
+              }
             }
+            
+            if (lastToSnapshot != null) {
+              for (final doc in lastToSnapshot!.docs) {
+                allDocs[doc.id] = doc;
+              }
+              if (kDebugMode) {
+                debugPrint(
+                    '✅ ChatService: Found ${lastToSnapshot!.docs.length} connections where user is receiver');
+              }
+            }
+
+            // Parse all connections
+            final connections = allDocs.values
+                .map((doc) {
+                  try {
+                    return Connection.fromFirestore(doc);
+                  } catch (e) {
+                    if (kDebugMode) {
+                      debugPrint(
+                          '❌ ChatService: Error parsing connection ${doc.id} - $e');
+                    }
+                    return null;
+                  }
+                })
+                .where((connection) => connection != null)
+                .cast<Connection>()
+                .toList();
+
+            if (kDebugMode) {
+              debugPrint(
+                  '✅ ChatService: Total accepted connections: ${connections.length}');
+            }
+
+            if (!controller!.isClosed) {
+              controller!.add(connections);
+            }
+          }
+
+          fromSub = fromStream.listen((fromSnapshot) {
+            lastFromSnapshot = fromSnapshot;
+            updateConnections();
           });
+
+          toSub = toStream.listen((toSnapshot) {
+            lastToSnapshot = toSnapshot;
+            updateConnections();
+          });
+        },
+        onCancel: () {
+          fromSub?.cancel();
+          toSub?.cancel();
+          controller?.close();
+        },
+      );
+
+      return controller.stream;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error setting up getUserConnections stream - $e');
+        debugPrint(
+            '❌ ChatService: Error setting up getUserConnections stream - $e');
       }
       return Stream.value([]);
     }
@@ -639,7 +1221,8 @@ class ChatService {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: No authenticated user for getPendingConnectionRequests');
+        debugPrint(
+            '❌ ChatService: No authenticated user for getPendingConnectionRequests');
       }
       return Stream.value([]);
     }
@@ -651,36 +1234,39 @@ class ChatService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .handleError((error) {
-            if (kDebugMode) {
-              debugPrint('❌ ChatService: Error in getPendingConnectionRequests stream - $error');
-            }
-          })
-          .map((snapshot) {
-            try {
-              return snapshot.docs
-                  .map((doc) {
-                    try {
-                      return Connection.fromFirestore(doc);
-                    } catch (e) {
-                      if (kDebugMode) {
-                        debugPrint('❌ ChatService: Error parsing connection ${doc.id} - $e');
-                      }
-                      return null;
-                    }
-                  })
-                  .where((connection) => connection != null)
-                  .cast<Connection>()
-                  .toList();
-            } catch (e) {
-              if (kDebugMode) {
-                debugPrint('❌ ChatService: Error processing connections snapshot - $e');
-              }
-              return <Connection>[];
-            }
-          });
+        if (kDebugMode) {
+          debugPrint(
+              '❌ ChatService: Error in getPendingConnectionRequests stream - $error');
+        }
+      }).map((snapshot) {
+        try {
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return Connection.fromFirestore(doc);
+                } catch (e) {
+                  if (kDebugMode) {
+                    debugPrint(
+                        '❌ ChatService: Error parsing connection ${doc.id} - $e');
+                  }
+                  return null;
+                }
+              })
+              .where((connection) => connection != null)
+              .cast<Connection>()
+              .toList();
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint(
+                '❌ ChatService: Error processing connections snapshot - $e');
+          }
+          return <Connection>[];
+        }
+      });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error setting up getPendingConnectionRequests stream - $e');
+        debugPrint(
+            '❌ ChatService: Error setting up getPendingConnectionRequests stream - $e');
       }
       return Stream.value([]);
     }
@@ -690,13 +1276,15 @@ class ChatService {
   Future<bool> canUsersChat(String otherUserId) async {
     try {
       // Get other user's profile to check if it's public
-      final otherUserProfile = await _userRepository.getUserProfile(otherUserId);
+      final otherUserProfile =
+          await _userRepository.getUserProfile(otherUserId);
       if (otherUserProfile == null) return false;
 
       // For now, assume all profiles are public (can be extended later)
       // In a real implementation, you'd check a 'isPublic' field from the profile
       // Using a variable instead of const to avoid dead code warning
-      final isProfilePublic = otherUserProfile.profilePictureUrl != null; // Simplified logic for demo
+      final isProfilePublic = otherUserProfile.profilePictureUrl !=
+          null; // Simplified logic for demo
 
       if (isProfilePublic) return true;
 
@@ -779,7 +1367,7 @@ class ChatService {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return null;
 
-      final chatId = 'team_$teamId';
+      final chatId = teamChatId(teamId);
       final now = DateTime.now();
 
       // Create participants list
@@ -843,9 +1431,10 @@ class ChatService {
         participants.add(ChatParticipant(
           userId: participantIds[i],
           name: participantNames[i],
-          imageUrl: participantImageUrls != null && i < participantImageUrls.length
-              ? participantImageUrls[i]
-              : null,
+          imageUrl:
+              participantImageUrls != null && i < participantImageUrls.length
+                  ? participantImageUrls[i]
+                  : null,
           role: isOrganizer ? 'admin' : 'member',
           joinedAt: now,
         ));
@@ -890,9 +1479,8 @@ class ChatService {
       }
 
       // Check if user is already a member
-      final existingMember = chatRoom.participants
-          .where((p) => p.userId == userId)
-          .firstOrNull;
+      final existingMember =
+          chatRoom.participants.where((p) => p.userId == userId).firstOrNull;
 
       if (existingMember != null) {
         return true; // Already a member
@@ -935,9 +1523,8 @@ class ChatService {
         return false;
       }
 
-      final updatedParticipants = chatRoom.participants
-          .where((p) => p.userId != userId)
-          .toList();
+      final updatedParticipants =
+          chatRoom.participants.where((p) => p.userId != userId).toList();
 
       await _chatsCollection.doc(chatId).update({
         'participants': updatedParticipants.map((p) => p.toMap()).toList(),
@@ -997,8 +1584,6 @@ class ChatService {
     }
   }
 
-
-
   /// Add participant to group chat
   Future<bool> addParticipantToGroupChat({
     required String chatId,
@@ -1029,7 +1614,8 @@ class ChatService {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error adding participant to group chat - $e');
+        debugPrint(
+            '❌ ChatService: Error adding participant to group chat - $e');
       }
       return false;
     }
@@ -1046,9 +1632,10 @@ class ChatService {
 
       final chatRoom = ChatRoom.fromFirestore(chatDoc);
       final updatedParticipants = chatRoom?.participants
-          .where((p) => p.userId != userId)
-          .map((p) => p.toMap())
-          .toList() ?? [];
+              .where((p) => p.userId != userId)
+              .map((p) => p.toMap())
+              .toList() ??
+          [];
 
       await _chatsCollection.doc(chatId).update({
         'participants': updatedParticipants,
@@ -1056,13 +1643,15 @@ class ChatService {
       });
 
       if (kDebugMode) {
-        debugPrint('✅ ChatService: Removed user $userId from group chat $chatId');
+        debugPrint(
+            '✅ ChatService: Removed user $userId from group chat $chatId');
       }
 
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatService: Error removing participant from group chat - $e');
+        debugPrint(
+            '❌ ChatService: Error removing participant from group chat - $e');
       }
       return false;
     }
@@ -1080,19 +1669,26 @@ class ChatService {
       final systemMessage = ChatMessage(
         id: messageId,
         chatId: chatId,
-        senderId: 'system',
+        fromId: 'system',
+        groupId: chatId,
         senderName: 'System',
         type: MessageType.text,
         text: message,
-        timestamp: now,
+        createdAt: now,
+        readBy: const ['system'],
       );
+
+      final messageData = systemMessage.toFirestore();
+      messageData['createdAt'] = FieldValue.serverTimestamp();
+      messageData['timestamp'] = FieldValue.serverTimestamp();
+      messageData['readBy'] = ['system'];
 
       // Add message to subcollection
       await _chatsCollection
           .doc(chatId)
           .collection('messages')
           .doc(messageId)
-          .set(systemMessage.toFirestore());
+          .set(messageData);
 
       // Update chat room with last message
       await _updateChatRoomLastMessage(
@@ -1114,4 +1710,98 @@ class ChatService {
       return false;
     }
   }
+
+  /// Get a chat room by ID
+  Future<ChatRoom?> getChatRoom(String chatId) async {
+    try {
+      final chatDoc = await _chatsCollection.doc(chatId).get();
+      if (chatDoc.exists) {
+        return ChatRoom.fromFirestore(chatDoc);
+      }
+      return null;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error getting chat room - $e');
+      }
+      return null;
+    }
+  }
+
+  Stream<ChatRoom?> watchChatRoom(String chatId) {
+    try {
+      return _chatsCollection.doc(chatId).snapshots().map((snapshot) {
+        if (!snapshot.exists) return null;
+        return ChatRoom.fromFirestore(snapshot);
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error watching chat room - $e');
+      }
+      return Stream.value(null);
+    }
+  }
+
+  /// Delete a chat room (soft delete by removing current user from participants)
+  Future<bool> deleteChatRoom(String chatId) async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return false;
+
+      final chatDoc = await _chatsCollection.doc(chatId).get();
+      if (!chatDoc.exists) return false;
+
+      final chatRoom = ChatRoom.fromFirestore(chatDoc);
+      if (chatRoom == null) return false;
+
+      // For group chats, remove the user from participants
+      if (chatRoom.isGroupChat) {
+        return await removeParticipantFromGroupChat(
+          chatId: chatId,
+          userId: currentUser.uid,
+        );
+      }
+
+      // For direct chats, mark as deleted for this user
+      await _chatsCollection.doc(chatId).update({
+        'deletedBy.${currentUser.uid}': FieldValue.serverTimestamp(),
+      });
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ ChatService: Error deleting chat room - $e');
+      }
+      return false;
+    }
+  }
+}
+
+  ChatParticipant _buildParticipant({
+    required String userId,
+    required DateTime joinedAt,
+    required String defaultName,
+    UserProfile? profile,
+    String? fallbackName,
+    String? fallbackImageUrl,
+  }) {
+    final sanitizedFallbackName =
+        (fallbackName != null && fallbackName.trim().isNotEmpty)
+            ? fallbackName
+            : null;
+    final resolvedName =
+        profile?.fullName ?? sanitizedFallbackName ?? defaultName;
+
+    final sanitizedFallbackImage =
+        (fallbackImageUrl != null && fallbackImageUrl.trim().isNotEmpty)
+            ? fallbackImageUrl
+            : null;
+    final resolvedImage =
+        profile?.profilePictureUrl ?? sanitizedFallbackImage;
+
+    return ChatParticipant(
+      userId: userId,
+      name: resolvedName,
+      imageUrl: resolvedImage,
+      joinedAt: joinedAt,
+    );
 }

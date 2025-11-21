@@ -55,12 +55,13 @@ class MatchmakingService {
       // Apply distance filter if location is available
       if (userLocation != null) {
         potentialMatches = potentialMatches.where((player) {
-          final playerLocation = player.geoPoint ?? 
-              _locationService.getApproximateLocationFromString(player.location);
+          final playerLocation = player.geoPoint ??
+              _locationService
+                  .getApproximateLocationFromString(player.location);
           if (playerLocation == null) return false;
-          
+
           final distance = _locationService.calculateDistance(
-            userLocation, 
+            userLocation,
             playerLocation,
           );
           return distance <= maxDistance;
@@ -71,12 +72,12 @@ class MatchmakingService {
       List<PlayerMatch> matches = [];
       for (final player in potentialMatches) {
         final matchResult = _calculateMatchScore(
-          currentPlayer, 
-          player, 
+          currentPlayer,
+          player,
           userLocation,
           skillTolerance,
         );
-        
+
         if (matchResult != null && matchResult.matchScore > 30) {
           matches.add(matchResult);
         }
@@ -104,18 +105,20 @@ class MatchmakingService {
   ) {
     double totalScore = 0;
     List<String> matchReasons = [];
-    
+
     // 1. Sport compatibility (40% weight)
     final commonSports = currentPlayer.sportsOfInterest
         .where((sport) => otherPlayer.sportsOfInterest.contains(sport))
         .toList();
-    
+
     if (commonSports.isEmpty) return null; // No common sports
-    
-    final sportScore = (commonSports.length / 
-        max(currentPlayer.sportsOfInterest.length, otherPlayer.sportsOfInterest.length)) * 40;
+
+    final sportScore = (commonSports.length /
+            max(currentPlayer.sportsOfInterest.length,
+                otherPlayer.sportsOfInterest.length)) *
+        40;
     totalScore += sportScore;
-    
+
     if (commonSports.length > 1) {
       matchReasons.add('${commonSports.length} sports in common');
     } else {
@@ -125,11 +128,11 @@ class MatchmakingService {
     // 2. Skill compatibility (30% weight)
     double skillScore = 0;
     int skillComparisons = 0;
-    
+
     for (final sport in commonSports) {
       final currentSkill = currentPlayer.getSkillScore(sport);
       final otherSkill = otherPlayer.getSkillScore(sport);
-      
+
       if (currentSkill > 0 && otherSkill > 0) {
         final skillDiff = (currentSkill - otherSkill).abs();
         if (skillDiff <= skillTolerance) {
@@ -138,15 +141,15 @@ class MatchmakingService {
         }
       }
     }
-    
+
     if (skillComparisons > 0) {
       skillScore = skillScore / skillComparisons;
       totalScore += skillScore;
-      
+
       final avgCurrentSkill = currentPlayer.averageSkillScore;
       final avgOtherSkill = otherPlayer.averageSkillScore;
       final skillDiff = (avgCurrentSkill - avgOtherSkill).abs();
-      
+
       if (skillDiff <= 5) {
         matchReasons.add('Very similar skill level');
       } else if (skillDiff <= 10) {
@@ -171,11 +174,13 @@ class MatchmakingService {
     final commonAvailability = currentPlayer.availability
         .where((slot) => otherPlayer.availability.contains(slot))
         .toList();
-    
+
     double availabilityScore = 0;
     if (commonAvailability.isNotEmpty) {
-      availabilityScore = (commonAvailability.length / 
-          max(currentPlayer.availability.length, otherPlayer.availability.length)) * 10;
+      availabilityScore = (commonAvailability.length /
+              max(currentPlayer.availability.length,
+                  otherPlayer.availability.length)) *
+          10;
       totalScore += availabilityScore;
       matchReasons.add('${commonAvailability.length} time slots match');
     }
@@ -183,11 +188,13 @@ class MatchmakingService {
     // 5. Distance bonus (10% weight)
     double? distance;
     if (userLocation != null) {
-      final otherLocation = otherPlayer.geoPoint ?? 
-          _locationService.getApproximateLocationFromString(otherPlayer.location);
+      final otherLocation = otherPlayer.geoPoint ??
+          _locationService
+              .getApproximateLocationFromString(otherPlayer.location);
       if (otherLocation != null) {
-        distance = _locationService.calculateDistance(userLocation, otherLocation);
-        
+        distance =
+            _locationService.calculateDistance(userLocation, otherLocation);
+
         double distanceScore = 0;
         if (distance <= 5) {
           distanceScore = 10;
@@ -273,7 +280,8 @@ class MatchmakingService {
   }
 
   /// Get sent match requests by a player
-  Future<List<Map<String, dynamic>>> getSentMatchRequests(String playerId) async {
+  Future<List<Map<String, dynamic>>> getSentMatchRequests(
+      String playerId) async {
     try {
       final requestsQuery = await _firestore
           .collection('match_requests')
@@ -290,7 +298,8 @@ class MatchmakingService {
       }).toList();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ MatchmakingService: Error getting sent match requests - $e');
+        debugPrint(
+            '❌ MatchmakingService: Error getting sent match requests - $e');
       }
       return [];
     }
@@ -308,11 +317,13 @@ class MatchmakingService {
       });
 
       if (kDebugMode) {
-        debugPrint('✅ MatchmakingService: Match request ${accepted ? 'accepted' : 'declined'}');
+        debugPrint(
+            '✅ MatchmakingService: Match request ${accepted ? 'accepted' : 'declined'}');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ MatchmakingService: Error responding to match request - $e');
+        debugPrint(
+            '❌ MatchmakingService: Error responding to match request - $e');
       }
       rethrow;
     }

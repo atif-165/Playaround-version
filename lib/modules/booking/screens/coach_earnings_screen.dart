@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
-
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../../../models/booking_analytics_model.dart';
@@ -20,11 +19,11 @@ class CoachEarningsScreen extends StatefulWidget {
 
 class _CoachEarningsScreenState extends State<CoachEarningsScreen> {
   final BookingHistoryService _bookingHistoryService = BookingHistoryService();
-  
+
   EarningsSummary? _earningsSummary;
   bool _isLoading = true;
   String _selectedPeriod = 'This Month';
-  
+
   final List<String> _periodOptions = [
     'This Week',
     'This Month',
@@ -163,7 +162,7 @@ class _CoachEarningsScreenState extends State<CoachEarningsScreen> {
 
   Widget _buildEarningsSummaryCards() {
     final summary = _earningsSummary!;
-    
+
     return Column(
       children: [
         Row(
@@ -253,7 +252,7 @@ class _CoachEarningsScreenState extends State<CoachEarningsScreen> {
 
   Widget _buildSportBreakdown() {
     final summary = _earningsSummary!;
-    
+
     if (summary.earningsBySport.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -281,10 +280,10 @@ class _CoachEarningsScreenState extends State<CoachEarningsScreen> {
           ),
           Gap(16.h),
           ...summary.earningsBySport.entries.map((entry) {
-            final percentage = summary.totalEarnings > 0 
-                ? (entry.value / summary.totalEarnings * 100) 
+            final percentage = summary.totalEarnings > 0
+                ? (entry.value / summary.totalEarnings * 100)
                 : 0.0;
-            
+
             return Padding(
               padding: EdgeInsets.only(bottom: 12.h),
               child: Row(
@@ -328,7 +327,7 @@ class _CoachEarningsScreenState extends State<CoachEarningsScreen> {
 
   Widget _buildSessionStats() {
     final summary = _earningsSummary!;
-    
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -353,8 +352,13 @@ class _CoachEarningsScreenState extends State<CoachEarningsScreen> {
           Gap(16.h),
           _buildStatRow('Total Sessions', '${summary.totalSessions}'),
           _buildStatRow('Completed Sessions', '${summary.completedSessions}'),
-          _buildStatRow('Highest Session Earning', '\$${summary.highestSessionEarnings.toStringAsFixed(2)}'),
-          _buildStatRow('Most Profitable Sport', summary.mostProfitableSport.isNotEmpty ? summary.mostProfitableSport : 'N/A'),
+          _buildStatRow('Highest Session Earning',
+              '\$${summary.highestSessionEarnings.toStringAsFixed(2)}'),
+          _buildStatRow(
+              'Most Profitable Sport',
+              summary.mostProfitableSport.isNotEmpty
+                  ? summary.mostProfitableSport
+                  : 'N/A'),
         ],
       ),
     );

@@ -64,7 +64,8 @@ class WeekdaySelector extends StatelessWidget {
                   color: isSelected ? ColorsManager.mainBlue : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
                     width: 1.5,
                   ),
                 ),

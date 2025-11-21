@@ -9,19 +9,27 @@ class ImageUtils {
   /// Validates if a URL is a valid image URL
   static bool isValidImageUrl(String? url) {
     if (url == null || url.isEmpty) return false;
-    
+
     // Check if it's a valid URL format
     try {
       final uri = Uri.parse(url);
-      if (!uri.hasScheme || (!uri.scheme.startsWith('http') && !uri.scheme.startsWith('https'))) {
+      if (!uri.hasScheme ||
+          (!uri.scheme.startsWith('http') && !uri.scheme.startsWith('https'))) {
         return false;
       }
-      
+
       // Check if it has a valid image extension or is from known image services
       final path = uri.path.toLowerCase();
-      final validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'];
+      final validExtensions = [
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.gif',
+        '.webp',
+        '.bmp'
+      ];
       final isValidExtension = validExtensions.any((ext) => path.endsWith(ext));
-      
+
       // Check for known image hosting services
       final knownImageHosts = [
         'cloudinary.com',
@@ -31,8 +39,9 @@ class ImageUtils {
         'imgur.com',
         'unsplash.com',
       ];
-      final isKnownHost = knownImageHosts.any((host) => uri.host.contains(host));
-      
+      final isKnownHost =
+          knownImageHosts.any((host) => uri.host.contains(host));
+
       return isValidExtension || isKnownHost;
     } catch (e) {
       return false;
@@ -71,16 +80,18 @@ class ImageUtils {
       width: width,
       height: height,
       fit: fit,
-      placeholder: placeholder ?? (context, url) => _buildPlaceholder(width, height),
-      errorWidget: errorWidget ?? (context, url, error) => _buildFallbackWidget(
-              width: width,
-              height: height,
-              borderRadius: borderRadius,
-              fallbackIcon: fallbackIcon,
-              fallbackIconColor: fallbackIconColor,
-              fallbackIconSize: fallbackIconSize,
-              backgroundColor: backgroundColor,
-            ),
+      placeholder:
+          placeholder ?? (context, url) => _buildPlaceholder(width, height),
+      errorWidget: errorWidget ??
+          (context, url, error) => _buildFallbackWidget(
+                width: width,
+                height: height,
+                borderRadius: borderRadius,
+                fallbackIcon: fallbackIcon,
+                fallbackIconColor: fallbackIconColor,
+                fallbackIconSize: fallbackIconSize,
+                backgroundColor: backgroundColor,
+              ),
     );
 
     // Apply border radius if provided
@@ -110,7 +121,8 @@ class ImageUtils {
           ? CachedNetworkImageProvider(imageUrl!)
           : null,
       child: !isValidImageUrl(imageUrl)
-          ? (child ?? _buildAvatarFallback(fallbackText, fallbackTextColor, radius))
+          ? (child ??
+              _buildAvatarFallback(fallbackText, fallbackTextColor, radius))
           : null,
     );
   }
@@ -160,7 +172,8 @@ class ImageUtils {
   }
 
   /// Builds a fallback for avatar (initials or icon)
-  static Widget _buildAvatarFallback(String? fallbackText, Color? textColor, double radius) {
+  static Widget _buildAvatarFallback(
+      String? fallbackText, Color? textColor, double radius) {
     if (fallbackText != null && fallbackText.isNotEmpty) {
       return Text(
         fallbackText.substring(0, 1).toUpperCase(),
@@ -182,12 +195,13 @@ class ImageUtils {
   /// Gets initials from a full name
   static String getInitials(String? fullName) {
     if (fullName == null || fullName.isEmpty) return '';
-    
+
     final names = fullName.trim().split(' ');
     if (names.length == 1) {
       return names[0].substring(0, 1).toUpperCase();
     } else {
-      return '${names[0].substring(0, 1)}${names[names.length - 1].substring(0, 1)}'.toUpperCase();
+      return '${names[0].substring(0, 1)}${names[names.length - 1].substring(0, 1)}'
+          .toUpperCase();
     }
   }
 

@@ -112,7 +112,7 @@ class NotificationCard extends StatelessWidget {
       variant: notification.isRead ? CardVariant.filled : CardVariant.elevated,
       size: CardSize.medium,
       onTap: onTap,
-      backgroundColor: notification.isRead 
+      backgroundColor: notification.isRead
           ? ColorsManager.surfaceVariant.withValues(alpha: 0.5)
           : null,
       child: Column(
@@ -142,7 +142,8 @@ class NotificationCard extends StatelessWidget {
               Text(
                 notification.title,
                 style: AppTypography.titleMedium.copyWith(
-                  fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.w600,
+                  fontWeight:
+                      notification.isRead ? FontWeight.w500 : FontWeight.w600,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -192,8 +193,8 @@ class NotificationCard extends StatelessWidget {
         Text(
           notification.message,
           style: AppTypography.bodyMedium.copyWith(
-            color: notification.isRead 
-                ? ColorsManager.onSurfaceVariant 
+            color: notification.isRead
+                ? ColorsManager.onSurfaceVariant
                 : ColorsManager.onSurface,
           ),
           maxLines: 3,

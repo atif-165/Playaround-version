@@ -16,6 +16,7 @@ export 'match_models.dart';
 export 'dashboard_models.dart';
 
 // Export module models
+
 export '../modules/team/models/models.dart' hide SportType;
 export '../modules/tournament/models/models.dart' hide MatchStatus;
 export '../modules/skill_tracking/models/models.dart';

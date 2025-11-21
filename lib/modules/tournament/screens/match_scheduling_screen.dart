@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -11,6 +13,7 @@ import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/models.dart';
 import '../services/tournament_service.dart';
+import '../services/tournament_team_service.dart';
 
 /// Screen for scheduling tournament matches
 class MatchSchedulingScreen extends StatefulWidget {
@@ -27,6 +30,7 @@ class MatchSchedulingScreen extends StatefulWidget {
 
 class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
   final _tournamentService = TournamentService();
+  final TournamentTeamService _teamService = TournamentTeamService();
   final _formKey = GlobalKey<FormState>();
 
   // Form controllers
@@ -40,42 +44,39 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
   TimeOfDay? _selectedTime;
   bool _isLoading = false;
   bool _isLoadingTeams = true;
+  StreamSubscription<List<TournamentTeam>>? _teamSubscription;
 
   // Data
-  List<TournamentTeamRegistration> _registeredTeams = [];
+  List<TournamentTeam> _activeTeams = [];
 
   @override
   void initState() {
     super.initState();
-    _loadRegisteredTeams();
+    _listenToTournamentTeams();
   }
 
   @override
   void dispose() {
     _roundController.dispose();
     _matchNumberController.dispose();
+    _teamSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> _loadRegisteredTeams() async {
-    try {
-      final teams = await _tournamentService.getTournamentTeamRegistrations(
-        tournamentId: widget.tournament.id,
-        status: TeamRegistrationStatus.approved,
-      );
-
+  void _listenToTournamentTeams() {
+    _teamSubscription = _teamService
+        .getTeamsStream(widget.tournament.id)
+        .listen((teams) {
+      if (!mounted) return;
       setState(() {
-        _registeredTeams = teams;
+        _activeTeams = teams;
         _isLoadingTeams = false;
       });
-    } catch (e) {
-      setState(() {
-        _isLoadingTeams = false;
-      });
-      if (mounted) {
-        context.showSnackBar('Failed to load teams: ${e.toString()}');
-      }
-    }
+    }, onError: (error) {
+      if (!mounted) return;
+      setState(() => _isLoadingTeams = false);
+      context.showSnackBar('Failed to load teams: $error');
+    });
   }
 
   @override
@@ -100,7 +101,7 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
   }
 
   Widget _buildBody() {
-    if (_registeredTeams.length < 2) {
+    if (_activeTeams.length < 2) {
       return _buildInsufficientTeamsMessage();
     }
 
@@ -309,9 +310,8 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
     required Function(String?) onChanged,
     String? excludeTeamId,
   }) {
-    final availableTeams = _registeredTeams
-        .where((team) => team.teamId != excludeTeamId)
-        .toList();
+    final availableTeams =
+        _activeTeams.where((team) => team.id != excludeTeamId).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,9 +342,9 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
             dropdownColor: ColorsManager.cardBackground,
             items: availableTeams.map((team) {
               return DropdownMenuItem<String>(
-                value: team.teamId,
+                value: team.id,
                 child: Text(
-                  team.teamName,
+                  team.name,
                   style: TextStyles.font14DarkBlueMedium.copyWith(
                     color: ColorsManager.textPrimary,
                   ),
@@ -541,15 +541,17 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
         _selectedTime!.minute,
       );
 
-      final team1 = _registeredTeams.firstWhere((t) => t.teamId == _selectedTeam1Id);
-      final team2 = _registeredTeams.firstWhere((t) => t.teamId == _selectedTeam2Id);
+      final team1 =
+          _activeTeams.firstWhere((t) => t.id == _selectedTeam1Id);
+      final team2 =
+          _activeTeams.firstWhere((t) => t.id == _selectedTeam2Id);
 
       await _tournamentService.scheduleMatch(
         tournamentId: widget.tournament.id,
         team1Id: _selectedTeam1Id!,
-        team1Name: team1.teamName,
+        team1Name: team1.name,
         team2Id: _selectedTeam2Id!,
-        team2Name: team2.teamName,
+        team2Name: team2.name,
         scheduledDate: matchDateTime,
         round: _roundController.text.trim(),
         matchNumber: int.parse(_matchNumberController.text.trim()),

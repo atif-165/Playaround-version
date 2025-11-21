@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/dashboard_models.dart';
 import '../models/user_profile.dart';
+import '../modules/shop/models/product.dart';
 
 /// Service for managing dashboard data and operations
 class DashboardService {
@@ -19,10 +20,7 @@ class DashboardService {
       final user = _auth.currentUser;
       if (user == null) throw Exception('User not authenticated');
 
-      final doc = await _firestore
-          .collection('user_stats')
-          .doc(user.uid)
-          .get();
+      final doc = await _firestore.collection('user_stats').doc(user.uid).get();
 
       if (doc.exists) {
         return DashboardStats.fromFirestore(doc);
@@ -105,15 +103,14 @@ class DashboardService {
       }
 
       final snapshot = await query.get();
-      List<FeaturedCoach> coaches = snapshot.docs
-          .map((doc) => FeaturedCoach.fromFirestore(doc))
-          .toList();
+      List<FeaturedCoach> coaches =
+          snapshot.docs.map((doc) => FeaturedCoach.fromFirestore(doc)).toList();
 
       // Filter by sports of interest if provided
       if (sportsOfInterest != null && sportsOfInterest.isNotEmpty) {
         coaches = coaches.where((coach) {
-          return coach.specializations.any((sport) => 
-              sportsOfInterest.contains(sport));
+          return coach.specializations
+              .any((sport) => sportsOfInterest.contains(sport));
         }).toList();
       }
 
@@ -135,10 +132,7 @@ class DashboardService {
       if (user == null) throw Exception('User not authenticated');
 
       // Get current user profile to determine preferences
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
 
       if (!userDoc.exists) return [];
 
@@ -164,13 +158,12 @@ class DashboardService {
 
         final data = doc.data() as Map<String, dynamic>;
         final otherSports = List<String>.from(data['sportsOfInterest'] ?? []);
-        
+
         // Calculate compatibility score based on common interests
-        final commonInterests = userSports
-            .where((sport) => otherSports.contains(sport))
-            .toList();
-        
-        final compatibilityScore = commonInterests.length / 
+        final commonInterests =
+            userSports.where((sport) => otherSports.contains(sport)).toList();
+
+        final compatibilityScore = commonInterests.length /
             (userSports.length + otherSports.length - commonInterests.length);
 
         // Calculate distance (simplified - in real app would use geolocation)
@@ -189,7 +182,8 @@ class DashboardService {
           age: data['age'] ?? 0,
           skillLevel: data['skillLevel'] != null
               ? SkillLevel.values.firstWhere(
-                  (level) => level.toString().split('.').last == data['skillLevel'],
+                  (level) =>
+                      level.toString().split('.').last == data['skillLevel'],
                   orElse: () => SkillLevel.beginner,
                 )
               : null,
@@ -204,7 +198,8 @@ class DashboardService {
 
       // Sort by compatibility score and distance
       suggestions.sort((a, b) {
-        final scoreComparison = b.compatibilityScore.compareTo(a.compatibilityScore);
+        final scoreComparison =
+            b.compatibilityScore.compareTo(a.compatibilityScore);
         if (scoreComparison != 0) return scoreComparison;
         return a.distance.compareTo(b.distance);
       });
@@ -232,14 +227,14 @@ class DashboardService {
 
       final snapshot = await query.get();
       List<ShopProduct> products = snapshot.docs
-          .map((doc) => ShopProduct.fromFirestore(doc))
+          .map((doc) => ShopProduct.fromFirestore(
+              doc as DocumentSnapshot<Map<String, dynamic>>))
           .toList();
 
       // Filter by sports of interest if provided
       if (sportsOfInterest != null && sportsOfInterest.isNotEmpty) {
         products = products.where((product) {
-          return product.tags.any((tag) => 
-              sportsOfInterest.contains(tag));
+          return product.tags.any((tag) => sportsOfInterest.contains(tag));
         }).toList();
       }
 
@@ -267,36 +262,43 @@ class DashboardService {
       if (user == null) throw Exception('User not authenticated');
 
       final docRef = _firestore.collection('user_stats').doc(user.uid);
-      
+
       await _firestore.runTransaction((transaction) async {
         final doc = await transaction.get(docRef);
-        
+
         if (doc.exists) {
           final data = doc.data() as Map<String, dynamic>;
           final updates = <String, dynamic>{};
-          
+
           if (sessionsIncrement != null) {
-            updates['sessionsThisMonth'] = (data['sessionsThisMonth'] ?? 0) + sessionsIncrement;
+            updates['sessionsThisMonth'] =
+                (data['sessionsThisMonth'] ?? 0) + sessionsIncrement;
           }
           if (hoursIncrement != null) {
-            updates['hoursTrained'] = (data['hoursTrained'] ?? 0) + hoursIncrement;
+            updates['hoursTrained'] =
+                (data['hoursTrained'] ?? 0) + hoursIncrement;
           }
           if (skillPointsIncrement != null) {
-            updates['skillPoints'] = (data['skillPoints'] ?? 0) + skillPointsIncrement;
+            updates['skillPoints'] =
+                (data['skillPoints'] ?? 0) + skillPointsIncrement;
           }
           if (matchesIncrement != null) {
-            updates['matchesPlayed'] = (data['matchesPlayed'] ?? 0) + matchesIncrement;
+            updates['matchesPlayed'] =
+                (data['matchesPlayed'] ?? 0) + matchesIncrement;
           }
           if (teamsIncrement != null) {
-            updates['teamsJoined'] = (data['teamsJoined'] ?? 0) + teamsIncrement;
+            updates['teamsJoined'] =
+                (data['teamsJoined'] ?? 0) + teamsIncrement;
           }
           if (tournamentsIncrement != null) {
-            updates['tournamentsParticipated'] = (data['tournamentsParticipated'] ?? 0) + tournamentsIncrement;
+            updates['tournamentsParticipated'] =
+                (data['tournamentsParticipated'] ?? 0) + tournamentsIncrement;
           }
           if (bookingsIncrement != null) {
-            updates['totalBookings'] = (data['totalBookings'] ?? 0) + bookingsIncrement;
+            updates['totalBookings'] =
+                (data['totalBookings'] ?? 0) + bookingsIncrement;
           }
-          
+
           if (updates.isNotEmpty) {
             transaction.update(docRef, updates);
           }

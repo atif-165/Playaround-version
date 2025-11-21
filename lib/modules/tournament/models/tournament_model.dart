@@ -1,5 +1,45 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../team/models/models.dart';
+
+/// Enum for tournament type
+enum TournamentType {
+  individual,
+  team,
+  mixed,
+  knockout,
+  knockOut, // Alias for knockout, kept for compatibility
+  league;
+
+  String get displayName {
+    switch (this) {
+      case TournamentType.individual:
+        return 'Individual';
+      case TournamentType.team:
+        return 'Team';
+      case TournamentType.mixed:
+        return 'Mixed';
+      case TournamentType.knockout:
+        return 'Knockout';
+      case TournamentType.knockOut:
+        return 'Knockout';
+      case TournamentType.league:
+        return 'League';
+    }
+  }
+
+  int get minTeamRequirement {
+    switch (this) {
+      case TournamentType.knockout:
+      case TournamentType.knockOut:
+        return 4;
+      case TournamentType.league:
+        return 3;
+      default:
+        return 2;
+    }
+  }
+}
 
 /// Enum for tournament status
 enum TournamentStatus {
@@ -7,6 +47,7 @@ enum TournamentStatus {
   registrationOpen,
   registrationClosed,
   ongoing,
+  running, // Same as ongoing, kept for compatibility
   inProgress,
   completed,
   cancelled;
@@ -21,6 +62,8 @@ enum TournamentStatus {
         return 'Registration Closed';
       case TournamentStatus.ongoing:
         return 'Ongoing';
+      case TournamentStatus.running:
+        return 'Running';
       case TournamentStatus.inProgress:
         return 'In Progress';
       case TournamentStatus.completed:
@@ -90,9 +133,10 @@ class Tournament {
   final String? winnerTeamName; // Name of winning team
   final String? groupChatId; // Associated group chat ID
   final List<String> qualifyingQuestions; // Questions for team registration
-  final bool allowTeamEditing; // Whether teams can be edited before tournament starts
+  final bool
+      allowTeamEditing; // Whether teams can be edited before tournament starts
   final Map<String, int> teamPoints; // Team ID -> Points mapping
-  final List<TournamentMatch> matches; // Tournament matches
+  // Note: Matches are now managed separately via TournamentMatchService
   final Map<String, dynamic>? tournamentResults; // Final results and statistics
 
   const Tournament({
@@ -130,7 +174,6 @@ class Tournament {
     this.qualifyingQuestions = const [],
     this.allowTeamEditing = true,
     this.teamPoints = const {},
-    this.matches = const [],
     this.tournamentResults,
   });
 
@@ -170,60 +213,223 @@ class Tournament {
       'qualifyingQuestions': qualifyingQuestions,
       'allowTeamEditing': allowTeamEditing,
       'teamPoints': teamPoints,
-      'matches': matches.map((match) => match.toMap()).toList(),
       'tournamentResults': tournamentResults,
     };
   }
 
+  static DateTime _coerceToDate(dynamic raw, {DateTime? fallback}) {
+    if (raw == null) return fallback ?? DateTime.now();
+    if (raw is DateTime) return raw;
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        return DateTime.parse(raw);
+      } catch (_) {
+        return fallback ?? DateTime.now();
+      }
+    }
+    return fallback ?? DateTime.now();
+  }
+
+  static T _safeFirstWhere<T>(
+    Iterable<T> values,
+    bool Function(T element) test,
+    T fallback,
+  ) {
+    return values.firstWhere(
+      test,
+      orElse: () => fallback,
+    );
+  }
+
+  static TournamentFormat _parseFormat(Map<String, dynamic> map) {
+    final raw = (map['format'] ?? map['type'] ?? '').toString();
+    if (raw.isEmpty) return TournamentFormat.singleElimination;
+    return _safeFirstWhere(
+      TournamentFormat.values,
+      (value) => value.name.toLowerCase() == raw.toLowerCase(),
+      TournamentFormat.singleElimination,
+    );
+  }
+
+  static SportType _parseSportType(Map<String, dynamic> map) {
+    final raw = (map['sportType'] ?? map['sport'] ?? '').toString();
+    if (raw.isEmpty) return SportType.other;
+    return _safeFirstWhere(
+      SportType.values,
+      (value) => value.name.toLowerCase() == raw.toLowerCase(),
+      SportType.other,
+    );
+  }
+
+  static TournamentStatus _parseStatus(Map<String, dynamic> map) {
+    final raw = (map['status'] ?? '').toString();
+    if (raw.isEmpty) return TournamentStatus.upcoming;
+    return _safeFirstWhere(
+      TournamentStatus.values,
+      (value) => value.name.toLowerCase() == raw.toLowerCase(),
+      TournamentStatus.upcoming,
+    );
+  }
+
+  static String _resolveOrganizerName(Map<String, dynamic> map) {
+    if (map['organizerName'] != null && map['organizerName'].toString().isNotEmpty) {
+      return map['organizerName'].toString();
+    }
+
+    final members = map['members'];
+    if (members is List && members.isNotEmpty) {
+      for (final member in members) {
+        if (member is Map<String, dynamic>) {
+          final role = member['role']?.toString().toLowerCase();
+          if (role == 'organizer' || role == 'owner') {
+            final name = member['name'] ?? member['userName'];
+            if (name != null && name.toString().isNotEmpty) {
+              return name.toString();
+            }
+          }
+        }
+      }
+    }
+
+    if (map['members'] is List && (map['members'] as List).isNotEmpty) {
+      final fallbackMember = (map['members'] as List).first;
+      if (fallbackMember is Map<String, dynamic>) {
+        final name = fallbackMember['name'] ?? fallbackMember['userName'];
+        if (name != null && name.toString().isNotEmpty) {
+          return name.toString();
+        }
+      }
+    }
+
+    return 'Tournament Organizer';
+  }
+
+  static int _resolveCurrentTeamsCount(Map<String, dynamic> map) {
+    if (map['currentTeamsCount'] is int) {
+      return map['currentTeamsCount'] as int;
+    }
+    if (map['currentTeamsCount'] is double) {
+      return (map['currentTeamsCount'] as double).round();
+    }
+
+    final stat = map['stat'];
+    if (stat is Map<String, dynamic>) {
+      final activeTeams = stat['activeTeams'] ?? stat['totalTeams'];
+      if (activeTeams is int) return activeTeams;
+      if (activeTeams is double) return activeTeams.round();
+    }
+
+    final teamIds = map['teamIds'];
+    if (teamIds is List) return teamIds.length;
+
+    final members = map['members'];
+    if (members is List) return members.length;
+
+    return 0;
+  }
+
+  static Map<String, int> _parseTeamPoints(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return raw.map((key, value) => MapEntry(key, (value is num) ? value.toInt() : 0));
+    }
+    return const {};
+  }
+
+  static Map<String, dynamic>? _mergeMetadata(Map<String, dynamic> map) {
+    final existing = map['metadata'] is Map<String, dynamic>
+        ? Map<String, dynamic>.from(map['metadata'] as Map<String, dynamic>)
+        : <String, dynamic>{};
+
+    void attach(String key) {
+      if (map[key] != null) {
+        existing.putIfAbsent(key, () => map[key]);
+      }
+    }
+
+    attach('currency');
+    attach('stat');
+    attach('members');
+    attach('teamIds');
+    attach('bannerImageUrl');
+    attach('profileImageUrl');
+
+    return existing.isEmpty ? null : existing;
+  }
+
+  static List<String> _parseStringList(dynamic raw) {
+    if (raw is List) {
+      return raw.map((e) => e.toString()).toList();
+    }
+    return const [];
+  }
+
+  static Map<String, dynamic>? _parseMap(dynamic raw) {
+    if (raw is Map<String, dynamic>) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return null;
+  }
+
   factory Tournament.fromMap(Map<String, dynamic> map) {
+    final startDate = _coerceToDate(map['startDate']);
+    final registrationStartDate = _coerceToDate(
+      map['registrationStartDate'],
+      fallback: map['registrationOpenDate'] != null
+          ? _coerceToDate(map['registrationOpenDate'])
+          : _coerceToDate(map['createdAt'], fallback: startDate.subtract(const Duration(days: 14))),
+    );
+    final registrationEndDate = _coerceToDate(
+      map['registrationEndDate'],
+      fallback: map['registrationDeadline'] != null
+          ? _coerceToDate(map['registrationDeadline'])
+          : startDate,
+    );
+    final createdAt = _coerceToDate(map['createdAt'], fallback: startDate);
+    final updatedAt = _coerceToDate(map['updatedAt'], fallback: createdAt);
+
     return Tournament(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
       description: map['description'] ?? '',
-      sportType: SportType.values.firstWhere(
-        (e) => e.name == map['sportType'],
-        orElse: () => SportType.other,
-      ),
-      format: TournamentFormat.values.firstWhere(
-        (e) => e.name == map['format'],
-        orElse: () => TournamentFormat.singleElimination,
-      ),
-      status: TournamentStatus.values.firstWhere(
-        (e) => e.name == map['status'],
-        orElse: () => TournamentStatus.upcoming,
-      ),
-      organizerId: map['organizerId'] ?? '',
-      organizerName: map['organizerName'] ?? '',
-      registrationStartDate: (map['registrationStartDate'] as Timestamp).toDate(),
-      registrationEndDate: (map['registrationEndDate'] as Timestamp).toDate(),
-      startDate: (map['startDate'] as Timestamp).toDate(),
-      endDate: map['endDate'] != null ? (map['endDate'] as Timestamp).toDate() : null,
-      maxTeams: map['maxTeams'] ?? 0,
-      minTeams: map['minTeams'] ?? 2,
-      currentTeamsCount: map['currentTeamsCount'] ?? 0,
-      location: map['location'],
-      venueId: map['venueId'],
-      venueName: map['venueName'],
-      imageUrl: map['imageUrl'],
-      rules: List<String>.from(map['rules'] ?? []),
-      prizes: map['prizes'],
-      isPublic: map['isPublic'] ?? true,
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: (map['updatedAt'] as Timestamp).toDate(),
-      metadata: map['metadata'],
+      sportType: _parseSportType(map),
+      format: _parseFormat(map),
+      status: _parseStatus(map),
+      organizerId: map['organizerId']?.toString() ?? map['createdBy']?.toString() ?? '',
+      organizerName: _resolveOrganizerName(map),
+      registrationStartDate: registrationStartDate,
+      registrationEndDate: registrationEndDate,
+      startDate: startDate,
+      endDate: map['endDate'] != null ? _coerceToDate(map['endDate']) : null,
+      maxTeams: (map['maxTeams'] is num) ? (map['maxTeams'] as num).toInt() : 0,
+      minTeams: (map['minTeams'] is num) ? (map['minTeams'] as num).toInt() : 2,
+      currentTeamsCount: _resolveCurrentTeamsCount(map),
+      location: map['location']?.toString(),
+      venueId: map['venueId']?.toString(),
+      venueName: map['venueName']?.toString(),
+      imageUrl: (map['imageUrl'] ??
+              map['bannerImageUrl'] ??
+              map['profileImageUrl'])
+          ?.toString(),
+      rules: _parseStringList(map['rules']),
+      prizes: _parseMap(map['prizes']),
+      isPublic: map['isPublic'] is bool ? map['isPublic'] as bool : true,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      metadata: _mergeMetadata(map),
       // New fields
-      entryFee: map['entryFee']?.toDouble(),
-      winningPrize: map['winningPrize']?.toDouble(),
-      winnerTeamId: map['winnerTeamId'],
-      winnerTeamName: map['winnerTeamName'],
-      groupChatId: map['groupChatId'],
-      qualifyingQuestions: List<String>.from(map['qualifyingQuestions'] ?? []),
-      allowTeamEditing: map['allowTeamEditing'] ?? true,
-      teamPoints: Map<String, int>.from(map['teamPoints'] ?? {}),
-      matches: (map['matches'] as List<dynamic>?)
-          ?.map((matchMap) => TournamentMatch.fromMap(matchMap as Map<String, dynamic>))
-          .toList() ?? [],
-      tournamentResults: map['tournamentResults'],
+      entryFee: map['entryFee'] is num ? (map['entryFee'] as num).toDouble() : null,
+      winningPrize:
+          map['winningPrize'] is num ? (map['winningPrize'] as num).toDouble() : null,
+      winnerTeamId: map['winnerTeamId']?.toString(),
+      winnerTeamName: map['winnerTeamName']?.toString(),
+      groupChatId: map['groupChatId']?.toString(),
+      qualifyingQuestions: _parseStringList(map['qualifyingQuestions']),
+      allowTeamEditing: map['allowTeamEditing'] is bool
+          ? map['allowTeamEditing'] as bool
+          : true,
+      teamPoints: _parseTeamPoints(map['teamPoints']),
+      tournamentResults: _parseMap(map['tournamentResults']),
     );
   }
 
@@ -262,7 +468,6 @@ class Tournament {
     List<String>? qualifyingQuestions,
     bool? allowTeamEditing,
     Map<String, int>? teamPoints,
-    List<TournamentMatch>? matches,
     Map<String, dynamic>? tournamentResults,
   }) {
     return Tournament(
@@ -274,7 +479,8 @@ class Tournament {
       status: status ?? this.status,
       organizerId: organizerId ?? this.organizerId,
       organizerName: organizerName ?? this.organizerName,
-      registrationStartDate: registrationStartDate ?? this.registrationStartDate,
+      registrationStartDate:
+          registrationStartDate ?? this.registrationStartDate,
       registrationEndDate: registrationEndDate ?? this.registrationEndDate,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
@@ -300,7 +506,6 @@ class Tournament {
       qualifyingQuestions: qualifyingQuestions ?? this.qualifyingQuestions,
       allowTeamEditing: allowTeamEditing ?? this.allowTeamEditing,
       teamPoints: teamPoints ?? this.teamPoints,
-      matches: matches ?? this.matches,
       tournamentResults: tournamentResults ?? this.tournamentResults,
     );
   }
@@ -309,8 +514,8 @@ class Tournament {
   bool get isRegistrationOpen {
     final now = DateTime.now();
     return status == TournamentStatus.registrationOpen &&
-           now.isAfter(registrationStartDate) &&
-           now.isBefore(registrationEndDate);
+        now.isAfter(registrationStartDate) &&
+        now.isBefore(registrationEndDate);
   }
 
   /// Check if tournament is full
@@ -323,144 +528,61 @@ class Tournament {
   int get availableSpots => maxTeams - currentTeamsCount;
 
   /// Check if tournament is active (in progress or upcoming)
-  bool get isActive => status != TournamentStatus.completed &&
-                      status != TournamentStatus.cancelled;
+  bool get isActive =>
+      status != TournamentStatus.completed &&
+      status != TournamentStatus.cancelled;
 
   /// Check if tournament can be deleted (no teams have joined)
   bool get canBeDeleted => currentTeamsCount == 0;
 
   /// Check if tournament can be edited (before it starts and teams can be edited)
-  bool get canBeEdited => allowTeamEditing && status == TournamentStatus.upcoming;
+  bool get canBeEdited =>
+      allowTeamEditing && status == TournamentStatus.upcoming;
 }
 
-/// Enum for match status
-enum MatchStatus {
-  scheduled,
-  inProgress,
-  completed,
-  cancelled;
+/// Extension for backward compatibility
+extension TournamentBackwardCompatibility on Tournament {
+  /// Profile image URL (backward compatibility - maps to imageUrl)
+  String? get profileImageUrl => imageUrl;
 
-  String get displayName {
-    switch (this) {
-      case MatchStatus.scheduled:
-        return 'Scheduled';
-      case MatchStatus.inProgress:
-        return 'In Progress';
-      case MatchStatus.completed:
-        return 'Completed';
-      case MatchStatus.cancelled:
-        return 'Cancelled';
-    }
-  }
+  /// Banner image URL (backward compatibility - currently not supported)
+  String? get bannerImageUrl => null;
+
+  /// Tournament type (backward compatibility - maps to format)
+  TournamentFormat get type => format;
+
+  /// Team IDs list (backward compatibility - needs to be fetched from service)
+  /// This is a placeholder that returns empty list
+  List<String> get teamIds => [];
+
+  /// Match IDs list (backward compatibility - needs to be fetched from service)
+  /// This is a placeholder that returns empty list
+  List<String> get matchIds => [];
+
+  /// Tournament statistics (backward compatibility - placeholder)
+  TournamentStats get stat => TournamentStats(
+        totalMatches: 0,
+        completedMatches: 0,
+        upcomingMatches: 0,
+      );
+
+  /// Matches list (backward compatibility - needs to be fetched from service)
+  /// This is a placeholder that returns empty list
+  List<dynamic> get matches => [];
 }
 
-/// Model representing a tournament match
-class TournamentMatch {
-  final String id;
-  final String tournamentId;
-  final String team1Id;
-  final String team1Name;
-  final String team2Id;
-  final String team2Name;
-  final DateTime scheduledDate;
-  final MatchStatus status;
-  final int? team1Score;
-  final int? team2Score;
-  final String? winnerTeamId;
-  final String? winnerTeamName;
-  final String round; // 'Round 1', 'Quarter Final', 'Semi Final', 'Final'
-  final int matchNumber;
-  final String? venueId;
-  final String? venueName;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  final Map<String, dynamic>? metadata;
+/// Stats model for backward compatibility
+class TournamentStats {
+  final int totalMatches;
+  final int completedMatches;
+  final int upcomingMatches;
 
-  const TournamentMatch({
-    required this.id,
-    required this.tournamentId,
-    required this.team1Id,
-    required this.team1Name,
-    required this.team2Id,
-    required this.team2Name,
-    required this.scheduledDate,
-    required this.status,
-    this.team1Score,
-    this.team2Score,
-    this.winnerTeamId,
-    this.winnerTeamName,
-    required this.round,
-    required this.matchNumber,
-    this.venueId,
-    this.venueName,
-    required this.createdAt,
-    required this.updatedAt,
-    this.metadata,
+  const TournamentStats({
+    required this.totalMatches,
+    required this.completedMatches,
+    required this.upcomingMatches,
   });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'tournamentId': tournamentId,
-      'team1Id': team1Id,
-      'team1Name': team1Name,
-      'team2Id': team2Id,
-      'team2Name': team2Name,
-      'scheduledDate': Timestamp.fromDate(scheduledDate),
-      'status': status.name,
-      'team1Score': team1Score,
-      'team2Score': team2Score,
-      'winnerTeamId': winnerTeamId,
-      'winnerTeamName': winnerTeamName,
-      'round': round,
-      'matchNumber': matchNumber,
-      'venueId': venueId,
-      'venueName': venueName,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
-      'metadata': metadata,
-    };
-  }
-
-  factory TournamentMatch.fromMap(Map<String, dynamic> map) {
-    return TournamentMatch(
-      id: map['id'] ?? '',
-      tournamentId: map['tournamentId'] ?? '',
-      team1Id: map['team1Id'] ?? '',
-      team1Name: map['team1Name'] ?? '',
-      team2Id: map['team2Id'] ?? '',
-      team2Name: map['team2Name'] ?? '',
-      scheduledDate: (map['scheduledDate'] as Timestamp).toDate(),
-      status: MatchStatus.values.firstWhere(
-        (e) => e.name == map['status'],
-        orElse: () => MatchStatus.scheduled,
-      ),
-      team1Score: map['team1Score'],
-      team2Score: map['team2Score'],
-      winnerTeamId: map['winnerTeamId'],
-      winnerTeamName: map['winnerTeamName'],
-      round: map['round'] ?? '',
-      matchNumber: map['matchNumber'] ?? 0,
-      venueId: map['venueId'],
-      venueName: map['venueName'],
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: (map['updatedAt'] as Timestamp).toDate(),
-      metadata: map['metadata'],
-    );
-  }
-
-  /// Check if match is today
-  bool get isToday {
-    final now = DateTime.now();
-    final matchDate = scheduledDate;
-    return now.year == matchDate.year &&
-           now.month == matchDate.month &&
-           now.day == matchDate.day;
-  }
-
-  /// Check if match is in the past
-  bool get isPast => scheduledDate.isBefore(DateTime.now());
-
-  /// Check if match is in the future
-  bool get isFuture => scheduledDate.isAfter(DateTime.now());
 }
+
+// Typedef to maintain backward compatibility with code using TournamentModel
+typedef TournamentModel = Tournament;

@@ -18,6 +18,15 @@ enum NotificationType {
   profileLike('profile_like'),
   profileComment('profile_comment'),
   userMatch('user_match'),
+  coachVenueRequest('coach_venue_request'),
+  coachTeamRequest('coach_team_request'),
+  coachPlayerRequest('coach_player_request'),
+  sessionCreated('session_created'),
+  sessionUpdated('session_updated'),
+  sessionCancelled('session_cancelled'),
+  bookingUpdate('booking_update'),
+  profileFollow('profile_follow'),
+  profileUpdate('profile_update'),
   general('general');
 
   const NotificationType(this.value);
@@ -64,6 +73,24 @@ enum NotificationType {
         return 'Profile Comment';
       case NotificationType.userMatch:
         return 'Match';
+      case NotificationType.coachVenueRequest:
+        return 'Coach Venue Request';
+      case NotificationType.coachTeamRequest:
+        return 'Coach Team Request';
+      case NotificationType.coachPlayerRequest:
+        return 'Coach Player Request';
+      case NotificationType.sessionCreated:
+        return 'Session Scheduled';
+      case NotificationType.sessionUpdated:
+        return 'Session Updated';
+      case NotificationType.sessionCancelled:
+        return 'Session Cancelled';
+      case NotificationType.bookingUpdate:
+        return 'Booking Update';
+      case NotificationType.profileFollow:
+        return 'New Follower';
+      case NotificationType.profileUpdate:
+        return 'Profile Update';
       case NotificationType.general:
         return 'General';
     }
@@ -126,9 +153,8 @@ class NotificationModel {
       data: map['data'] as Map<String, dynamic>?,
       isRead: map['isRead'] as bool? ?? false,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
-      readAt: map['readAt'] != null 
-          ? (map['readAt'] as Timestamp).toDate() 
-          : null,
+      readAt:
+          map['readAt'] != null ? (map['readAt'] as Timestamp).toDate() : null,
     );
   }
 

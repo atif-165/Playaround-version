@@ -4,7 +4,7 @@ enum UserRole { player, coach, team, admin }
 
 enum QuickActionType {
   bookFacility,
-  findCoach,
+  userMatchmaking,
   joinTeam,
   trackSkills,
   communityForums,

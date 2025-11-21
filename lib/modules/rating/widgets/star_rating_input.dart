@@ -38,12 +38,12 @@ class _StarRatingInputState extends State<StarRatingInput>
   void initState() {
     super.initState();
     _currentRating = widget.initialRating;
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.2,
@@ -61,15 +61,15 @@ class _StarRatingInputState extends State<StarRatingInput>
 
   void _handleTap(int rating) {
     if (widget.isReadOnly) return;
-    
+
     setState(() {
       _currentRating = rating;
     });
-    
+
     _animationController.forward().then((_) {
       _animationController.reverse();
     });
-    
+
     widget.onRatingChanged(rating);
   }
 
@@ -80,14 +80,15 @@ class _StarRatingInputState extends State<StarRatingInput>
       children: List.generate(widget.maxRating, (index) {
         final starIndex = index + 1;
         final isActive = starIndex <= _currentRating;
-        
+
         return GestureDetector(
           onTap: () => _handleTap(starIndex),
           child: AnimatedBuilder(
             animation: _scaleAnimation,
             builder: (context, child) {
-              final scale = starIndex == _currentRating ? _scaleAnimation.value : 1.0;
-              
+              final scale =
+                  starIndex == _currentRating ? _scaleAnimation.value : 1.0;
+
               return Transform.scale(
                 scale: scale,
                 child: Container(
@@ -137,7 +138,7 @@ class StarRatingDisplay extends StatelessWidget {
           final starIndex = index + 1;
           final isFullStar = starIndex <= rating.floor();
           final isHalfStar = starIndex == rating.ceil() && rating % 1 != 0;
-          
+
           return Icon(
             isFullStar
                 ? Icons.star
@@ -232,7 +233,7 @@ class RatingDistribution extends StatelessWidget {
         final stars = 5 - index;
         final count = starDistribution[stars] ?? 0;
         final percentage = totalRatings > 0 ? count / totalRatings : 0.0;
-        
+
         return Padding(
           padding: EdgeInsets.symmetric(vertical: 2.h),
           child: Row(
@@ -352,7 +353,8 @@ class _RatingCardState extends State<RatingCard>
                   borderRadius: BorderRadius.circular(12.r),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withValues(alpha: _isHovered ? 0.3 : 0.1),
+                      color:
+                          Colors.grey.withValues(alpha: _isHovered ? 0.3 : 0.1),
                       spreadRadius: 1,
                       blurRadius: _isHovered ? 8 : 4,
                       offset: const Offset(0, 2),
@@ -402,7 +404,8 @@ class _RatingCardState extends State<RatingCard>
                         ),
                       ],
                     ),
-                    if (widget.feedback != null && widget.feedback!.isNotEmpty) ...[
+                    if (widget.feedback != null &&
+                        widget.feedback!.isNotEmpty) ...[
                       SizedBox(height: 12.h),
                       Text(
                         widget.feedback!,

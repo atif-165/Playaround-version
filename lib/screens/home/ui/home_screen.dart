@@ -42,12 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
         BlocListener<OnboardingCubit, OnboardingState>(
           listener: (context, state) {
             if (kDebugMode) {
-              debugPrint('🏠 HomeScreen: OnboardingCubit state changed to: ${state.runtimeType}');
+              debugPrint(
+                  '🏠 HomeScreen: OnboardingCubit state changed to: ${state.runtimeType}');
             }
 
             if (state is OnboardingRoleSelectionRequired) {
               if (kDebugMode) {
-                debugPrint('🔄 HomeScreen: Redirecting to role selection screen');
+                debugPrint(
+                    '🔄 HomeScreen: Redirecting to role selection screen');
               }
               // User needs to complete onboarding
               context.pushNamedAndRemoveUntil(
@@ -56,7 +58,8 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             } else if (state is OnboardingProfileExists) {
               if (kDebugMode) {
-                debugPrint('✅ HomeScreen: Profile exists and is complete, staying on home screen');
+                debugPrint(
+                    '✅ HomeScreen: Profile exists and is complete, staying on home screen');
               }
             }
           },
@@ -69,8 +72,11 @@ class _HomeScreenState extends State<HomeScreen> {
             List<ConnectivityResult> connectivity,
             Widget child,
           ) {
-            final bool connected = !connectivity.contains(ConnectivityResult.none);
-            return connected ? _buildHomeContent(context) : const BuildNoInternet();
+            final bool connected =
+                !connectivity.contains(ConnectivityResult.none);
+            return connected
+                ? _buildHomeContent(context)
+                : const BuildNoInternet();
           },
           child: const Center(
             child: CircularProgressIndicator(

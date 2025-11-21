@@ -11,10 +11,15 @@ class PlayerProfile extends UserProfile {
   const PlayerProfile({
     required super.uid,
     required super.fullName,
+    super.nickname,
+    super.bio,
     required super.gender,
     required super.age,
     required super.location,
+    super.latitude,
+    super.longitude,
     super.profilePictureUrl,
+    super.profilePhotos = const [],
     required super.isProfileComplete,
     super.teamId,
     required super.createdAt,
@@ -40,31 +45,44 @@ class PlayerProfile extends UserProfile {
   static PlayerProfile? fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
     if (data == null) return null;
+    data['uid'] ??= doc.id;
+    return fromMap(data);
+  }
 
+  static PlayerProfile? fromMap(Map<String, dynamic> rawData) {
     try {
+      final data = Map<String, dynamic>.from(rawData);
       final baseData = UserProfile.baseFromFirestore(data);
-      
+
       return PlayerProfile(
         uid: baseData['uid'],
         fullName: baseData['fullName'],
+        nickname: baseData['nickname'],
+        bio: baseData['bio'],
         gender: baseData['gender'],
         age: baseData['age'],
         location: baseData['location'],
+        latitude: baseData['latitude'],
+        longitude: baseData['longitude'],
         profilePictureUrl: baseData['profilePictureUrl'],
+        profilePhotos: baseData['profilePhotos'],
         isProfileComplete: baseData['isProfileComplete'],
         createdAt: baseData['createdAt'],
         updatedAt: baseData['updatedAt'],
         sportsOfInterest: List<String>.from(data['sportsOfInterest'] ?? []),
-        skillLevel: SkillLevel.fromString(data['skillLevel'] as String? ?? 'beginner'),
+        skillLevel:
+            SkillLevel.fromString(data['skillLevel'] as String? ?? 'beginner'),
         availability: (data['availability'] as List<dynamic>?)
-                ?.map((slot) => TimeSlot.fromMap(slot as Map<String, dynamic>))
+                ?.map((slot) => TimeSlot.fromMap(
+                      Map<String, dynamic>.from(slot as Map),
+                    ))
                 .toList() ??
             [],
         preferredTrainingType: TrainingType.fromString(
           data['preferredTrainingType'] as String? ?? 'in_person',
         ),
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
@@ -98,7 +116,8 @@ class PlayerProfile extends UserProfile {
       sportsOfInterest: sportsOfInterest ?? this.sportsOfInterest,
       skillLevel: skillLevel ?? this.skillLevel,
       availability: availability ?? this.availability,
-      preferredTrainingType: preferredTrainingType ?? this.preferredTrainingType,
+      preferredTrainingType:
+          preferredTrainingType ?? this.preferredTrainingType,
     );
   }
 

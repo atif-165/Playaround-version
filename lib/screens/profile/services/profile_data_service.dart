@@ -33,7 +33,7 @@ class ProfileDataService {
           .get();
 
       final connections = <Connection>[];
-      
+
       // Add connections where user is the sender
       for (final doc in connectionsQuery.docs) {
         try {
@@ -96,8 +96,8 @@ class ProfileDataService {
           final team = Team.fromMap(data);
 
           // Double-check if user is an active member
-          final isMember = team.members.any((member) =>
-            member.userId == user.uid && member.isActive);
+          final isMember = team.members
+              .any((member) => member.userId == user.uid && member.isActive);
 
           if (isMember) {
             teams.add(team);
@@ -180,7 +180,8 @@ class ProfileDataService {
       }
 
       // Sort by end date (most recent first)
-      tournaments.sort((a, b) => (b.endDate ?? b.startDate).compareTo(a.endDate ?? a.startDate));
+      tournaments.sort((a, b) =>
+          (b.endDate ?? b.startDate).compareTo(a.endDate ?? a.startDate));
 
       return tournaments;
     } catch (e) {
@@ -271,11 +272,11 @@ class ProfileDataService {
       if (user == null) return [];
 
       final coachIds = <String>[];
-      
+
       for (final connection in connections) {
         // Get the other user's ID (not the current user)
-        final otherUserId = connection.fromUserId == user.uid 
-            ? connection.toUserId 
+        final otherUserId = connection.fromUserId == user.uid
+            ? connection.toUserId
             : connection.fromUserId;
         coachIds.add(otherUserId);
       }
@@ -283,11 +284,11 @@ class ProfileDataService {
       if (coachIds.isEmpty) return [];
 
       final coaches = <UserProfile>[];
-      
+
       // Fetch user profiles in batches
       for (int i = 0; i < coachIds.length; i += 10) {
         final batch = coachIds.skip(i).take(10).toList();
-        
+
         final coachesQuery = await _firestore
             .collection('users')
             .where(FieldPath.documentId, whereIn: batch)
@@ -328,11 +329,11 @@ class ProfileDataService {
       if (user == null) return [];
 
       final userIds = <String>[];
-      
+
       for (final connection in connections) {
         // Get the other user's ID (not the current user)
-        final otherUserId = connection.fromUserId == user.uid 
-            ? connection.toUserId 
+        final otherUserId = connection.fromUserId == user.uid
+            ? connection.toUserId
             : connection.fromUserId;
         userIds.add(otherUserId);
       }
@@ -340,11 +341,11 @@ class ProfileDataService {
       if (userIds.isEmpty) return [];
 
       final users = <UserProfile>[];
-      
+
       // Fetch user profiles in batches
       for (int i = 0; i < userIds.length; i += 10) {
         final batch = userIds.skip(i).take(10).toList();
-        
+
         final usersQuery = await _firestore
             .collection('users')
             .where(FieldPath.documentId, whereIn: batch)

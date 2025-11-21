@@ -67,7 +67,8 @@ class AppDropdownField<T> extends StatelessWidget {
             isDense: true,
             filled: true,
             fillColor: ColorsManager.lightShadeOfGray,
-            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 17.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 20.w, vertical: 17.h),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
                 color: ColorsManager.gray93Color,
@@ -153,7 +154,8 @@ class DropdownHelper {
   }
 
   /// Create dropdown items for age range
-  static List<DropdownMenuItem<int>> ageItems({int minAge = 13, int maxAge = 80}) {
+  static List<DropdownMenuItem<int>> ageItems(
+      {int minAge = 13, int maxAge = 80}) {
     return List.generate(maxAge - minAge + 1, (index) {
       final age = minAge + index;
       return DropdownMenuItem<int>(
@@ -168,10 +170,10 @@ class DropdownHelper {
     return List.generate(maxYears + 1, (index) {
       return DropdownMenuItem<int>(
         value: index,
-        child: Text(index == 0 ? 'No experience' : '$index year${index == 1 ? '' : 's'}'),
+        child: Text(index == 0
+            ? 'No experience'
+            : '$index year${index == 1 ? '' : 's'}'),
       );
     });
   }
 }
-
-

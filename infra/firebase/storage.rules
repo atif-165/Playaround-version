@@ -1,0 +1,57 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getRoles() {
+      return request.auth.token.roles != null
+        ? request.auth.token.roles
+        : (request.auth.token.role != null ? [request.auth.token.role] : []);
+    }
+
+    function hasRole(role) {
+      return isSignedIn() && role in getRoles();
+    }
+
+    function isAllowedContentType() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp)')
+        || request.resource.contentType.matches('video/(mp4|quicktime)');
+    }
+
+    function isAllowedSize() {
+      return request.resource.size < 15 * 1024 * 1024; // < 15 MB
+    }
+
+    match /user-media/{uid}/{fileName} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || hasRole('admin'));
+      allow write: if isSignedIn()
+        && request.auth.uid == uid
+        && isAllowedContentType()
+        && isAllowedSize();
+    }
+
+    match /product-media/{productId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn()
+        && (hasRole('admin') || hasRole('coach'))
+        && isAllowedContentType()
+        && isAllowedSize();
+    }
+
+    match /coach-media/{coachId}/{fileName} {
+      allow read: if true;
+      allow write: if isSignedIn()
+        && request.auth.uid == coachId
+        && (hasRole('coach') || hasRole('admin'))
+        && isAllowedContentType()
+        && isAllowedSize();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

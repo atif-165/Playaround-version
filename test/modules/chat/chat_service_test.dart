@@ -7,17 +7,16 @@ import 'package:playaround/modules/chat/widgets/entity_card.dart';
 
 void main() {
   group('Chat Models Tests', () {
-
     group('ChatMessage Model Tests', () {
       test('should create ChatMessage with text content', () {
         final message = ChatMessage(
           id: 'msg_1',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.text,
           text: 'Hello, world!',
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
         );
 
         expect(message.id, equals('msg_1'));
@@ -32,11 +31,17 @@ void main() {
         final message = ChatMessage(
           id: 'msg_2',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.image,
-          imageUrl: 'https://example.com/image.jpg',
-          timestamp: DateTime.now(),
+          text: null,
+          attachments: const [
+            ChatAttachment(
+              type: AttachmentType.image,
+              url: 'https://example.com/image.jpg',
+            ),
+          ],
+          createdAt: DateTime.now(),
         );
 
         expect(message.type, equals(MessageType.image));
@@ -55,11 +60,11 @@ void main() {
         final message = ChatMessage(
           id: 'msg_3',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.entity,
           sharedEntity: entity,
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
         );
 
         expect(message.type, equals(MessageType.entity));
@@ -71,11 +76,11 @@ void main() {
         final message = ChatMessage(
           id: 'msg_4',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.text,
           text: 'Original message',
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
           isDeleted: true,
         );
 
@@ -86,11 +91,11 @@ void main() {
         final originalMessage = ChatMessage(
           id: 'msg_5',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.text,
           text: 'Test message',
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
         );
 
         final firestoreData = originalMessage.toFirestore();
@@ -204,7 +209,7 @@ void main() {
       test('should generate consistent connection ID', () {
         final id1 = ConnectionHelper.generateConnectionId('user_1', 'user_2');
         final id2 = ConnectionHelper.generateConnectionId('user_2', 'user_1');
-        
+
         expect(id1, equals(id2));
         expect(id1, equals('user_1_user_2'));
       });
@@ -238,8 +243,10 @@ void main() {
 
         // Private profile - need accepted connection
         expect(ConnectionHelper.canUsersChat(null, false), isFalse);
-        expect(ConnectionHelper.canUsersChat(pendingConnection, false), isFalse);
-        expect(ConnectionHelper.canUsersChat(acceptedConnection, false), isTrue);
+        expect(
+            ConnectionHelper.canUsersChat(pendingConnection, false), isFalse);
+        expect(
+            ConnectionHelper.canUsersChat(acceptedConnection, false), isTrue);
       });
     });
 

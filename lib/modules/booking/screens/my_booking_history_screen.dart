@@ -1,20 +1,21 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/widgets/progress_indicaror.dart';
+import '../../../data/models/booking_model.dart' as data;
+import '../../../data/models/listing_model.dart' as data;
+import '../../../data/repositories/booking_repository.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
-import '../../../models/booking_model.dart';
-import '../../../models/user_profile.dart';
-import '../../../repositories/user_repository.dart';
-import '../services/booking_history_service.dart';
 import '../widgets/booking_history_card.dart';
 import 'booking_detail_screen.dart';
 
-/// Screen for displaying user's booking history with tabbed interface
 class MyBookingHistoryScreen extends StatefulWidget {
-  const MyBookingHistoryScreen({super.key});
+  const MyBookingHistoryScreen({super.key, this.repository});
+
+  final BookingRepository? repository;
 
   @override
   State<MyBookingHistoryScreen> createState() => _MyBookingHistoryScreenState();
@@ -22,18 +23,39 @@ class MyBookingHistoryScreen extends StatefulWidget {
 
 class _MyBookingHistoryScreenState extends State<MyBookingHistoryScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final BookingHistoryService _bookingHistoryService = BookingHistoryService();
-  final UserRepository _userRepository = UserRepository();
-  
-  UserProfile? _userProfile;
-  bool _isLoading = true;
+  late final BookingRepository _repository;
+
+  late final TabController _tabController;
+
+  Map<String, data.ListingModel> _listingLookup = {};
+  List<data.BookingModel> _cachedBookings = [];
+  Stream<List<data.BookingModel>>? _bookingStream;
 
   @override
   void initState() {
     super.initState();
+    _repository = widget.repository ?? BookingRepository();
     _tabController = TabController(length: 3, vsync: this);
-    _loadUserProfile();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    await _repository.init();
+    final cached = await _repository.loadCachedBookingsForUser(user.uid);
+    _bookingStream = _repository.watchBookingsForUser(user.uid);
+
+    try {
+      final listings = await _repository.loadListings();
+      _listingLookup = {for (final listing in listings) listing.id: listing};
+    } catch (_) {
+      _listingLookup = {};
+    }
+
+    setState(() {
+      _cachedBookings = cached;
+    });
   }
 
   @override
@@ -42,165 +64,114 @@ class _MyBookingHistoryScreenState extends State<MyBookingHistoryScreen>
     super.dispose();
   }
 
-  Future<void> _loadUserProfile() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final profile = await _userRepository.getUserProfile(user.uid);
-        setState(() {
-          _userProfile = profile;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text('Please sign in to view bookings.')),
+      );
+    }
+
+    if (_bookingStream == null) {
+      return const Scaffold(body: Center(child: CustomProgressIndicator()));
+    }
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          'My Bookings',
-          style: TextStyles.font18DarkBlueBold,
-        ),
+        title: Text('My bookings', style: TextStyles.font18DarkBlueBold),
         backgroundColor: Colors.white,
-        elevation: 0,
         iconTheme: const IconThemeData(color: ColorsManager.mainBlue),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: ColorsManager.mainBlue,
-          unselectedLabelColor: ColorsManager.gray,
           indicatorColor: ColorsManager.mainBlue,
-          labelStyle: TextStyles.font14DarkBlueMedium,
-          unselectedLabelStyle: TextStyles.font14Grey400Weight,
+          labelColor: ColorsManager.mainBlue,
+          unselectedLabelColor: Colors.grey,
           tabs: const [
             Tab(text: 'Upcoming'),
-            Tab(text: 'Completed'),
+            Tab(text: 'Past'),
             Tab(text: 'Cancelled'),
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _buildUpcomingTab(),
-                _buildCompletedTab(),
-                _buildCancelledTab(),
-              ],
-            ),
-    );
-  }
+      body: StreamBuilder<List<data.BookingModel>>(
+        stream: _bookingStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError && _cachedBookings.isEmpty) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-  Widget _buildUpcomingTab() {
-    return StreamBuilder<List<BookingModel>>(
-      stream: _bookingHistoryService.getUpcomingBookings(
-        userRole: _userProfile?.role,
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _cachedBookings.isEmpty) {
+            return const CustomProgressIndicator();
+          }
 
-        if (snapshot.hasError) {
-          return _buildErrorWidget('Failed to load upcoming bookings');
-        }
+          final streamBookings = snapshot.data ?? [];
+          final useCached =
+              (snapshot.connectionState == ConnectionState.waiting &&
+                      _cachedBookings.isNotEmpty) ||
+                  (snapshot.hasError && _cachedBookings.isNotEmpty);
+          final bookings = useCached ? _cachedBookings : streamBookings;
 
-        final bookings = snapshot.data ?? [];
+          final upcoming = bookings.where(_isUpcoming).toList();
+          final past = bookings.where(_isCompleted).toList();
+          final cancelled = bookings.where(_isCancelled).toList();
 
-        if (bookings.isEmpty) {
-          return _buildEmptyState(
-            'No Upcoming Bookings',
-            'You don\'t have any upcoming bookings.',
-            Icons.calendar_today,
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildTab(upcoming, emptyLabel: 'No upcoming bookings'),
+              _buildTab(past, emptyLabel: 'No completed bookings'),
+              _buildTab(cancelled, emptyLabel: 'No cancelled bookings'),
+            ],
           );
-        }
-
-        return _buildBookingsList(bookings);
-      },
-    );
-  }
-
-  Widget _buildCompletedTab() {
-    return StreamBuilder<List<BookingModel>>(
-      stream: _bookingHistoryService.getCompletedBookings(
-        userRole: _userProfile?.role,
+        },
       ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return _buildErrorWidget('Failed to load completed bookings');
-        }
-
-        final bookings = snapshot.data ?? [];
-
-        if (bookings.isEmpty) {
-          return _buildEmptyState(
-            'No Completed Bookings',
-            'You haven\'t completed any bookings yet.',
-            Icons.check_circle_outline,
-          );
-        }
-
-        return _buildBookingsList(bookings);
-      },
     );
   }
 
-  Widget _buildCancelledTab() {
-    return StreamBuilder<List<BookingModel>>(
-      stream: _bookingHistoryService.getCancelledBookings(
-        userRole: _userProfile?.role,
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget _buildTab(List<data.BookingModel> bookings,
+      {required String emptyLabel}) {
+    if (bookings.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_busy, size: 48.sp, color: Colors.grey[400]),
+            Gap(12.h),
+            Text(emptyLabel, style: TextStyles.font14Grey400Weight),
+          ],
+        ),
+      );
+    }
 
-        if (snapshot.hasError) {
-          return _buildErrorWidget('Failed to load cancelled bookings');
-        }
-
-        final bookings = snapshot.data ?? [];
-
-        if (bookings.isEmpty) {
-          return _buildEmptyState(
-            'No Cancelled Bookings',
-            'You don\'t have any cancelled bookings.',
-            Icons.cancel_outlined,
-          );
-        }
-
-        return _buildBookingsList(bookings);
-      },
-    );
-  }
-
-  Widget _buildBookingsList(List<BookingModel> bookings) {
     return RefreshIndicator(
-      onRefresh: () async {
-        setState(() {}); // Trigger rebuild to refresh streams
-      },
+      onRefresh: () async => _init(),
       child: ListView.builder(
         padding: EdgeInsets.all(16.w),
         itemCount: bookings.length,
         itemBuilder: (context, index) {
           final booking = bookings[index];
+          final listing = _listingLookup[booking.listingId];
+          final subtitle = listing != null
+              ? 'Provider: ${listing.providerName.isEmpty ? listing.providerId : listing.providerName}'
+              : 'Listing: ${booking.listingId}';
           return Padding(
             padding: EdgeInsets.only(bottom: 12.h),
             child: BookingHistoryCard(
               booking: booking,
-              userRole: _userProfile?.role ?? UserRole.player,
-              onTap: () => _navigateToBookingDetail(booking),
+              subtitle: subtitle,
+              onTap: () async {
+                final updated = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookingDetailScreen(booking: booking),
+                  ),
+                );
+                if (updated == true) {
+                  _init();
+                }
+              },
             ),
           );
         },
@@ -208,91 +179,15 @@ class _MyBookingHistoryScreenState extends State<MyBookingHistoryScreen>
     );
   }
 
-  Widget _buildEmptyState(String title, String subtitle, IconData icon) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 64.w,
-              color: ColorsManager.gray76,
-            ),
-            Gap(16.h),
-            Text(
-              title,
-              style: TextStyles.font18DarkBlueBold,
-              textAlign: TextAlign.center,
-            ),
-            Gap(8.h),
-            Text(
-              subtitle,
-              style: TextStyles.font14Grey400Weight,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
+  bool _isUpcoming(data.BookingModel booking) {
+    final now = DateTime.now();
+    return booking.status == data.BookingStatusType.confirmed &&
+        booking.startTime.isAfter(now);
   }
 
-  Widget _buildErrorWidget(String message) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.w),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 64.w,
-              color: ColorsManager.coralRed,
-            ),
-            Gap(16.h),
-            Text(
-              'Oops!',
-              style: TextStyles.font18DarkBlueBold,
-              textAlign: TextAlign.center,
-            ),
-            Gap(8.h),
-            Text(
-              message,
-              style: TextStyles.font14Grey400Weight,
-              textAlign: TextAlign.center,
-            ),
-            Gap(16.h),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {}); // Trigger rebuild to retry
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorsManager.mainBlue,
-                foregroundColor: Colors.white,
-              ),
-              child: Text(
-                'Retry',
-                style: TextStyles.font14White500Weight,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  bool _isCompleted(data.BookingModel booking) =>
+      booking.status == data.BookingStatusType.completed;
 
-  void _navigateToBookingDetail(BookingModel booking) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingDetailScreen(booking: booking),
-      ),
-    );
-
-    // If booking was updated, refresh the list
-    if (result == true) {
-      setState(() {}); // Trigger rebuild to refresh streams
-    }
-  }
+  bool _isCancelled(data.BookingModel booking) =>
+      booking.status == data.BookingStatusType.cancelled;
 }

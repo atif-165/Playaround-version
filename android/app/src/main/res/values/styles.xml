@@ -4,12 +4,10 @@
     <color name="playaround_primary">#247CFF</color>
     <color name="playaround_surface">#FEFBFF</color>
     <color name="playaround_background">#FEFBFF</color>
-
     <!-- PlayAround App Dark Colors (fallback for night mode) -->
     <color name="playaround_primary_dark">#ADC6FF</color>
     <color name="playaround_surface_dark">#10131A</color>
     <color name="playaround_background_dark">#10131A</color>
-
     <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <!-- Show a splash screen on the activity. Automatically removed when
@@ -19,8 +17,11 @@
         <item name="android:navigationBarColor">@color/playaround_surface</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:forceDarkAllowed">false</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
-
     <!-- Theme applied to the Android Window as soon as the process has started.
          This theme determines the color of the Android Window while your
          Flutter UI initializes, as well as behind your Flutter UI while its

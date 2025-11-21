@@ -43,28 +43,34 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       if (kDebugMode) {
-        debugPrint('🔍 OnboardingCubit: Checking profile for user: ${currentUser.uid}');
+        debugPrint(
+            '🔍 OnboardingCubit: Checking profile for user: ${currentUser.uid}');
       }
 
-      final existingProfile = await _userRepository.getUserProfile(currentUser.uid);
+      final existingProfile =
+          await _userRepository.getUserProfile(currentUser.uid);
 
       if (kDebugMode) {
-        debugPrint('📋 OnboardingCubit: Profile found: ${existingProfile != null}');
+        debugPrint(
+            '📋 OnboardingCubit: Profile found: ${existingProfile != null}');
         if (existingProfile != null) {
-          debugPrint('✅ Profile complete: ${existingProfile.isProfileComplete}');
+          debugPrint(
+              '✅ Profile complete: ${existingProfile.isProfileComplete}');
           debugPrint('👤 Profile name: ${existingProfile.fullName}');
           debugPrint('🎭 Profile role: ${existingProfile.role}');
         }
       }
 
-      if (existingProfile != null && existingProfile.isProfileComplete) {
+      if (existingProfile != null) {
         if (kDebugMode) {
-          debugPrint('🎉 OnboardingCubit: Profile is complete, staying on home screen');
+          debugPrint(
+              '🎉 OnboardingCubit: Profile exists, staying on home screen');
         }
         emit(OnboardingProfileExists(existingProfile));
       } else {
         if (kDebugMode) {
-          debugPrint('🚨 OnboardingCubit: Profile incomplete, redirecting to role selection');
+          debugPrint(
+              '🚨 OnboardingCubit: No profile found, redirecting to role selection');
         }
         emit(OnboardingRoleSelectionRequired());
       }
@@ -72,13 +78,80 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       if (kDebugMode) {
         debugPrint('💥 OnboardingCubit: Error checking profile: $e');
       }
-      emit(OnboardingError('Failed to check existing profile: ${e.toString()}'));
+      emit(
+          OnboardingError('Failed to check existing profile: ${e.toString()}'));
     }
   }
 
   /// Select user role and proceed to form
   void selectRole(UserRole role) {
     emit(OnboardingRoleSelected(role));
+  }
+
+  /// Save minimal profile with just role selection (no onboarding form)
+  Future<void> saveMinimalProfileWithRole(UserRole role) async {
+    emit(OnboardingValidating());
+
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        emit(OnboardingError('No authenticated user found'));
+        return;
+      }
+
+      if (kDebugMode) {
+        debugPrint(
+            '💾 OnboardingCubit: Saving minimal profile with role: ${role.value}');
+      }
+
+      final now = DateTime.now();
+      final userEmail = currentUser.email ?? '';
+      final displayName = currentUser.displayName ?? userEmail.split('@').first;
+
+      UserProfile profile;
+
+      if (role == UserRole.player) {
+        profile = PlayerProfile(
+          uid: currentUser.uid,
+          fullName: displayName,
+          gender: Gender.male, // Default value
+          age: 18, // Default value
+          location: 'Not set', // Default value
+          isProfileComplete: false, // Profile is incomplete
+          createdAt: now,
+          updatedAt: now,
+          sportsOfInterest: [], // Empty, user will set later
+          skillLevel: SkillLevel.beginner, // Default value
+          availability: [], // Empty, user will set later
+          preferredTrainingType: TrainingType.inPerson, // Default value
+        );
+      } else {
+        profile = CoachProfile(
+          uid: currentUser.uid,
+          fullName: displayName,
+          gender: Gender.male, // Default value
+          age: 18, // Default value
+          location: 'Not set', // Default value
+          isProfileComplete: false, // Profile is incomplete
+          createdAt: now,
+          updatedAt: now,
+          specializationSports: [], // Empty, user will set later
+          experienceYears: 0, // Default value
+          hourlyRate: 0.0, // Default value
+          availableTimeSlots: [], // Empty, user will set later
+          coachingType: TrainingType.inPerson, // Default value
+        );
+      }
+
+      await _userRepository.saveUserProfile(profile);
+      emit(OnboardingProfileSaved(profile));
+
+      // Complete onboarding after a brief delay
+      await Future.delayed(const Duration(milliseconds: 500));
+      emit(OnboardingComplete(profile));
+    } catch (e) {
+      emit(OnboardingError('Failed to save profile: ${e.toString()}'));
+    }
   }
 
   /// Go back to role selection
@@ -108,7 +181,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       if (kDebugMode) {
-        debugPrint('💾 OnboardingCubit: Saving player profile with image URL: $profilePictureUrl');
+        debugPrint(
+            '💾 OnboardingCubit: Saving player profile with image URL: $profilePictureUrl');
       }
 
       final now = DateTime.now();
@@ -130,7 +204,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
       await _userRepository.saveUserProfile(playerProfile);
       emit(OnboardingProfileSaved(playerProfile));
-      
+
       // Complete onboarding after a brief delay
       await Future.delayed(const Duration(milliseconds: 500));
       emit(OnboardingComplete(playerProfile));
@@ -164,7 +238,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       }
 
       if (kDebugMode) {
-        debugPrint('💾 OnboardingCubit: Saving coach profile with image URL: $profilePictureUrl');
+        debugPrint(
+            '💾 OnboardingCubit: Saving coach profile with image URL: $profilePictureUrl');
       }
 
       final now = DateTime.now();
@@ -180,8 +255,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
         updatedAt: now,
         specializationSports: specializationSports,
         experienceYears: experienceYears,
-        certifications: certifications?.trim().isNotEmpty == true 
-            ? [certifications!.trim()] 
+        certifications: certifications?.trim().isNotEmpty == true
+            ? [certifications!.trim()]
             : null,
         hourlyRate: hourlyRate,
         availableTimeSlots: availableTimeSlots,
@@ -191,7 +266,7 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
       await _userRepository.saveUserProfile(coachProfile);
       emit(OnboardingProfileSaved(coachProfile));
-      
+
       // Complete onboarding after a brief delay
       await Future.delayed(const Duration(milliseconds: 500));
       emit(OnboardingComplete(coachProfile));
@@ -237,7 +312,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
       if (kDebugMode) {
         debugPrint('💥 OnboardingCubit: Image upload failed: $e');
       }
-      emit(OnboardingImageUploadError('Failed to upload image: ${e.toString()}'));
+      emit(OnboardingImageUploadError(
+          'Failed to upload image: ${e.toString()}'));
     }
   }
 
@@ -255,7 +331,8 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
       await uploadSelectedImage(File(image.path));
     } catch (e) {
-      emit(OnboardingImageUploadError('Failed to pick and upload image: ${e.toString()}'));
+      emit(OnboardingImageUploadError(
+          'Failed to pick and upload image: ${e.toString()}'));
     }
   }
 

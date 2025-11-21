@@ -72,8 +72,18 @@ class EarningsChartWidget extends StatelessWidget {
                   if (parts.length == 2) {
                     final month = int.tryParse(parts[1]) ?? 1;
                     final monthNames = [
-                      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                      'Jan',
+                      'Feb',
+                      'Mar',
+                      'Apr',
+                      'May',
+                      'Jun',
+                      'Jul',
+                      'Aug',
+                      'Sep',
+                      'Oct',
+                      'Nov',
+                      'Dec'
                     ];
                     return Text(
                       monthNames[month - 1],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import '../../../core/widgets/safe_cached_image.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/typography.dart';
 
@@ -67,12 +68,13 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
           onPageChanged: widget.onImageSelected,
           itemCount: widget.images.length,
           itemBuilder: (context, index) {
-            return Image.network(
-              widget.images[index],
+            return SafeCachedImage(
+              imageUrl: widget.images[index],
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return _buildPlaceholder();
-              },
+              borderRadius: BorderRadius.circular(16.r),
+              backgroundColor: ColorsManager.surfaceVariant,
+              fallbackIcon: Icons.image,
+              fallbackIconColor: ColorsManager.onSurfaceVariant,
             );
           },
         ),
@@ -88,7 +90,7 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
         itemCount: widget.images.length,
         itemBuilder: (context, index) {
           final isSelected = index == widget.selectedIndex;
-          
+
           return GestureDetector(
             onTap: () {
               _pageController.animateToPage(
@@ -105,22 +107,22 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
                 color: ColorsManager.surfaceVariant,
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                  color: isSelected ? ColorsManager.primary : ColorsManager.outline,
+                  color: isSelected
+                      ? ColorsManager.primary
+                      : ColorsManager.outline,
                   width: isSelected ? 2 : 1,
                 ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12.r),
-                child: Image.network(
-                  widget.images[index],
+                child: SafeCachedImage(
+                  imageUrl: widget.images[index],
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.image,
-                      color: ColorsManager.onSurfaceVariant,
-                      size: 32.w,
-                    );
-                  },
+                  borderRadius: BorderRadius.circular(12.r),
+                  backgroundColor: ColorsManager.surfaceVariant,
+                  fallbackIcon: Icons.image,
+                  fallbackIconColor: ColorsManager.onSurfaceVariant,
+                  fallbackIconSize: 32.w,
                 ),
               ),
             ),

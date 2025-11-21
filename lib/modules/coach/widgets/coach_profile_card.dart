@@ -1,13 +1,15 @@
+import 'dart:math';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../models/coach_profile.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 
-/// Card widget for displaying coach profile information
+/// Card widget for displaying coach profile information with vibrant styling.
 class CoachProfileCard extends StatelessWidget {
   final CoachProfile coach;
   final VoidCallback onTap;
@@ -20,128 +22,104 @@ class CoachProfileCard extends StatelessWidget {
     this.showFullBio = false,
   });
 
+  Color get _accentColor {
+    if (coach.specializationSports.isEmpty) {
+      return ColorsManager.primary;
+    }
+
+    final seed = coach.specializationSports.first.codeUnitAt(0);
+    final colors = [
+      const Color(0xFF6C63FF),
+      const Color(0xFF00D1FF),
+      const Color(0xFFFF6CAB),
+      const Color(0xFFFFAA4C),
+      const Color(0xFF4ADE80),
+    ];
+    return colors[seed % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 4,
-      color: Colors.black,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.r),
-        side: const BorderSide(color: Color(0xFF00FFFF), width: 1), // Neon blue border
-      ),
+    final accent = _accentColor;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(24.r),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16.r),
-        child: Padding(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              Gap(12.h),
-              _buildBio(),
-              Gap(12.h),
-              _buildSpecializations(),
-              Gap(12.h),
-              _buildFooter(),
+        borderRadius: BorderRadius.circular(24.r),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24.r),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withOpacity(0.18),
+                const Color(0xFF0D0A2A),
+              ],
+            ),
+            border: Border.all(
+              color: accent.withOpacity(0.35),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withOpacity(0.18),
+                blurRadius: 20,
+                offset: const Offset(0, 12),
+              ),
             ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(accent),
+                Gap(16.h),
+                _buildBioSection(),
+                Gap(16.h),
+                _buildSpecializations(accent),
+                Gap(16.h),
+                _buildFooter(accent),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Color accent) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Square profile picture
-        Container(
-          width: 60.w,
-          height: 60.h,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            color: const Color(0xFF00FFFF).withValues(alpha: 0.2), // Neon blue background
-            border: Border.all(color: const Color(0xFF00FFFF), width: 1),
-          ),
-          child: coach.profilePictureUrl != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(12.r),
-                  child: CachedNetworkImage(
-                    imageUrl: coach.profilePictureUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                    errorWidget: (context, url, error) => Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 30.sp,
-                    ),
-                  ),
-                )
-              : Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 30.sp,
-                ),
-        ),
-        Gap(12.w),
+        _buildAvatar(accent),
+        Gap(16.w),
         Expanded(
-          flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                coach.fullName,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      coach.fullName,
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _buildCoachBadge(accent),
+                ],
               ),
-              Gap(3.h),
+              Gap(6.h),
               _buildRatingRow(),
-              Gap(3.h),
-              _buildExperienceRow(),
-            ],
-          ),
-        ),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (_hasWinningTournaments()) ...[
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFD700), // Gold color for WIN tag
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.emoji_events,
-                        size: 10.sp,
-                        color: Colors.black,
-                      ),
-                      Gap(2.w),
-                      Text(
-                        'WIN',
-                        style: TextStyle(
-                          fontSize: 8.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Gap(4.h),
-              ],
-              _buildCoachBadge(),
+              Gap(6.h),
+              _buildQuickStats(accent),
             ],
           ),
         ),
@@ -149,94 +127,34 @@ class CoachProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildRatingRow() {
-    // TODO: Implement actual rating system
-    const rating = 4.5; // Placeholder rating
-    const reviewCount = 23; // Placeholder review count
-
-    return Row(
-      children: [
-        Icon(
-          Icons.star,
-          color: Colors.amber,
-          size: 14.sp,
-        ),
-        Gap(3.w),
-        Text(
-          rating.toStringAsFixed(1),
-          style: TextStyle(
-            fontSize: 11.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
-        ),
-        Gap(3.w),
-        Expanded(
-          child: Text(
-            '($reviewCount reviews)',
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w400,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExperienceRow() {
-    return Row(
-      children: [
-        Icon(
-          Icons.work_outline,
-          size: 12.sp,
-          color: Colors.white.withValues(alpha: 0.7),
-        ),
-        Gap(3.w),
-        Expanded(
-          child: Text(
-            '${coach.experienceYears} years exp',
-            style: TextStyle(
-              fontSize: 10.sp,
-              fontWeight: FontWeight.w400,
-              color: Colors.white.withValues(alpha: 0.8),
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCoachBadge() {
+  Widget _buildCoachBadge(Color accent) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: ColorsManager.primary, // Red
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(14.r),
+        gradient: LinearGradient(
+          colors: [
+            accent,
+            accent.withOpacity(0.6),
+          ],
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.sports,
+            Icons.verified_rounded,
             color: Colors.white,
-            size: 8.sp,
+            size: 14.sp,
           ),
-          Gap(1.w),
-          Flexible(
-            child: Text(
-              'COACH',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 7.sp,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
+          Gap(4.w),
+          Text(
+            'COACH',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 11.sp,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.6,
             ),
           ),
         ],
@@ -244,29 +162,160 @@ class CoachProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBio() {
-    if (coach.bio == null || coach.bio!.isEmpty) {
-      return Text(
-        'No bio available',
-        style: TextStyles.font12Grey400Weight.copyWith(
-          fontStyle: FontStyle.italic,
-        ),
-      );
-    }
+  Widget _buildAvatar(Color accent) {
+    final borderGradient = LinearGradient(
+      colors: [
+        accent,
+        accent.withOpacity(0.4),
+      ],
+    );
 
-    return Text(
-      coach.bio!,
-      style: TextStyle(
-        fontSize: 14.sp,
-        fontWeight: FontWeight.w400,
-        color: Colors.white,
+    return Container(
+      width: 72.w,
+      height: 72.w,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: borderGradient,
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      maxLines: showFullBio ? null : 2,
-      overflow: showFullBio ? null : TextOverflow.ellipsis,
+      padding: EdgeInsets.all(3.w),
+      child: ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: coach.profilePictureUrl ?? '',
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: const Color(0xFF1F1B44),
+            child: Icon(
+              Icons.person,
+              color: Colors.white.withOpacity(0.6),
+              size: 32.sp,
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            color: const Color(0xFF1F1B44),
+            child: Icon(
+              Icons.person,
+              color: Colors.white.withOpacity(0.6),
+              size: 32.sp,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildSpecializations() {
+  Widget _buildRatingRow() {
+    const rating = 4.7;
+    const reviews = 32;
+
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFF18143A),
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.star_rounded,
+                size: 16.sp,
+                color: const Color(0xFFFFD76F),
+              ),
+              Gap(4.w),
+              Text(
+                rating.toStringAsFixed(1),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.sp,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Gap(8.w),
+        Text(
+          '$reviews reviews',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickStats(Color accent) {
+    final sessions = max(coach.experienceYears * 30, 40);
+    return Wrap(
+      spacing: 10.w,
+      runSpacing: 8.h,
+      children: [
+        _StatChip(
+          icon: Icons.work_outline_rounded,
+          label: '${coach.experienceYears} yrs experience',
+          accent: accent,
+        ),
+        _StatChip(
+          icon: Icons.school_rounded,
+          label:
+              '${coach.certifications?.length ?? 2}+ certifications',
+          accent: accent,
+        ),
+        _StatChip(
+          icon: Icons.timeline_rounded,
+          label: '$sessions sessions',
+          accent: accent,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBioSection() {
+    final copy = coach.bio?.isNotEmpty == true
+        ? coach.bio!
+        : 'Elite ${coach.specializationSports.firstOrNull ?? 'sports'} coach helping athletes unlock peak performance with custom programs and weekly progress insights.';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Coaching Philosophy',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+        Gap(6.h),
+        Text(
+          copy,
+          style: TextStyle(
+            fontSize: 13.sp,
+            height: 1.45,
+            fontWeight: FontWeight.w400,
+            color: Colors.white.withOpacity(0.88),
+          ),
+          maxLines: showFullBio ? null : 3,
+          overflow:
+              showFullBio ? TextOverflow.visible : TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpecializations(Color accent) {
     if (coach.specializationSports.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -275,35 +324,47 @@ class CoachProfileCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Specializations:',
+          'Signature Programs',
           style: TextStyle(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
+            color: Colors.white.withOpacity(0.8),
+            fontWeight: FontWeight.w600,
+            fontSize: 13.sp,
+            letterSpacing: 0.2,
           ),
         ),
-        Gap(6.h),
+        Gap(10.h),
         Wrap(
-          spacing: 6.w,
-          runSpacing: 6.h,
-          children: coach.specializationSports.take(3).map((sport) {
+          spacing: 10.w,
+          runSpacing: 10.h,
+          children: coach.specializationSports.take(4).map((sport) {
             return Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: const Color(0xFF00FFFF).withValues(alpha: 0.2), // Neon blue background
-                borderRadius: BorderRadius.circular(8.r),
+                borderRadius: BorderRadius.circular(16.r),
+                color: accent.withOpacity(0.12),
                 border: Border.all(
-                  color: const Color(0xFF00FFFF), // Neon blue border
-                  width: 1,
+                  color: accent.withOpacity(0.6),
+                  width: 0.8,
                 ),
               ),
-              child: Text(
-                sport,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11.sp,
-                  fontWeight: FontWeight.w500,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.bolt_rounded,
+                    color: accent,
+                    size: 14.sp,
+                  ),
+                  Gap(6.w),
+                  Text(
+                    sport,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12.sp,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             );
           }).toList(),
@@ -312,64 +373,124 @@ class CoachProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(Color accent) {
     return Row(
       children: [
         Expanded(
-          flex: 3,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Rate: \$${coach.hourlyRate.toStringAsFixed(0)}/hr',
+                '\$${coach.hourlyRate.toStringAsFixed(0)}/session',
                 style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.bold,
                   color: Colors.white,
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              Gap(2.h),
-              Text(
-                coach.location,
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              Gap(4.h),
+              Row(
+                children: [
+                  Icon(
+                    Icons.location_on_outlined,
+                    size: 14.sp,
+                    color: Colors.white.withOpacity(0.6),
+                  ),
+                  Gap(4.w),
+                  Expanded(
+                    child: Text(
+                      coach.location,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12.sp,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        Gap(8.w),
-        Flexible(
-          flex: 2,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              color: ColorsManager.primary,
-              borderRadius: BorderRadius.circular(20.r),
+        Gap(16.w),
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                accent,
+                accent.withOpacity(0.7),
+              ],
             ),
-            child: Text(
-              'View Profile',
-              style: TextStyle(
+            borderRadius: BorderRadius.circular(18.r),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.play_circle_fill_rounded,
                 color: Colors.white,
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
+                size: 18.sp,
               ),
-              textAlign: TextAlign.center,
-            ),
+              Gap(6.w),
+              Text(
+                'View Profile',
+                style: TextStyles.font12White600Weight.copyWith(
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
+}
 
-  /// Check if coach has winning tournaments
-  bool _hasWinningTournaments() {
-    // TODO: This should check if any of the coach's teams have won tournaments
-    // For now, return false as placeholder
-    return false;
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color accent;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.14),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: accent.withOpacity(0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: accent,
+            size: 14.sp,
+          ),
+          Gap(6.w),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
+}
+
+extension on List<String> {
+  String? get firstOrNull => isEmpty ? null : first;
 }

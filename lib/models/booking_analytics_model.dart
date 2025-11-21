@@ -81,14 +81,13 @@ class BookingAnalytics {
       totalEarnings: (map['totalEarnings'] as num).toDouble(),
       totalSpent: (map['totalSpent'] as num).toDouble(),
       bookingsBySport: Map<String, int>.from(map['bookingsBySport'] as Map),
-      earningsBySport: Map<String, double>.from(
-        (map['earningsBySport'] as Map).map((k, v) => MapEntry(k, (v as num).toDouble()))
-      ),
-      spentBySport: Map<String, double>.from(
-        (map['spentBySport'] as Map).map((k, v) => MapEntry(k, (v as num).toDouble()))
-      ),
+      earningsBySport: Map<String, double>.from((map['earningsBySport'] as Map)
+          .map((k, v) => MapEntry(k, (v as num).toDouble()))),
+      spentBySport: Map<String, double>.from((map['spentBySport'] as Map)
+          .map((k, v) => MapEntry(k, (v as num).toDouble()))),
       dailyStats: (map['dailyStats'] as List<dynamic>)
-          .map((stat) => DailyBookingStats.fromMap(stat as Map<String, dynamic>))
+          .map(
+              (stat) => DailyBookingStats.fromMap(stat as Map<String, dynamic>))
           .toList(),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
@@ -201,42 +200,49 @@ class EarningsSummary {
     DateTime periodEnd,
   ) {
     final completedBookings = bookings.where((b) => b.isCompleted).toList();
-    final confirmedBookings = bookings.where((b) => 
-      b.status == BookingStatus.confirmed || b.status == BookingStatus.pending
-    ).toList();
+    final confirmedBookings = bookings
+        .where((b) =>
+            b.status == BookingStatus.confirmed ||
+            b.status == BookingStatus.pending)
+        .toList();
 
     final totalEarnings = completedBookings.fold<double>(
-      0.0, (total, booking) => total + booking.totalAmount
-    );
+        0.0, (total, booking) => total + booking.totalAmount);
 
     final pendingEarnings = confirmedBookings.fold<double>(
-      0.0, (total, booking) => total + booking.totalAmount
-    );
+        0.0, (total, booking) => total + booking.totalAmount);
 
     // Calculate earnings by sport
     final earningsBySport = <String, double>{};
     for (final booking in completedBookings) {
       final sport = booking.sportType.displayName;
-      earningsBySport[sport] = (earningsBySport[sport] ?? 0.0) + booking.totalAmount;
+      earningsBySport[sport] =
+          (earningsBySport[sport] ?? 0.0) + booking.totalAmount;
     }
 
     // Calculate earnings by month
     final earningsByMonth = <String, double>{};
     for (final booking in completedBookings) {
-      final monthKey = '${booking.selectedDate.year}-${booking.selectedDate.month.toString().padLeft(2, '0')}';
-      earningsByMonth[monthKey] = (earningsByMonth[monthKey] ?? 0.0) + booking.totalAmount;
+      final monthKey =
+          '${booking.selectedDate.year}-${booking.selectedDate.month.toString().padLeft(2, '0')}';
+      earningsByMonth[monthKey] =
+          (earningsByMonth[monthKey] ?? 0.0) + booking.totalAmount;
     }
 
-    final averageSessionEarnings = completedBookings.isNotEmpty 
-        ? totalEarnings / completedBookings.length 
+    final averageSessionEarnings = completedBookings.isNotEmpty
+        ? totalEarnings / completedBookings.length
         : 0.0;
 
     final highestSessionEarnings = completedBookings.isNotEmpty
-        ? completedBookings.map((b) => b.totalAmount).reduce((a, b) => a > b ? a : b)
+        ? completedBookings
+            .map((b) => b.totalAmount)
+            .reduce((a, b) => a > b ? a : b)
         : 0.0;
 
     final mostProfitableSport = earningsBySport.isNotEmpty
-        ? earningsBySport.entries.reduce((a, b) => a.value > b.value ? a : b).key
+        ? earningsBySport.entries
+            .reduce((a, b) => a.value > b.value ? a : b)
+            .key
         : '';
 
     return EarningsSummary(

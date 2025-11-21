@@ -25,7 +25,7 @@ class PlayerComparisonScreen extends StatefulWidget {
 
 class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
   final CoachAnalyticsService _analyticsService = CoachAnalyticsService();
-  
+
   List<TeamMember> _allPlayers = [];
   TeamMember? _selectedPlayer1;
   TeamMember? _selectedPlayer2;
@@ -209,7 +209,11 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
                 style: TextStyles.font14Grey400Weight,
               ),
               items: _allPlayers
-                  .where((player) => player != (label == 'Player 1' ? _selectedPlayer2 : _selectedPlayer1))
+                  .where((player) =>
+                      player !=
+                      (label == 'Player 1'
+                          ? _selectedPlayer2
+                          : _selectedPlayer1))
                   .map((player) => DropdownMenuItem<TeamMember>(
                         value: player,
                         child: Text(
@@ -306,7 +310,7 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
 
   Widget _buildComparisonSummary() {
     final summary = _comparison!.summary;
-    
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -532,9 +536,10 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
     );
   }
 
-  Widget _buildSkillComparisonRow(SkillType skillType, ComparisonResult comparison) {
+  Widget _buildSkillComparisonRow(
+      SkillType skillType, ComparisonResult comparison) {
     final winner = comparison.scoreWinner;
-    
+
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -552,7 +557,8 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
                   width: 16.w,
                   height: 16.h,
                   decoration: BoxDecoration(
-                    color: Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+                    color: Color(
+                        int.parse('0xFF${skillType.colorHex.substring(1)}')),
                     borderRadius: BorderRadius.circular(8.r),
                   ),
                 ),
@@ -568,7 +574,9 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
             child: Text(
               comparison.player1Score.toString(),
               style: TextStyles.font14DarkBlue600Weight.copyWith(
-                color: winner == PlayerComparisonWinner.player1 ? Colors.green[600] : null,
+                color: winner == PlayerComparisonWinner.player1
+                    ? Colors.green[600]
+                    : null,
               ),
               textAlign: TextAlign.center,
             ),
@@ -577,7 +585,9 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
             child: Text(
               comparison.player2Score.toString(),
               style: TextStyles.font14DarkBlue600Weight.copyWith(
-                color: winner == PlayerComparisonWinner.player2 ? Colors.green[600] : null,
+                color: winner == PlayerComparisonWinner.player2
+                    ? Colors.green[600]
+                    : null,
               ),
               textAlign: TextAlign.center,
             ),
@@ -604,7 +614,7 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
 
   Widget _buildRecommendations() {
     final recommendations = _comparison!.summary.recommendations;
-    
+
     if (recommendations.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -618,30 +628,30 @@ class _PlayerComparisonScreenState extends State<PlayerComparisonScreen> {
         ),
         Gap(16.h),
         ...recommendations.map((recommendation) => Container(
-          margin: EdgeInsets.only(bottom: 8.h),
-          padding: EdgeInsets.all(12.w),
-          decoration: BoxDecoration(
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: Colors.blue[200]!),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: Colors.blue[600],
-                size: 20.sp,
+              margin: EdgeInsets.only(bottom: 8.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: Colors.blue[200]!),
               ),
-              Gap(12.w),
-              Expanded(
-                child: Text(
-                  recommendation,
-                  style: TextStyles.font14DarkBlue600Weight,
-                ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline,
+                    color: Colors.blue[600],
+                    size: 20.sp,
+                  ),
+                  Gap(12.w),
+                  Expanded(
+                    child: Text(
+                      recommendation,
+                      style: TextStyles.font14DarkBlue600Weight,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        )),
+            )),
       ],
     );
   }

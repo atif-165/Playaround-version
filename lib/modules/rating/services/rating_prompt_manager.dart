@@ -21,11 +21,12 @@ class RatingPromptManager {
       if (user == null) return;
 
       // Get pending ratings for the current user
-      final pendingRatingsStream = _ratingService.getPendingRatingsForUser(user.uid);
-      
+      final pendingRatingsStream =
+          _ratingService.getPendingRatingsForUser(user.uid);
+
       // Listen to the first emission to get current pending ratings
       final pendingRatings = await pendingRatingsStream.first;
-      
+
       if (pendingRatings.isNotEmpty && context.mounted) {
         // Show rating prompts based on the number of pending ratings
         if (pendingRatings.length == 1) {
@@ -43,7 +44,8 @@ class RatingPromptManager {
   }
 
   /// Show modal prompt for a single pending rating
-  void _showSingleRatingPrompt(BuildContext context, PendingRatingModel pendingRating) {
+  void _showSingleRatingPrompt(
+      BuildContext context, PendingRatingModel pendingRating) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -62,7 +64,8 @@ class RatingPromptManager {
   }
 
   /// Show full-screen prompt for multiple pending ratings
-  void _showMultipleRatingPrompts(BuildContext context, List<PendingRatingModel> pendingRatings) {
+  void _showMultipleRatingPrompts(
+      BuildContext context, List<PendingRatingModel> pendingRatings) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => FullScreenRatingPrompt(
@@ -84,7 +87,7 @@ class RatingPromptManager {
   /// Show thank you message after rating completion
   void _showThankYouSnackBar(BuildContext context) {
     if (!context.mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
@@ -107,7 +110,7 @@ class RatingPromptManager {
   /// Show message when rating is skipped
   void _showSkippedSnackBar(BuildContext context) {
     if (!context.mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
@@ -144,9 +147,11 @@ class RatingPromptManager {
     try {
       // This would be implemented in the RatingService if needed
       // For now, ratings are automatically marked as completed when submitted
-      debugPrint('✅ RatingPromptManager: Marked pending rating as completed: $pendingRatingId');
+      debugPrint(
+          '✅ RatingPromptManager: Marked pending rating as completed: $pendingRatingId');
     } catch (e) {
-      debugPrint('❌ RatingPromptManager: Error marking pending rating as completed: $e');
+      debugPrint(
+          '❌ RatingPromptManager: Error marking pending rating as completed: $e');
     }
   }
 
@@ -191,14 +196,15 @@ class RatingPromptManager {
 
       _showSingleRatingPrompt(context, pendingRating);
     } catch (e) {
-      debugPrint('❌ RatingPromptManager: Error showing rating prompt for booking: $e');
+      debugPrint(
+          '❌ RatingPromptManager: Error showing rating prompt for booking: $e');
     }
   }
 
   /// Show message when user tries to rate something they've already rated
   void _showAlreadyRatedSnackBar(BuildContext context) {
     if (!context.mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(
@@ -219,12 +225,14 @@ class RatingPromptManager {
   }
 
   /// Get rating statistics for display
-  Future<RatingStats> getRatingStatsForEntity(String entityId, RatingType ratingType) async {
+  Future<RatingStats> getRatingStatsForEntity(
+      String entityId, RatingType ratingType) async {
     return await _ratingService.getRatingStats(entityId, ratingType);
   }
 
   /// Get ratings stream for real-time updates
-  Stream<List<RatingModel>> getRatingsForEntity(String entityId, RatingType ratingType) {
+  Stream<List<RatingModel>> getRatingsForEntity(
+      String entityId, RatingType ratingType) {
     return _ratingService.getRatingsForEntity(entityId, ratingType);
   }
 
@@ -246,7 +254,8 @@ class AutoRatingPromptChecker extends StatefulWidget {
   });
 
   @override
-  State<AutoRatingPromptChecker> createState() => _AutoRatingPromptCheckerState();
+  State<AutoRatingPromptChecker> createState() =>
+      _AutoRatingPromptCheckerState();
 }
 
 class _AutoRatingPromptCheckerState extends State<AutoRatingPromptChecker> {
@@ -287,7 +296,7 @@ class PendingRatingsBadge extends StatelessWidget {
       stream: _promptManager.getPendingRatingsCount(),
       builder: (context, snapshot) {
         final count = snapshot.data ?? 0;
-        
+
         if (count == 0) {
           return child;
         }

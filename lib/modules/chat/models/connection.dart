@@ -111,7 +111,8 @@ class Connection {
       'message': message,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
-      'respondedAt': respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
+      'respondedAt':
+          respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
     };
   }
 
@@ -132,8 +133,8 @@ class Connection {
         message: data['message'] as String?,
         createdAt: (data['createdAt'] as Timestamp).toDate(),
         updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-        respondedAt: data['respondedAt'] != null 
-            ? (data['respondedAt'] as Timestamp).toDate() 
+        respondedAt: data['respondedAt'] != null
+            ? (data['respondedAt'] as Timestamp).toDate()
             : null,
       );
     } catch (e) {
@@ -208,16 +209,17 @@ class ConnectionHelper {
   static bool canUsersChat(Connection? connection, bool isProfilePublic) {
     // If profile is public, anyone can chat
     if (isProfilePublic) return true;
-    
+
     // If no connection exists, can't chat with private profile
     if (connection == null) return false;
-    
+
     // Can only chat if connection is accepted
     return connection.isAccepted;
   }
 
   /// Get connection status display text
-  static String getStatusDisplayText(ConnectionStatus status, bool isSentByCurrentUser) {
+  static String getStatusDisplayText(
+      ConnectionStatus status, bool isSentByCurrentUser) {
     switch (status) {
       case ConnectionStatus.pending:
         return isSentByCurrentUser ? 'Request Sent' : 'Pending Response';

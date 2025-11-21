@@ -39,7 +39,7 @@ class _VenueMapViewState extends State<VenueMapView> {
 
   void _createMarkers() {
     _markers.clear();
-    
+
     // Add current location marker
     _markers.add(
       Marker(
@@ -60,7 +60,9 @@ class _VenueMapViewState extends State<VenueMapView> {
           markerId: MarkerId('venue_${venue.id}'),
           position: LatLng(venue.latitude, venue.longitude),
           icon: BitmapDescriptor.defaultMarkerWithHue(
-            venue.isVerified ? BitmapDescriptor.hueGreen : BitmapDescriptor.hueRed,
+            venue.isVerified
+                ? BitmapDescriptor.hueGreen
+                : BitmapDescriptor.hueRed,
           ),
           infoWindow: InfoWindow(
             title: venue.name,
@@ -78,7 +80,7 @@ class _VenueMapViewState extends State<VenueMapView> {
     setState(() {
       _selectedVenue = venue;
     });
-    
+
     // Move camera to selected venue
     _mapController?.animateCamera(
       CameraUpdate.newLatLngZoom(
@@ -143,8 +145,8 @@ class _VenueMapViewState extends State<VenueMapView> {
             child: Text(
               '${widget.venues.length} venues found',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ),
         ),
@@ -154,7 +156,7 @@ class _VenueMapViewState extends State<VenueMapView> {
 
   Widget _buildSelectedVenueCard() {
     final venue = _selectedVenue!;
-    
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -194,8 +196,8 @@ class _VenueMapViewState extends State<VenueMapView> {
                     Text(
                       venue.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -239,8 +241,8 @@ class _VenueMapViewState extends State<VenueMapView> {
                     Text(
                       venue.address,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                            color: Colors.grey[600],
+                          ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -248,9 +250,9 @@ class _VenueMapViewState extends State<VenueMapView> {
                     Text(
                       'From \$${venue.pricing.hourlyRate.toStringAsFixed(0)}/hour',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
                     ),
                   ],
                 ),

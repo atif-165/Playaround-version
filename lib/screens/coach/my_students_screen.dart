@@ -13,7 +13,8 @@ class MyStudentsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('My Students', style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
+        title: Text('My Students',
+            style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
         backgroundColor: Colors.grey[900],
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -44,15 +45,21 @@ class MyStudentsScreen extends StatelessWidget {
           CircleAvatar(
             radius: 24.r,
             backgroundColor: ColorsManager.primary,
-            child: Text(name[0], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: Text(name[0],
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ),
           Gap(16.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.white)),
-                Text('$sport • $level', style: TextStyles.font14Grey400Weight.copyWith(color: Colors.grey[400])),
+                Text(name,
+                    style: TextStyles.font16DarkBlueBold
+                        .copyWith(color: Colors.white)),
+                Text('$sport • $level',
+                    style: TextStyles.font14Grey400Weight
+                        .copyWith(color: Colors.grey[400])),
               ],
             ),
           ),

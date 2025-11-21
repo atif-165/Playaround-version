@@ -18,9 +18,9 @@ import '../../listing/widgets/sport_type_dropdown.dart';
 import '../../team/models/team_model.dart' as team;
 import '../models/tournament_model.dart';
 import '../services/tournament_service.dart';
-import '../services/tournament_permission_service.dart';
 import '../widgets/venue_selector.dart';
 import 'tournament_preview_screen.dart';
+import '../../../theming/public_profile_theme.dart';
 
 /// Enhanced screen for creating tournaments
 class CreateTournamentScreen extends StatefulWidget {
@@ -33,7 +33,6 @@ class CreateTournamentScreen extends StatefulWidget {
 class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tournamentService = TournamentService();
-  final _permissionService = TournamentPermissionService();
 
   // Form controllers
   final _nameController = TextEditingController();
@@ -43,9 +42,6 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final _entryFeeController = TextEditingController();
   final _winningPrizeController = TextEditingController();
   final _rulesController = TextEditingController();
-  final _question1Controller = TextEditingController();
-  final _question2Controller = TextEditingController();
-  final _question3Controller = TextEditingController();
 
   // Form state
   listing.SportType? _selectedSportType;
@@ -55,10 +51,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   DateTime? _registrationDeadline;
   VenueModel? _selectedVenue;
   bool _isLoading = false;
-  bool _checkingPermissions = true;
-
   UserProfile? _currentUserProfile;
-  TournamentCreationPermission? _creationPermission;
 
   @override
   void initState() {
@@ -77,9 +70,6 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     _entryFeeController.dispose();
     _winningPrizeController.dispose();
     _rulesController.dispose();
-    _question1Controller.dispose();
-    _question2Controller.dispose();
-    _question3Controller.dispose();
     super.dispose();
   }
 
@@ -89,194 +79,64 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       setState(() {
         _currentUserProfile = authState.userProfile;
       });
-      await _checkPermissions();
-    } else {
-      // If no profile, allow creation anyway
-      setState(() {
-        _creationPermission = const TournamentCreationPermission(
-          canCreate: true,
-          reason: 'Default permission granted',
-        );
-        _checkingPermissions = false;
-      });
     }
-  }
-
-  Future<void> _checkPermissions() async {
-    try {
-      final permission = await _permissionService.checkTournamentCreationPermission(
-        _currentUserProfile,
-      ).timeout(const Duration(seconds: 10));
-
-      if (mounted) {
-        setState(() {
-          _creationPermission = permission;
-          _checkingPermissions = false;
-        });
-
-        // If user doesn't have permission, show dialog and go back
-        if (!permission.canCreate) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showPermissionDeniedDialog();
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _creationPermission = TournamentCreationPermission(
-            canCreate: true,
-            reason: 'Permission check failed, allowing creation',
-          );
-          _checkingPermissions = false;
-        });
-      }
-    }
-  }
-
-  void _showPermissionDeniedDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Permission Required',
-          style: TextStyles.font18DarkBlueBold,
-        ),
-        content: Text(
-          _permissionService.getPermissionDenialMessage(),
-          style: TextStyles.font14Grey400Weight,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Go back to previous screen
-            },
-            child: Text(
-              'OK',
-              style: TextStyles.font14MainBlue500Weight,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking permissions
-    if (_checkingPermissions) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Create Tournament',
-            style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
-          ),
-          backgroundColor: Colors.black,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(ColorsManager.mainBlue),
-          ),
-        ),
-      );
-    }
-
-    // Check if user has permission to create tournaments
-    if (_creationPermission?.canCreate != true) {
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Create Tournament',
-            style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
-          ),
-          backgroundColor: Colors.black,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.block,
-                size: 64.sp,
-                color: Colors.red,
-              ),
-              Gap(16.h),
-              Text(
-                'Access Denied',
-                style: TextStyles.font20DarkBlueBold,
-              ),
-              Gap(8.h),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 32.w),
-                child: Text(
-                  _creationPermission?.reason ?? 'Permission denied',
-                  style: TextStyles.font14Grey400Weight,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
           'Create Tournament',
           style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CustomProgressIndicator())
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(24.w),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    Gap(32.h),
-                    _buildBasicInfo(),
-                    Gap(24.h),
-                    _buildTournamentDetails(),
-                    Gap(24.h),
-                    _buildDateTimeSection(),
-                    Gap(24.h),
-                    _buildAdditionalInfo(),
-                    Gap(32.h),
-                    _buildSubmitButton(),
-                  ],
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: PublicProfileTheme.backgroundGradient,
+        ),
+        child: _isLoading
+            ? const Center(child: CustomProgressIndicator())
+            : SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(
+                    24.w, kToolbarHeight + 24.h, 24.w, 24.h),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCard(_buildBasicInfo()),
+                      Gap(20.h),
+                      _buildCard(_buildTournamentDetails()),
+                      Gap(20.h),
+                      _buildCard(_buildDateTimeSection()),
+                      Gap(20.h),
+                      _buildCard(_buildAdditionalInfo()),
+                      Gap(32.h),
+                      _buildSubmitButton(),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Create New Tournament',
-          style: TextStyles.font24Blue700Weight.copyWith(color: Colors.white),
-        ),
-        Gap(8.h),
-        Text(
-          'Organize and manage your sports tournament',
-          style: TextStyles.font14Grey400Weight.copyWith(color: Colors.white),
-        ),
-      ],
+  Widget _buildCard(Widget child) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: PublicProfileTheme.panelColor,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        boxShadow: PublicProfileTheme.defaultShadow(),
+      ),
+      child: child,
     );
   }
 
@@ -316,7 +176,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         _buildTextField(
           controller: _descriptionController,
           label: 'Description',
-          hint: 'Describe the tournament, rules, and what participants can expect...',
+          hint:
+              'Describe the tournament, rules, and what participants can expect...',
           maxLines: 4,
           maxLength: 1000,
           validator: (value) {
@@ -339,7 +200,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       children: [
         Text(
           'Tournament Details',
-          style: TextStyles.font18DarkBlueBold,
+          style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
         Gap(16.h),
         Row(
@@ -374,13 +235,15 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                   Gap(8.h),
                   DropdownButtonFormField<TournamentFormat>(
                     value: _selectedFormat,
+                    isExpanded: true,
                     decoration: InputDecoration(
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16.r),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16.r),
-                        borderSide: const BorderSide(color: ColorsManager.mainBlue),
+                        borderSide:
+                            const BorderSide(color: ColorsManager.mainBlue),
                       ),
                     ),
                     items: TournamentFormat.values.map((format) {
@@ -458,7 +321,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       children: [
         Text(
           'Tournament Fees & Prizes',
-          style: TextStyles.font18DarkBlueBold,
+          style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
         Gap(16.h),
         Row(
@@ -507,7 +370,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         Gap(24.h),
         Text(
           'Venue & Rules',
-          style: TextStyles.font18DarkBlueBold,
+          style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
         ),
         Gap(16.h),
         VenueSelector(
@@ -523,7 +386,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         _buildTextField(
           controller: _rulesController,
           label: 'Tournament Rules (Required)',
-          hint: 'Specific rules, eligibility criteria, match format, scoring system...',
+          hint:
+              'Specific rules, eligibility criteria, match format, scoring system...',
           maxLines: 4,
           maxLength: 1000,
           validator: (value) {
@@ -535,55 +399,6 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             }
             return null;
           },
-        ),
-        Gap(24.h),
-        _buildQualifyingQuestions(),
-      ],
-    );
-  }
-
-  Widget _buildQualifyingQuestions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Team Registration Questions (2-3 questions)',
-          style: TextStyles.font18DarkBlueBold,
-        ),
-        Gap(8.h),
-        Text(
-          'These questions will be asked to team captains during registration',
-          style: TextStyles.font14Grey400Weight,
-        ),
-        Gap(16.h),
-        _buildTextField(
-          controller: _question1Controller,
-          label: 'Question 1 (Required)',
-          hint: 'e.g., What is your team\'s experience level?',
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Please enter the first question';
-            }
-            return null;
-          },
-        ),
-        Gap(16.h),
-        _buildTextField(
-          controller: _question2Controller,
-          label: 'Question 2 (Required)',
-          hint: 'e.g., How many tournaments has your team participated in?',
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Please enter the second question';
-            }
-            return null;
-          },
-        ),
-        Gap(16.h),
-        _buildTextField(
-          controller: _question3Controller,
-          label: 'Question 3 (Optional)',
-          hint: 'e.g., Any special requirements or notes?',
         ),
       ],
     );
@@ -615,8 +430,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           decoration: InputDecoration(
             hintText: hint,
             prefixText: prefixText,
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.r),
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.r),
@@ -648,7 +466,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             width: double.infinity,
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
+              color: Colors.white.withOpacity(0.04),
+              border: Border.all(color: Colors.white.withOpacity(0.08)),
               borderRadius: BorderRadius.circular(16.r),
             ),
             child: Row(
@@ -662,7 +481,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 Expanded(
                   child: Text(
                     value,
-                    style: TextStyles.font14DarkBlueMedium.copyWith(color: Colors.white),
+                    style: TextStyles.font14DarkBlueMedium
+                        .copyWith(color: Colors.white),
                   ),
                 ),
                 const Icon(
@@ -745,11 +565,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   Future<void> _selectRegistrationDeadline() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _startDate?.subtract(const Duration(days: 1)) ?? 
-                   DateTime.now().add(const Duration(days: 6)),
+      initialDate: _startDate?.subtract(const Duration(days: 1)) ??
+          DateTime.now().add(const Duration(days: 6)),
       firstDate: DateTime.now(),
-      lastDate: _startDate?.subtract(const Duration(hours: 1)) ?? 
-                DateTime.now().add(const Duration(days: 364)),
+      lastDate: _startDate?.subtract(const Duration(hours: 1)) ??
+          DateTime.now().add(const Duration(days: 364)),
     );
 
     if (date != null) {
@@ -799,21 +619,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     final entryFee = double.parse(_entryFeeController.text.trim());
     final winningPrize = double.parse(_winningPrizeController.text.trim());
 
-    final rules = _rulesController.text.trim().split('\n')
+    final rules = _rulesController.text
+        .trim()
+        .split('\n')
         .where((rule) => rule.trim().isNotEmpty)
         .toList();
-
-    // Collect qualifying questions
-    final qualifyingQuestions = <String>[];
-    if (_question1Controller.text.trim().isNotEmpty) {
-      qualifyingQuestions.add(_question1Controller.text.trim());
-    }
-    if (_question2Controller.text.trim().isNotEmpty) {
-      qualifyingQuestions.add(_question2Controller.text.trim());
-    }
-    if (_question3Controller.text.trim().isNotEmpty) {
-      qualifyingQuestions.add(_question3Controller.text.trim());
-    }
 
     // Convert listing SportType to team SportType
     final teamSportType = _convertToTeamSportType(_selectedSportType!);
@@ -849,7 +659,6 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       updatedAt: DateTime.now(),
       entryFee: entryFee,
       winningPrize: winningPrize,
-      qualifyingQuestions: qualifyingQuestions,
     );
 
     // Navigate to preview screen
@@ -933,52 +742,43 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       );
 
       final entryFee = double.tryParse(_entryFeeController.text.trim()) ?? 0.0;
-      final winningPrize = double.tryParse(_winningPrizeController.text.trim()) ?? 0.0;
+      final winningPrize =
+          double.tryParse(_winningPrizeController.text.trim()) ?? 0.0;
 
-      final rules = _rulesController.text.trim().split('\n')
+      final rules = _rulesController.text
+          .trim()
+          .split('\n')
           .where((rule) => rule.trim().isNotEmpty)
           .toList();
-
-      // Collect qualifying questions
-      final qualifyingQuestions = <String>[];
-      if (_question1Controller.text.trim().isNotEmpty) {
-        qualifyingQuestions.add(_question1Controller.text.trim());
-      }
-      if (_question2Controller.text.trim().isNotEmpty) {
-        qualifyingQuestions.add(_question2Controller.text.trim());
-      }
-      if (_question3Controller.text.trim().isNotEmpty) {
-        qualifyingQuestions.add(_question3Controller.text.trim());
-      }
 
       // Convert listing SportType to team SportType
       final teamSportType = _convertToTeamSportType(_selectedSportType!);
 
-      await _tournamentService.createTournament(
-        name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
-        sportType: teamSportType,
-        format: _selectedFormat,
-        registrationStartDate: DateTime.now(),
-        registrationEndDate: _registrationDeadline!,
-        startDate: startDateTime,
-        maxTeams: int.parse(_maxTeamsController.text),
-        location: _selectedVenue?.location ??
-            (_locationController.text.trim().isEmpty
-                ? null
-                : _locationController.text.trim()),
-        venueId: _selectedVenue?.id,
-        venueName: _selectedVenue?.title,
-        rules: rules,
-        prizes: {
-          'entry_fee': entryFee,
-          'winning_prize': winningPrize,
-        },
-        // New parameters
-        entryFee: entryFee,
-        winningPrize: winningPrize,
-        qualifyingQuestions: qualifyingQuestions,
-      ).timeout(const Duration(seconds: 30));
+      await _tournamentService
+          .createTournament(
+            name: _nameController.text.trim(),
+            description: _descriptionController.text.trim(),
+            sportType: teamSportType,
+            format: _selectedFormat,
+            registrationStartDate: DateTime.now(),
+            registrationEndDate: _registrationDeadline!,
+            startDate: startDateTime,
+            maxTeams: int.parse(_maxTeamsController.text),
+            location: _selectedVenue?.location ??
+                (_locationController.text.trim().isEmpty
+                    ? null
+                    : _locationController.text.trim()),
+            venueId: _selectedVenue?.id,
+            venueName: _selectedVenue?.title,
+            rules: rules,
+            prizes: {
+              'entry_fee': entryFee,
+              'winning_prize': winningPrize,
+            },
+            entryFee: entryFee,
+            winningPrize: winningPrize,
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (mounted) {
         context.showSnackBar('Tournament created successfully!');

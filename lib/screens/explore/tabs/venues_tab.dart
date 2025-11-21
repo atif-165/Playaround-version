@@ -1,143 +1,128 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gap/gap.dart';
 
-import '../../../models/geo_models.dart';
-import '../../../services/location_service.dart';
-import '../widgets/venue_card.dart';
 import '../../../core/widgets/progress_indicaror.dart';
+import '../../../data/models/venue_model.dart';
+import '../../../data/repositories/discovery_repository.dart';
+import '../../../services/location_service.dart';
+import '../widgets/venue_discovery_card.dart';
 
 /// Venues tab for explore screen
 class VenuesTab extends StatefulWidget {
-  final String searchQuery;
-  final Map<String, dynamic> filters;
-
   const VenuesTab({
     super.key,
     required this.searchQuery,
     required this.filters,
   });
 
+  final String searchQuery;
+  final Map<String, dynamic> filters;
+
   @override
   State<VenuesTab> createState() => _VenuesTabState();
 }
 
 class _VenuesTabState extends State<VenuesTab> {
+  final DiscoveryRepository _repository = DiscoveryRepository();
   final LocationService _locationService = LocationService();
-  List<GeoVenue> _venues = [];
-  bool _isLoading = true;
+
+  List<VenueModel> _venues = [];
+  List<VenueModel> _filteredVenues = [];
+  bool _loading = true;
   String? _error;
   GeoPoint? _userLocation;
 
   @override
   void initState() {
     super.initState();
-    _initializeLocation();
+    _initialLoad();
   }
 
   @override
-  void didUpdateWidget(VenuesTab oldWidget) {
+  void didUpdateWidget(covariant VenuesTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.searchQuery != widget.searchQuery ||
         oldWidget.filters != widget.filters) {
-      _loadVenues();
+      _applyFilters();
     }
   }
 
-  Future<void> _initializeLocation() async {
-    _userLocation = await _locationService.getCurrentLocation();
-    await _loadVenues();
-  }
-
-  Future<void> _loadVenues() async {
-    if (!mounted) return;
-
+  Future<void> _initialLoad() async {
     setState(() {
-      _isLoading = true;
+      _loading = true;
       _error = null;
     });
 
     try {
-      // Get venues from Firestore
-      Query query = FirebaseFirestore.instance.collection('venues');
-
-      // Apply search filter
-      if (widget.searchQuery.isNotEmpty) {
-        query = query.where('title', 
-            isGreaterThanOrEqualTo: widget.searchQuery)
-            .where('title', 
-            isLessThanOrEqualTo: '${widget.searchQuery}\uf8ff');
-      }
-
-      // Apply sport filter
-      if (widget.filters['sports'] != null && 
-          (widget.filters['sports'] as List).isNotEmpty) {
-        query = query.where('sportType', 
-            whereIn: widget.filters['sports']);
-      }
-
-      // Apply active filter
-      query = query.where('isActive', isEqualTo: true);
-
-      final querySnapshot = await query.get();
-      
-      List<GeoVenue> venues = querySnapshot.docs
-          .map((doc) => GeoVenue.fromFirestore(doc))
-          .toList();
-
-      // Apply distance filter if user location is available
-      if (_userLocation != null && widget.filters['radiusKm'] != null) {
-        final radiusKm = widget.filters['radiusKm'] as double;
-        venues = venues.where((venue) {
-          if (venue.geoPoint == null) {
-            // Try to get approximate location from string
-            final approxLocation = _locationService
-                .getApproximateLocationFromString(venue.location);
-            if (approxLocation != null) {
-              final distance = _locationService
-                  .calculateDistance(_userLocation!, approxLocation);
-              return distance <= radiusKm;
-            }
-            return false;
-          }
-          
-          final distance = _locationService
-              .calculateDistance(_userLocation!, venue.geoPoint!);
-          return distance <= radiusKm;
-        }).toList();
-      }
-
-      // Sort by distance if user location is available
-      if (_userLocation != null) {
-        venues = _locationService.sortByDistance<GeoVenue>(
-          venues,
-          _userLocation!,
-          (venue) => venue.geoPoint ?? 
-              _locationService.getApproximateLocationFromString(venue.location) ??
-              const GeoPoint(0, 0),
-        );
-      }
-
-      if (mounted) {
-        setState(() {
-          _venues = venues;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = 'Failed to load venues: $e';
-          _isLoading = false;
-        });
-      }
+      _userLocation = await _locationService.getCurrentLocation();
+      _venues = await _repository.loadVenues();
+      _applyFilters();
+    } catch (error) {
+      setState(() {
+        _loading = false;
+        _error = 'Failed to load venues';
+      });
     }
+  }
+
+  void _applyFilters() {
+    final query = widget.searchQuery.toLowerCase();
+    final sportsFilter =
+        (widget.filters['sports'] as List<dynamic>? ?? const []).cast<String>();
+    final radiusKm = widget.filters['radiusKm'] as double?;
+
+    List<VenueModel> filtered = _venues.where((venue) {
+      final matchesSearch = query.isEmpty ||
+          venue.name.toLowerCase().contains(query) ||
+          venue.city.toLowerCase().contains(query);
+      final matchesSports = sportsFilter.isEmpty ||
+          venue.sports.any(
+            (sport) => sportsFilter.any(
+              (selected) =>
+                  sport.toLowerCase().contains(selected.toLowerCase()),
+            ),
+          );
+      final matchesDistance = radiusKm == null ||
+          _userLocation == null ||
+          _distanceFor(venue) != null && _distanceFor(venue)! <= radiusKm;
+
+      return matchesSearch && matchesSports && matchesDistance;
+    }).toList();
+
+    if (_userLocation != null) {
+      filtered.sort((a, b) {
+        final distanceA = _distanceFor(a) ?? double.infinity;
+        final distanceB = _distanceFor(b) ?? double.infinity;
+        return distanceA.compareTo(distanceB);
+      });
+    }
+
+    setState(() {
+      _filteredVenues = filtered;
+      _loading = false;
+      _error = null;
+    });
+  }
+
+  double? _distanceFor(VenueModel venue) {
+    if (_userLocation == null ||
+        venue.latitude == null ||
+        venue.longitude == null) {
+      return null;
+    }
+    final venuePoint = GeoPoint(venue.latitude!, venue.longitude!);
+    return _locationService.calculateDistance(_userLocation!, venuePoint);
+  }
+
+  Future<void> _refresh() async {
+    await _initialLoad();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_loading) {
       return const Center(child: CustomProgressIndicator());
     }
 
@@ -146,23 +131,16 @@ class _VenuesTabState extends State<VenuesTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48.sp,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.error_outline, size: 48.sp, color: Colors.grey[400]),
             Gap(16.h),
             Text(
               _error!,
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             Gap(16.h),
             ElevatedButton(
-              onPressed: _loadVenues,
+              onPressed: _initialLoad,
               child: const Text('Retry'),
             ),
           ],
@@ -170,16 +148,13 @@ class _VenuesTabState extends State<VenuesTab> {
       );
     }
 
-    if (_venues.isEmpty) {
+    if (_filteredVenues.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.location_city_outlined,
-              size: 48.sp,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.location_city_outlined,
+                size: 48.sp, color: Colors.grey[400]),
             Gap(16.h),
             Text(
               'No venues found',
@@ -192,10 +167,7 @@ class _VenuesTabState extends State<VenuesTab> {
             Gap(8.h),
             Text(
               'Try adjusting your search or filters',
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey[500],
-              ),
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
             ),
           ],
         ),
@@ -203,30 +175,17 @@ class _VenuesTabState extends State<VenuesTab> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadVenues,
+      onRefresh: _refresh,
       child: ListView.builder(
         padding: EdgeInsets.all(16.w),
-        itemCount: _venues.length,
+        itemCount: _filteredVenues.length,
         itemBuilder: (context, index) {
-          final venue = _venues[index];
-          double? distance;
-          
-          if (_userLocation != null) {
-            final venueLocation = venue.geoPoint ?? 
-                _locationService.getApproximateLocationFromString(venue.location);
-            if (venueLocation != null) {
-              distance = _locationService.calculateDistance(
-                _userLocation!, 
-                venueLocation,
-              );
-            }
-          }
-
+          final venue = _filteredVenues[index];
           return Padding(
             padding: EdgeInsets.only(bottom: 16.h),
-            child: VenueCard(
+            child: VenueDiscoveryCard(
               venue: venue,
-              distance: distance,
+              distanceKm: _distanceFor(venue),
               onTap: () => _onVenueTap(venue),
             ),
           );
@@ -235,11 +194,9 @@ class _VenuesTabState extends State<VenuesTab> {
     );
   }
 
-  void _onVenueTap(GeoVenue venue) {
-    // Navigate to venue details
-    // TODO: Implement venue details navigation
+  void _onVenueTap(VenueModel venue) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Venue details for ${venue.title}')),
+      SnackBar(content: Text('Venue details for ${venue.name} coming soon')),
     );
   }
 }

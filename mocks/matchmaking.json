@@ -1,0 +1,403 @@
+{
+  "players": [
+    {
+      "id": "player_1",
+      "fullName": "Emma Johnson",
+      "age": 24,
+      "gender": "female",
+      "location": "San Francisco",
+      "latitude": 37.7749,
+      "longitude": -122.4194,
+      "avatarUrl": "https://images.playaround.app/avatars/emma.jpg",
+      "sports": ["Tennis", "Pickleball"],
+      "skillRatings": {"Tennis": 0.75, "Pickleball": 0.6},
+      "experienceLevel": 0.7,
+      "availability": ["sat_morning", "sun_morning", "wed_evening"],
+      "interests": ["Nutrition", "Travel"],
+      "bio": "USTA 4.0 player looking for a competitive doubles partner.",
+      "reputationScore": 4.8,
+      "lastActive": "2025-11-05T12:00:00.000Z",
+      "updatedAt": "2025-11-05T12:00:00.000Z"
+    },
+    {
+      "id": "player_2",
+      "fullName": "Liam Carter",
+      "age": 28,
+      "gender": "male",
+      "location": "San Francisco",
+      "latitude": 37.7790,
+      "longitude": -122.4312,
+      "avatarUrl": "https://images.playaround.app/avatars/liam.jpg",
+      "sports": ["Basketball", "Running"],
+      "skillRatings": {"Basketball": 0.8, "Running": 0.5},
+      "experienceLevel": 0.8,
+      "availability": ["tue_evening", "thu_evening", "sun_afternoon"],
+      "interests": ["Analytics", "Tech"],
+      "bio": "6'2\" guard with strong mid-range game. Looking for weekend runs.",
+      "reputationScore": 4.6,
+      "lastActive": "2025-11-07T08:30:00.000Z",
+      "updatedAt": "2025-11-07T08:30:00.000Z"
+    },
+    {
+      "id": "player_3",
+      "fullName": "Ava Chen",
+      "age": 22,
+      "gender": "female",
+      "location": "Oakland",
+      "latitude": 37.8044,
+      "longitude": -122.2711,
+      "avatarUrl": "https://images.playaround.app/avatars/ava.jpg",
+      "sports": ["Badminton", "Yoga"],
+      "skillRatings": {"Badminton": 0.65, "Yoga": 0.5},
+      "experienceLevel": 0.6,
+      "availability": ["mon_evening", "wed_evening", "fri_evening"],
+      "interests": ["Mindfulness", "Design"],
+      "bio": "Former collegiate badminton player. Loves intense rallies.",
+      "reputationScore": 4.9,
+      "lastActive": "2025-11-06T19:45:00.000Z",
+      "updatedAt": "2025-11-06T19:45:00.000Z"
+    },
+    {
+      "id": "player_4",
+      "fullName": "Mateo García",
+      "age": 26,
+      "gender": "male",
+      "location": "San Jose",
+      "latitude": 37.3382,
+      "longitude": -121.8863,
+      "avatarUrl": "https://images.playaround.app/avatars/mateo.jpg",
+      "sports": ["Soccer", "Futsal"],
+      "skillRatings": {"Soccer": 0.85, "Futsal": 0.8},
+      "experienceLevel": 0.9,
+      "availability": ["sat_morning", "sat_evening", "sun_evening"],
+      "interests": ["Coaching", "Community"],
+      "bio": "Semi-pro winger with speed for days. Always up for a challenge.",
+      "reputationScore": 4.7,
+      "lastActive": "2025-11-07T05:12:00.000Z",
+      "updatedAt": "2025-11-07T05:12:00.000Z"
+    },
+    {
+      "id": "player_5",
+      "fullName": "Sophia Patel",
+      "age": 30,
+      "gender": "female",
+      "location": "Berkeley",
+      "latitude": 37.8715,
+      "longitude": -122.2730,
+      "avatarUrl": "https://images.playaround.app/avatars/sophia.jpg",
+      "sports": ["Running", "Cycling"],
+      "gallery": [
+        "https://images.unsplash.com/photo-1526401485004-46910ecc8f51?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "skillRatings": {"Running": 0.7, "Cycling": 0.65},
+      "experienceLevel": 0.7,
+      "availability": ["mon_morning", "wed_morning", "sat_morning"],
+      "interests": ["Data Viz", "Nutrition"],
+      "bio": "Marathoner training for Boston 2026. Loves tempo runs and coffee rides.",
+      "reputationScore": 4.5,
+      "lastActive": "2025-11-03T16:00:00.000Z",
+      "updatedAt": "2025-11-03T16:00:00.000Z"
+    },
+    {
+      "id": "player_ayaan_malik",
+      "fullName": "Ayaan Malik",
+      "age": 24,
+      "gender": "male",
+      "location": "Karachi, Pakistan",
+      "latitude": 24.8607,
+      "longitude": 67.0011,
+      "avatarUrl": "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80",
+      "sports": ["Football", "Futsal", "Padel"],
+      "gallery": [
+        "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1495567720989-cebdbdd97913?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "skillRatings": {"Football": 0.92, "Futsal": 0.9, "Padel": 0.68},
+      "experienceLevel": 0.95,
+      "availability": ["mon_evening", "wed_evening", "fri_evening", "sat_evening"],
+      "interests": ["Sports Science", "Analytics", "Community"],
+      "bio": "Dynamic winger thriving in high-tempo systems. Loves partnering with aggressive forwards and experimenting with data-driven training.",
+      "reputationScore": 4.95,
+      "lastActive": "2025-11-09T08:00:00.000Z",
+      "updatedAt": "2025-11-09T08:00:00.000Z"
+    }
+  ],
+  "teams": [
+    {
+      "id": "team_1",
+      "name": "Mission District Hoops",
+      "sport": "Basketball",
+      "city": "San Francisco",
+      "logoUrl": "https://images.playaround.app/teams/mission-hoops.png",
+      "memberIds": ["player_2"],
+      "tags": ["competitive", "pickup"],
+      "rating": 4.6,
+      "wins": 18,
+      "losses": 6,
+      "createdAt": "2024-01-10T09:00:00.000Z",
+      "updatedAt": "2025-10-28T09:00:00.000Z"
+    },
+    {
+      "id": "team_2",
+      "name": "Bay Area Smashers",
+      "sport": "Badminton",
+      "city": "Oakland",
+      "logoUrl": "https://images.playaround.app/teams/bay-smashers.png",
+      "memberIds": ["player_3"],
+      "tags": ["tournaments", "doubles"],
+      "rating": 4.8,
+      "wins": 24,
+      "losses": 3,
+      "createdAt": "2024-05-14T14:00:00.000Z",
+      "updatedAt": "2025-11-02T08:30:00.000Z"
+    },
+    {
+      "id": "team_thunder_fc",
+      "name": "Thunder FC",
+      "sport": "Football",
+      "city": "Karachi",
+      "logoUrl": "https://images.unsplash.com/photo-1526237577798-4e16324c4e04?auto=format&fit=crop&w=400&q=80",
+      "memberIds": ["player_ayaan_malik"],
+      "tags": ["pressing", "regional-champions", "captain"],
+      "rating": 4.9,
+      "wins": 32,
+      "losses": 4,
+      "createdAt": "2023-09-12T09:00:00.000Z",
+      "updatedAt": "2025-10-30T09:00:00.000Z"
+    },
+    {
+      "id": "team_karachi_sparks",
+      "name": "Karachi Sparks",
+      "sport": "Football",
+      "city": "Karachi",
+      "logoUrl": "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=400&q=80",
+      "memberIds": ["player_ayaan_malik"],
+      "tags": ["guest-playmaker", "counter-attack"],
+      "rating": 4.6,
+      "wins": 18,
+      "losses": 6,
+      "createdAt": "2024-01-20T09:00:00.000Z",
+      "updatedAt": "2025-10-12T09:00:00.000Z"
+    },
+    {
+      "id": "team_pulse_united",
+      "name": "Pulse United",
+      "sport": "Football",
+      "city": "Dubai",
+      "logoUrl": "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=400&q=80",
+      "memberIds": ["player_ayaan_malik"],
+      "tags": ["adaptive", "regional-cup", "emerging-talent"],
+      "rating": 4.7,
+      "wins": 21,
+      "losses": 5,
+      "createdAt": "2023-11-02T09:00:00.000Z",
+      "updatedAt": "2025-09-15T09:00:00.000Z"
+    },
+    {
+      "id": "team_velocity_five",
+      "name": "Velocity Five",
+      "sport": "Futsal",
+      "city": "Doha",
+      "logoUrl": "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&w=400&q=80",
+      "memberIds": ["player_ayaan_malik"],
+      "tags": ["futsal", "high-tempo", "invitational"],
+      "rating": 4.8,
+      "wins": 27,
+      "losses": 3,
+      "createdAt": "2024-04-18T09:00:00.000Z",
+      "updatedAt": "2025-10-05T09:00:00.000Z"
+    }
+  ],
+  "venues": [
+    {
+      "id": "venue_1",
+      "name": "Pier 70 Sports Hub",
+      "address": "420 22nd St",
+      "city": "San Francisco",
+      "country": "USA",
+      "latitude": 37.7623,
+      "longitude": -122.3876,
+      "coverImageUrl": "https://images.playaround.app/venues/pier70-cover.jpg",
+      "gallery": [
+        "https://images.playaround.app/venues/pier70-court1.jpg",
+        "https://images.playaround.app/venues/pier70-lounge.jpg"
+      ],
+      "sports": ["Basketball", "Volleyball", "Pickleball"],
+      "amenities": {
+        "parking": true,
+        "lockerRooms": true,
+        "proShop": true,
+        "wifi": true
+      },
+      "rating": 4.7,
+      "reviewCount": 122,
+      "availability": [
+        "mon:07:00-22:00",
+        "tue:07:00-22:00",
+        "wed:07:00-22:00",
+        "thu:07:00-22:00",
+        "fri:07:00-22:00",
+        "sat:08:00-20:00",
+        "sun:08:00-20:00"
+      ],
+      "createdAt": "2023-08-01T09:00:00.000Z",
+      "updatedAt": "2025-10-25T09:00:00.000Z"
+    },
+    {
+      "id": "venue_2",
+      "name": "Lake Merritt Rowing Club",
+      "address": "568 Bellevue Ave",
+      "city": "Oakland",
+      "country": "USA",
+      "latitude": 37.8087,
+      "longitude": -122.2548,
+      "coverImageUrl": "https://images.playaround.app/venues/merritt-cover.jpg",
+      "gallery": [
+        "https://images.playaround.app/venues/merritt-boat.jpg",
+        "https://images.playaround.app/venues/merritt-dock.jpg"
+      ],
+      "sports": ["Rowing", "Kayaking"],
+      "amenities": {
+        "parking": true,
+        "lockers": true,
+        "equipmentRental": true
+      },
+      "rating": 4.9,
+      "reviewCount": 54,
+      "availability": [
+        "mon:06:00-12:00",
+        "wed:06:00-12:00",
+        "fri:06:00-12:00",
+        "sat:06:00-14:00"
+      ],
+      "createdAt": "2022-03-22T09:00:00.000Z",
+      "updatedAt": "2025-09-18T09:00:00.000Z"
+    },
+    {
+      "id": "venue_riverside_arena",
+      "name": "Riverside Arena",
+      "address": "Plot 12, Riverside Drive",
+      "city": "Karachi",
+      "country": "Pakistan",
+      "latitude": 24.8732,
+      "longitude": 66.9749,
+      "coverImageUrl": "https://images.unsplash.com/photo-1509021436665-8f07dbf5bf1d?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "sports": ["Futsal", "Football"],
+      "amenities": {
+        "smartLighting": true,
+        "lockerRooms": true,
+        "performanceTracking": true
+      },
+      "rating": 4.9,
+      "reviewCount": 187,
+      "availability": [
+        "mon:07:00-23:00",
+        "tue:07:00-23:00",
+        "wed:07:00-23:00",
+        "thu:07:00-23:00",
+        "fri:07:00-23:00",
+        "sat:08:00-22:00",
+        "sun:08:00-22:00"
+      ],
+      "createdAt": "2023-06-01T09:00:00.000Z",
+      "updatedAt": "2025-10-22T09:00:00.000Z"
+    },
+    {
+      "id": "venue_national_sports_complex",
+      "name": "National Sports Complex",
+      "address": "Sector 4, National Highway",
+      "city": "Karachi",
+      "country": "Pakistan",
+      "latitude": 24.8935,
+      "longitude": 67.0282,
+      "coverImageUrl": "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "sports": ["Football", "Conditioning"],
+      "amenities": {
+        "altitudeTraining": true,
+        "sportsLab": true,
+        "bootcamp": true
+      },
+      "rating": 4.8,
+      "reviewCount": 142,
+      "availability": [
+        "mon:06:00-22:00",
+        "wed:06:00-22:00",
+        "fri:06:00-22:00",
+        "sat:07:00-22:00"
+      ],
+      "createdAt": "2022-09-15T09:00:00.000Z",
+      "updatedAt": "2025-10-05T09:00:00.000Z"
+    },
+    {
+      "id": "venue_lakeside_dome",
+      "name": "Lakeside Dome",
+      "address": "Marina Boulevard",
+      "city": "Dubai",
+      "country": "UAE",
+      "latitude": 25.2048,
+      "longitude": 55.2708,
+      "coverImageUrl": "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "sports": ["Multi-sport", "Football"],
+      "amenities": {
+        "aiTracking": true,
+        "climateControl": true,
+        "spectatorLounge": true
+      },
+      "rating": 4.9,
+      "reviewCount": 98,
+      "availability": [
+        "daily:08:00-23:00"
+      ],
+      "createdAt": "2024-03-10T09:00:00.000Z",
+      "updatedAt": "2025-10-10T09:00:00.000Z"
+    },
+    {
+      "id": "venue_sunset_pitch",
+      "name": "Sunset Pitch",
+      "address": "Coastal Highway 8",
+      "city": "Doha",
+      "country": "Qatar",
+      "latitude": 25.2854,
+      "longitude": 51.5310,
+      "coverImageUrl": "https://images.unsplash.com/photo-1499028344343-cd173ffc68a9?auto=format&fit=crop&w=1200&q=80",
+      "gallery": [
+        "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80"
+      ],
+      "sports": ["Football", "Endurance"],
+      "amenities": {
+        "sandTrack": true,
+        "beachAccess": true,
+        "recoverySpa": true
+      },
+      "rating": 4.7,
+      "reviewCount": 76,
+      "availability": [
+        "mon:07:00-21:00",
+        "wed:07:00-21:00",
+        "fri:07:00-22:00",
+        "sat:07:00-22:00",
+        "sun:07:00-21:00"
+      ],
+      "createdAt": "2023-04-05T09:00:00.000Z",
+      "updatedAt": "2025-09-28T09:00:00.000Z"
+    }
+  ]
+}
+

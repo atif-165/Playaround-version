@@ -122,18 +122,19 @@ class _TeamRadarChartState extends State<TeamRadarChart>
 
   List<RadarDataSet> _buildDataSets() {
     final dataEntries = <RadarEntry>[];
-    
+
     for (int i = 0; i < SkillType.allSkills.length; i++) {
       final skillType = SkillType.allSkills[i];
       final score = widget.skillScores[skillType] ?? 0.0;
       final animatedScore = score * _animation.value;
-      
+
       dataEntries.add(RadarEntry(value: animatedScore));
     }
 
     return [
       RadarDataSet(
-        fillColor: const Color(0xFF247CFF).withValues(alpha: 0.2), // Main blue with transparency
+        fillColor: const Color(0xFF247CFF)
+            .withValues(alpha: 0.2), // Main blue with transparency
         borderColor: const Color(0xFF247CFF),
         entryRadius: 4.r,
         dataEntries: dataEntries,
@@ -245,7 +246,8 @@ class _EnhancedTeamRadarChartState extends State<EnhancedTeamRadarChart>
                       dataSets: _buildEnhancedDataSets(),
                       radarBackgroundColor: Colors.transparent,
                       borderData: FlBorderData(show: false),
-                      radarBorderData: const BorderSide(color: Colors.transparent),
+                      radarBorderData:
+                          const BorderSide(color: Colors.transparent),
                       titlePositionPercentageOffset: 0.15,
                       titleTextStyle: TextStyle(
                         color: Colors.grey[700],
@@ -254,9 +256,11 @@ class _EnhancedTeamRadarChartState extends State<EnhancedTeamRadarChart>
                       ),
                       getTitle: (index, angle) {
                         final skillType = SkillType.allSkills[index];
-                        final currentScore = widget.skillScores[skillType] ?? 0.0;
+                        final currentScore =
+                            widget.skillScores[skillType] ?? 0.0;
                         return RadarChartTitle(
-                          text: '${skillType.displayName}\n${currentScore.toStringAsFixed(1)}',
+                          text:
+                              '${skillType.displayName}\n${currentScore.toStringAsFixed(1)}',
                           angle: angle,
                         );
                       },
@@ -290,7 +294,7 @@ class _EnhancedTeamRadarChartState extends State<EnhancedTeamRadarChart>
 
   List<RadarDataSet> _buildEnhancedDataSets() {
     final dataSets = <RadarDataSet>[];
-    
+
     // Current scores dataset
     final currentEntries = <RadarEntry>[];
     for (int i = 0; i < SkillType.allSkills.length; i++) {

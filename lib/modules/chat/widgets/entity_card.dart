@@ -27,8 +27,8 @@ class EntityCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.r),
         side: BorderSide(
-          color: isInMessage 
-              ? Colors.transparent 
+          color: isInMessage
+              ? Colors.transparent
               : Colors.grey.withValues(alpha: 0.2),
           width: 1,
         ),
@@ -261,6 +261,8 @@ class EntityCard extends StatelessWidget {
         return Icons.group;
       case EntityType.tournament:
         return Icons.emoji_events;
+      case EntityType.post:
+        return Icons.article;
     }
   }
 
@@ -274,6 +276,8 @@ class EntityCard extends StatelessWidget {
         return Colors.purple;
       case EntityType.tournament:
         return Colors.orange;
+      case EntityType.post:
+        return const Color(0xFFFFC56F);
     }
   }
 }
@@ -293,7 +297,9 @@ class EntityHelper {
       id: id,
       title: name,
       imageUrl: imageUrl,
-      subtitle: role != null ? '$role${location != null ? ' • $location' : ''}' : location,
+      subtitle: role != null
+          ? '$role${location != null ? ' • $location' : ''}'
+          : location,
       metadata: {
         if (role != null) 'role': role,
         if (location != null) 'location': location,
@@ -362,7 +368,8 @@ class EntityHelper {
       id: id,
       title: name,
       imageUrl: imageUrl,
-      subtitle: sport != null && date != null ? '$sport • $date' : (sport ?? date),
+      subtitle:
+          sport != null && date != null ? '$sport • $date' : (sport ?? date),
       metadata: {
         if (sport != null) 'sport': sport,
         if (location != null) 'location': location,

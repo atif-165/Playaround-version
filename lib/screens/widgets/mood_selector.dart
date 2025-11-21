@@ -167,12 +167,12 @@ class _MoodSelectorState extends State<MoodSelector> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              color: isSelected 
+              color: isSelected
                   ? mood['color'].withValues(alpha: 0.2)
                   : ColorsManager.surface,
               borderRadius: BorderRadius.circular(12.r),
               border: Border.all(
-                color: isSelected 
+                color: isSelected
                     ? mood['color']
                     : ColorsManager.outline.withValues(alpha: 0.3),
                 width: isSelected ? 2.w : 1.w,
@@ -191,9 +191,7 @@ class _MoodSelectorState extends State<MoodSelector> {
                   style: TextStyle(
                     fontSize: 10.sp,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected 
-                        ? mood['color']
-                        : ColorsManager.onSurface,
+                    color: isSelected ? mood['color'] : ColorsManager.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -292,8 +290,8 @@ class _MoodSelectorState extends State<MoodSelector> {
             onPressed: () {
               widget.onMoodSelected(
                 _selectedMood!,
-                _descriptionController.text.trim().isEmpty 
-                    ? null 
+                _descriptionController.text.trim().isEmpty
+                    ? null
                     : _descriptionController.text.trim(),
               );
               Navigator.pop(context);

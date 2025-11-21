@@ -52,7 +52,7 @@ enum SportType {
 /// Time slot model for availability
 class TimeSlot {
   final String start; // Format: "HH:mm"
-  final String end;   // Format: "HH:mm"
+  final String end; // Format: "HH:mm"
 
   const TimeSlot({
     required this.start,
@@ -78,7 +78,8 @@ class TimeSlot {
     final startParts = start.split(':');
     final endParts = end.split(':');
 
-    final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+    final startMinutes =
+        int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
     final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
 
     return (endMinutes - startMinutes) / 60.0;
@@ -91,7 +92,8 @@ class TimeSlot {
     final otherStartMinutes = _timeToMinutes(other.start);
     final otherEndMinutes = _timeToMinutes(other.end);
 
-    return thisStartMinutes < otherEndMinutes && thisEndMinutes > otherStartMinutes;
+    return thisStartMinutes < otherEndMinutes &&
+        thisEndMinutes > otherStartMinutes;
   }
 
   int _timeToMinutes(String time) {
@@ -171,7 +173,8 @@ class ListingModel {
       'description': description,
       'hourlyRate': hourlyRate,
       'availableDays': availableDays,
-      'availableTimeSlots': availableTimeSlots.map((slot) => slot.toMap()).toList(),
+      'availableTimeSlots':
+          availableTimeSlots.map((slot) => slot.toMap()).toList(),
       'location': location,
       'gpsCoordinates': gpsCoordinates,
       'photos': photos,

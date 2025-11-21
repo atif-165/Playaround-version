@@ -19,7 +19,7 @@ class _CreateSessionScreenState extends State<CreateSessionScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
-  
+
   String _selectedSport = 'Football';
   String _selectedLevel = 'Beginner';
   DateTime _selectedDate = DateTime.now().add(const Duration(days: 1));

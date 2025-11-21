@@ -31,13 +31,15 @@ class VenueCard extends StatelessWidget {
           children: [
             // Image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: Stack(
                   children: [
                     CachedNetworkImage(
-                      imageUrl: venue.images.isNotEmpty ? venue.images.first : '',
+                      imageUrl:
+                          venue.images.isNotEmpty ? venue.images.first : '',
                       width: double.infinity,
                       height: double.infinity,
                       fit: BoxFit.cover,
@@ -157,9 +159,10 @@ class VenueCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           venue.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -176,9 +179,12 @@ class VenueCard extends StatelessWidget {
                           const SizedBox(width: 2),
                           Text(
                             venue.rating.toStringAsFixed(1),
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         ],
                       ),
@@ -197,9 +203,10 @@ class VenueCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           venue.address,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey[600],
+                                  ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -218,7 +225,9 @@ class VenueCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                          color: Theme.of(context)
+                              .primaryColor
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -237,8 +246,8 @@ class VenueCard extends StatelessWidget {
                     Text(
                       '+${venue.sports.length - 3} more',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
+                            color: Colors.grey[600],
+                          ),
                     ),
                   ],
                   const SizedBox(height: 8),
@@ -248,16 +257,16 @@ class VenueCard extends StatelessWidget {
                       Text(
                         'From \$${venue.pricing.hourlyRate.toStringAsFixed(0)}/hour',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
                       ),
                       const Spacer(),
                       Text(
                         '${venue.totalReviews} reviews',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                              color: Colors.grey[600],
+                            ),
                       ),
                     ],
                   ),

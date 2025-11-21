@@ -77,7 +77,8 @@ class Shop {
               DateTime.fromMillisecondsSinceEpoch(0),
       businessHours: Map<String, dynamic>.from(data['businessHours'] ?? {}),
       website: (data['website'] ?? '') as String,
-      socialMediaLinks: (data['socialMediaLinks'] as List?)?.cast<String>() ?? const [],
+      socialMediaLinks:
+          (data['socialMediaLinks'] as List?)?.cast<String>() ?? const [],
     );
   }
 

@@ -8,6 +8,7 @@ import '../../../theming/typography.dart';
 /// Standardized input system with consistent styling and validation
 
 enum InputFieldVariant { outlined, filled }
+
 enum InputFieldSize { small, medium, large }
 
 /// Base App Text Field Component
@@ -167,7 +168,8 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: borderRadius,
-            borderSide: const BorderSide(color: ColorsManager.primary, width: 2),
+            borderSide:
+                const BorderSide(color: ColorsManager.primary, width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: borderRadius,
@@ -179,7 +181,8 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: borderRadius,
-            borderSide: BorderSide(color: ColorsManager.outline.withValues(alpha: 0.5)),
+            borderSide:
+                BorderSide(color: ColorsManager.outline.withValues(alpha: 0.5)),
           ),
           contentPadding: contentPadding,
           labelStyle: _getLabelStyle(),
@@ -209,7 +212,8 @@ class _AppTextFieldState extends State<AppTextField> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: borderRadius,
-            borderSide: const BorderSide(color: ColorsManager.primary, width: 2),
+            borderSide:
+                const BorderSide(color: ColorsManager.primary, width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: borderRadius,
@@ -431,7 +435,8 @@ class AppDropdownField<T> extends StatelessWidget {
         ),
         disabledBorder: OutlineInputBorder(
           borderRadius: borderRadius,
-          borderSide: BorderSide(color: ColorsManager.outline.withValues(alpha: 0.5)),
+          borderSide:
+              BorderSide(color: ColorsManager.outline.withValues(alpha: 0.5)),
         ),
         contentPadding: contentPadding,
         labelStyle: _getLabelStyle(),

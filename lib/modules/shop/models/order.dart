@@ -82,8 +82,9 @@ class Order {
       shopId: (data['shopId'] ?? '') as String,
       shopName: (data['shopName'] ?? '') as String,
       items: (data['items'] as List?)
-          ?.map((item) => OrderItem.fromMap(item))
-          .toList() ?? [],
+              ?.map((item) => OrderItem.fromMap(item))
+              .toList() ??
+          [],
       subtotal: (data['subtotal'] ?? 0.0) as double,
       tax: (data['tax'] ?? 0.0) as double,
       shipping: (data['shipping'] ?? 0.0) as double,
@@ -134,7 +135,8 @@ class Order {
         'shippingAddress': shippingAddress.toMap(),
         'paymentMethod': paymentMethod.toMap(),
         'orderDate': Timestamp.fromDate(orderDate),
-        'deliveryDate': deliveryDate != null ? Timestamp.fromDate(deliveryDate!) : null,
+        'deliveryDate':
+            deliveryDate != null ? Timestamp.fromDate(deliveryDate!) : null,
         'trackingNumber': trackingNumber,
         'notes': notes,
         'metadata': metadata,

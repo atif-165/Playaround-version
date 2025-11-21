@@ -1,0 +1,145 @@
+{
+  "generatedAt": "2025-11-07T00:00:00Z",
+  "notes": "Mapping of recreated composite indexes to high-priority product surfaces.",
+  "indexes": [
+    {
+      "id": "users_role_lastActive",
+      "collectionGroup": "users",
+      "fields": ["role ASC", "lastActiveAt DESC"],
+      "screens": ["Coach Discovery", "People Presence Indicators"]
+    },
+    {
+      "id": "users_role_rating",
+      "collectionGroup": "users",
+      "fields": ["role ASC", "rating DESC"],
+      "screens": ["Coach Discovery Leaderboard"]
+    },
+    {
+      "id": "users_homeClub_role",
+      "collectionGroup": "users",
+      "fields": ["homeClubId ASC", "role ASC"],
+      "screens": ["Club Directory", "Team Formation"]
+    },
+    {
+      "id": "coachListings_sport_price",
+      "collectionGroup": "coachListings",
+      "fields": ["sportId ASC", "pricePerHour ASC"],
+      "screens": ["Coach Marketplace Filters"]
+    },
+    {
+      "id": "coachListings_sport_rating",
+      "collectionGroup": "coachListings",
+      "fields": ["sportId ASC", "rating DESC"],
+      "screens": ["Coach Marketplace Sorting"]
+    },
+    {
+      "id": "venues_city_rating",
+      "collectionGroup": "venues",
+      "fields": ["city ASC", "rating DESC"],
+      "screens": ["Venue Search Results"]
+    },
+    {
+      "id": "venues_manager_status",
+      "collectionGroup": "venues",
+      "fields": ["managerId ASC", "status ASC"],
+      "screens": ["Venue Management Dashboard"]
+    },
+    {
+      "id": "listings_venue_startsAt",
+      "collectionGroup": "listings",
+      "fields": ["venueId ASC", "startsAt ASC"],
+      "screens": ["Venue Availability View"]
+    },
+    {
+      "id": "listings_coach_startsAt",
+      "collectionGroup": "listings",
+      "fields": ["coachId ASC", "startsAt ASC"],
+      "screens": ["Coach Calendar"]
+    },
+    {
+      "id": "bookings_venue_startTime",
+      "collectionGroup": "bookings",
+      "fields": ["venueId ASC", "startTime ASC"],
+      "screens": ["Bookings Board", "Calendar Heatmap"]
+    },
+    {
+      "id": "bookings_user_startTime",
+      "collectionGroup": "bookings",
+      "fields": ["userId ASC", "startTime DESC"],
+      "screens": ["My Bookings Timeline"]
+    },
+    {
+      "id": "bookings_status_startTime",
+      "collectionGroup": "bookings",
+      "fields": ["status ASC", "startTime ASC"],
+      "screens": ["Operations Booking Queue"]
+    },
+    {
+      "id": "matches_tournament_startTime",
+      "collectionGroup": "matches",
+      "fields": ["tournamentId ASC", "startTime ASC"],
+      "screens": ["Tournament Schedule"]
+    },
+    {
+      "id": "matches_venue_startTime",
+      "collectionGroup": "matches",
+      "fields": ["venueId ASC", "startTime ASC"],
+      "screens": ["Venue Usage Overview"]
+    },
+    {
+      "id": "leaderboard_tournament_score",
+      "collectionGroup": "leaderboardEntries",
+      "fields": ["tournamentId ASC", "score DESC"],
+      "screens": ["Leaderboard Standings"]
+    },
+    {
+      "id": "leaderboard_tournament_wins",
+      "collectionGroup": "leaderboardEntries",
+      "fields": ["tournamentId ASC", "wins DESC"],
+      "screens": ["Leaderboard Alternate Sort"]
+    },
+    {
+      "id": "teams_club_name",
+      "collectionGroup": "teams",
+      "fields": ["clubId ASC", "name ASC"],
+      "screens": ["Club Team Browser"]
+    },
+    {
+      "id": "teamMembers_team_role",
+      "collectionGroup": "teamMembers",
+      "fields": ["teamId ASC", "role ASC"],
+      "screens": ["Team Roster Management"]
+    },
+    {
+      "id": "tournaments_season_startDate",
+      "collectionGroup": "tournaments",
+      "fields": ["seasonId ASC", "startDate DESC"],
+      "screens": ["Tournament Directory"]
+    },
+    {
+      "id": "posts_tags_published",
+      "collectionGroup": "posts",
+      "fields": ["tags ARRAY-CONTAINS", "publishedAt DESC"],
+      "screens": ["Community Feed Tag Filter"]
+    },
+    {
+      "id": "messageThreads_participants_updated",
+      "collectionGroup": "messageThreads",
+      "fields": ["participants ARRAY-CONTAINS", "updatedAt DESC"],
+      "screens": ["Inbox Thread List"]
+    },
+    {
+      "id": "messages_thread_created",
+      "collectionGroup": "messages",
+      "fields": ["threadId ASC", "createdAt ASC"],
+      "screens": ["Thread Message View"]
+    },
+    {
+      "id": "notifications_user_created",
+      "collectionGroup": "notifications",
+      "fields": ["userId ASC", "createdAt DESC"],
+      "screens": ["Notification Center"]
+    }
+  ]
+}
+

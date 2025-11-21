@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../routing/routes.dart';
 import '../models/models.dart';
 import '../services/team_service.dart';
 import '../widgets/team_list_widget.dart';
@@ -13,7 +16,7 @@ import 'team_profile_screen.dart';
 /// Screen for managing user's teams
 class TeamManagementScreen extends StatefulWidget {
   final String? teamId;
-  
+
   const TeamManagementScreen({super.key, this.teamId});
 
   @override
@@ -30,13 +33,201 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
   SportType? _selectedSportFilter;
   String? _selectedLocationFilter;
 
+  static const LinearGradient _backgroundGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFF11123D),
+      Color(0xFF070616),
+    ],
+  );
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
     _tabController.addListener(() {
       setState(() {}); // Refresh UI when tab changes
     });
+  }
+
+  Team _buildShowcaseTeam() {
+    final now = DateTime.now();
+    return Team(
+      id: 'showcase-team',
+      name: 'Thunder Warriors FC',
+      description:
+          'High-tempo football club with a disciplined core and elite coaching staff.',
+      bio:
+          'Preview team layout: this dummy squad shows off the new experience. Create your own to unlock scheduling, analytics and roster control.',
+      sportType: SportType.football,
+      ownerId: 'demo-owner',
+      members: [
+        TeamMember(
+          userId: 'demo-owner',
+          userName: 'You',
+          role: TeamRole.owner,
+          joinedAt: now,
+          position: 'Forward',
+          jerseyNumber: 10,
+          trophies: 4,
+          rating: 4.8,
+        ),
+        TeamMember(
+          userId: 'demo-captain',
+          userName: 'Ayan Malik',
+          role: TeamRole.captain,
+          joinedAt: now.subtract(const Duration(days: 42)),
+          position: 'Midfielder',
+          jerseyNumber: 8,
+          trophies: 6,
+          rating: 4.6,
+        ),
+        TeamMember(
+          userId: 'demo-coach',
+          userName: 'Coach Hina Qureshi',
+          role: TeamRole.coach,
+          joinedAt: now.subtract(const Duration(days: 120)),
+          position: 'Head Coach',
+          rating: 4.9,
+        ),
+      ],
+      maxMembers: 22,
+      isPublic: true,
+      location: 'Lahore • Fortress Arena',
+      createdAt: now.subtract(const Duration(days: 150)),
+      updatedAt: now,
+      metadata: {
+        'matchesWon': 12,
+        'matchesLost': 3,
+        'matchesDrawn': 2,
+        'matchesPlayed': 17,
+        'goalsScored': 42,
+        'goalsConceded': 18,
+        'totalPoints': 38,
+        'winPercentage': 70.5,
+      },
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            gradient: ColorsManager.primaryGradient,
+            borderRadius: BorderRadius.circular(16.r),
+            boxShadow: [
+              BoxShadow(
+                color: ColorsManager.primary.withValues(alpha: 0.3),
+                blurRadius: 14.r,
+                offset: Offset(0, 8.h),
+              ),
+            ],
+          ),
+          child: Icon(
+            icon,
+            color: ColorsManager.onPrimary,
+            size: 22.sp,
+          ),
+        ),
+        Gap(16.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyles.font18DarkBlueBold.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (subtitle != null && subtitle.isNotEmpty) ...[
+                Gap(6.h),
+                Text(
+                  subtitle,
+                  style: TextStyles.font13Grey400Weight.copyWith(
+                    color: Colors.white.withOpacity(0.7),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20.r),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.06),
+            Colors.white.withOpacity(0.02),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 32.h),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: ColorsManager.primaryGradient,
+              boxShadow: [
+                BoxShadow(
+                  color: ColorsManager.primary.withValues(alpha: 0.35),
+                  blurRadius: 18.r,
+                  offset: Offset(0, 10.h),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              size: 28.sp,
+              color: Colors.white,
+            ),
+          ),
+          Gap(18.h),
+          Text(
+            title,
+            style: TextStyles.font16DarkBlue500Weight.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Gap(10.h),
+          Text(
+            subtitle,
+            style: TextStyles.font13Grey400Weight.copyWith(
+              color: Colors.white.withOpacity(0.7),
+              height: 1.45,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -49,38 +240,145 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(
           'Team Management',
-          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
+          style:
+              TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: _backgroundGradient,
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Team Chat',
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: _openTeamChat,
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(50.h),
           child: TabBar(
             controller: _tabController,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicator: BoxDecoration(
+              gradient: ColorsManager.primaryGradient,
+              borderRadius: BorderRadius.circular(22.r),
+              boxShadow: [
+                BoxShadow(
+                  color: ColorsManager.primary.withValues(alpha: 0.35),
+                  blurRadius: 16.r,
+                  offset: Offset(0, 6.h),
+                ),
+              ],
+            ),
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.grey[400],
-            indicatorColor: Colors.white,
-            tabs: const [
-              Tab(text: 'My Teams'),
-              Tab(text: 'Browse Teams'),
-              Tab(text: 'Join Requests'),
+            labelStyle: TextStyles.font14White500Weight,
+            unselectedLabelColor: Colors.white.withOpacity(0.55),
+            tabs: [
+              Tab(
+                child: _buildTabLabel(Icons.workspace_premium, 'My Teams'),
+              ),
+              Tab(
+                child: _buildTabLabel(Icons.explore_outlined, 'Browse Teams'),
+              ),
+              Tab(
+                child: _buildTabLabel(Icons.mail_outline, 'Join Requests'),
+              ),
             ],
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: _backgroundGradient),
+        child: SafeArea(
+          top: false,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildMyTeamsTab(),
+              _buildBrowseTeamsTab(),
+              _buildJoinRequestsTab(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterButton() {
+    final hasFilters = _hasActiveFilters();
+    return InkWell(
+      borderRadius: BorderRadius.circular(14.r),
+      onTap: _showFilterDialog,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          gradient: hasFilters
+              ? ColorsManager.primaryGradient
+              : LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.12),
+                    Colors.white.withOpacity(0.04),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+            color: hasFilters
+                ? ColorsManager.primary.withValues(alpha: 0.6)
+                : Colors.white.withOpacity(0.08),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.filter_list,
+              color: hasFilters
+                  ? ColorsManager.onPrimary
+                  : Colors.white.withOpacity(0.8),
+              size: 18.sp,
+            ),
+            Gap(6.w),
+            Text(
+              'Filters',
+              style: TextStyle(
+                color: hasFilters
+                    ? ColorsManager.onPrimary
+                    : Colors.white.withOpacity(0.85),
+                fontWeight: FontWeight.w600,
+                fontSize: 12.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabLabel(IconData icon, String label) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildMyTeamsTab(),
-          _buildBrowseTeamsTab(),
-          _buildJoinRequestsTab(),
+          Icon(icon, size: 18.sp),
+          Gap(6.w),
+          Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+          ),
         ],
       ),
-
     );
   }
 
@@ -119,12 +417,30 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
         }
 
         final teams = snapshot.data ?? [];
+        final displayTeams = teams.isEmpty ? [_buildShowcaseTeam()] : teams;
+
         return Padding(
-          padding: EdgeInsets.all(16.w),
-          child: TeamListWidget(
-            teams: teams,
-            onTeamTap: _navigateToTeamDetails,
-            isLoading: false,
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionHeader(
+                icon: Icons.workspace_premium_rounded,
+                title: teams.isEmpty ? 'Build Your First Squad' : 'Your Squads',
+                subtitle: teams.isEmpty
+                    ? 'Preview how your future teams will look. Create a team to unlock full management controls.'
+                    : 'Manage the teams you lead or play with. Tap any squad to open its control center.',
+              ),
+              Gap(20.h),
+              Expanded(
+                child: TeamListWidget(
+                  teams: displayTeams,
+                  onTeamTap: _navigateToTeamDetails,
+                  isLoading: false,
+                  padding: EdgeInsets.only(bottom: 24.h),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -176,49 +492,38 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
         final teams = snapshot.data ?? [];
 
         if (teams.isEmpty && _searchQuery.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.search_off,
-                  size: 64.sp,
-                  color: ColorsManager.gray,
-                ),
-                Gap(16.h),
-                Text(
-                  'No teams found',
-                  style: TextStyles.font16DarkBlue500Weight,
-                ),
-                Gap(8.h),
-                Text(
-                  'Try adjusting your search terms',
-                  style: TextStyles.font13Grey400Weight,
-                  textAlign: TextAlign.center,
-                ),
-              ],
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
+            child: _buildEmptyState(
+              icon: Icons.search_off_outlined,
+              title: 'No teams match this search',
+              subtitle:
+                  'Try a different sport, city or keyword to discover more squads.',
             ),
           );
         }
 
-        return Column(
-          children: [
-            _buildSearchBar(),
-            if (_searchQuery.isNotEmpty || _selectedSportFilter != null)
-              _buildActiveFiltersChips(),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.all(16.w),
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSearchBar(),
+              if (_searchQuery.isNotEmpty || _selectedSportFilter != null)
+                _buildActiveFiltersChips(),
+              Gap(12.h),
+              Expanded(
                 child: TeamListWidget(
                   teams: teams,
                   onTeamTap: _navigateToTeamDetails,
                   onJoinTeam: _sendJoinRequest,
                   showJoinButton: true,
                   isLoading: false,
+                  padding: EdgeInsets.only(bottom: 24.h),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -259,40 +564,44 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
         }
 
         final requests = snapshot.data ?? [];
-        
+
         if (requests.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.inbox,
-                  size: 64.sp,
-                  color: ColorsManager.gray,
-                ),
-                Gap(16.h),
-                Text(
-                  'No join requests',
-                  style: TextStyles.font16DarkBlue500Weight,
-                ),
-                Gap(8.h),
-                Text(
-                  'Your team join requests will appear here',
-                  style: TextStyles.font13Grey400Weight,
-                  textAlign: TextAlign.center,
-                ),
-              ],
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 32.h),
+            child: _buildEmptyState(
+              icon: Icons.inbox_outlined,
+              title: 'No join requests yet',
+              subtitle:
+                  'As you apply to teams their responses will flow back into this inbox.',
             ),
           );
         }
 
-        return ListView.builder(
-          padding: EdgeInsets.all(16.w),
-          itemCount: requests.length,
-          itemBuilder: (context, index) {
-            final request = requests[index];
-            return _buildJoinRequestCard(request);
-          },
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionHeader(
+                icon: Icons.mail_outline,
+                title: 'Join Request Inbox',
+                subtitle:
+                    'Track approvals, get feedback from coaches and withdraw applications when needed.',
+              ),
+              Gap(20.h),
+              Expanded(
+                child: ListView.separated(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: requests.length,
+                  separatorBuilder: (_, __) => Gap(14.h),
+                  itemBuilder: (context, index) {
+                    final request = requests[index];
+                    return _buildJoinRequestCard(request);
+                  },
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -300,16 +609,26 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
 
   Widget _buildJoinRequestCard(TeamJoinRequest request) {
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(18.w),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            ColorsManager.surfaceVariant.withValues(alpha: 0.95),
+            ColorsManager.background.withValues(alpha: 0.92),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: ColorsManager.primary.withValues(alpha: 0.25),
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 24.r,
+            offset: Offset(0, 16.h),
           ),
         ],
       ),
@@ -321,7 +640,10 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
               Expanded(
                 child: Text(
                   request.teamName,
-                  style: TextStyles.font16DarkBlue600Weight,
+                  style: TextStyles.font18DarkBlueBold.copyWith(
+                    color: ColorsManager.onBackground,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _buildStatusChip(request.status),
@@ -331,19 +653,23 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
           if (request.message != null && request.message!.isNotEmpty) ...[
             Text(
               'Message: ${request.message}',
-              style: TextStyles.font14Blue400Weight,
+              style: TextStyles.font14Blue400Weight
+                  .copyWith(color: ColorsManager.onBackground),
             ),
             Gap(8.h),
           ],
           Text(
             'Requested on ${_formatDate(request.createdAt)}',
-            style: TextStyles.font13Grey400Weight,
+            style: TextStyles.font13Grey400Weight
+                .copyWith(color: ColorsManager.textSecondary),
           ),
-          if (request.responseMessage != null && request.responseMessage!.isNotEmpty) ...[
+          if (request.responseMessage != null &&
+              request.responseMessage!.isNotEmpty) ...[
             Gap(8.h),
             Text(
               'Response: ${request.responseMessage}',
-              style: TextStyles.font13Grey400Weight,
+              style: TextStyles.font13Grey400Weight
+                  .copyWith(color: ColorsManager.textSecondary),
             ),
           ],
           if (request.isPending) ...[
@@ -353,10 +679,14 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
               child: ElevatedButton(
                 onPressed: () => _cancelJoinRequest(request.id),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: ColorsManager.primary,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.r),
+                    borderRadius: BorderRadius.circular(14.r),
                   ),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                  elevation: 0,
                 ),
                 child: Text(
                   'Cancel Request',
@@ -374,28 +704,37 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
     Color color;
     switch (status) {
       case JoinRequestStatus.pending:
-        color = Colors.orange;
+        color = ColorsManager.secondary;
         break;
       case JoinRequestStatus.approved:
-        color = Colors.green;
+        color = ColorsManager.success;
         break;
       case JoinRequestStatus.rejected:
-        color = Colors.red;
+        color = ColorsManager.error;
         break;
       case JoinRequestStatus.cancelled:
-        color = Colors.grey;
+        color = ColorsManager.textSecondary;
         break;
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12.r),
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.24),
+            color.withValues(alpha: 0.08),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         status.displayName,
-        style: TextStyles.font12DarkBlue400Weight.copyWith(color: color),
+        style: TextStyles.font12DarkBlue400Weight.copyWith(
+          color: ColorsManager.onBackground,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -429,7 +768,8 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
       MaterialPageRoute(
         builder: (context) => TeamProfileScreen(
           team: team,
-          showJoinButton: false, // Don't show join button for teams user can already access
+          showJoinButton:
+              false, // Don't show join button for teams user can already access
         ),
       ),
     );
@@ -458,6 +798,10 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
     }
   }
 
+  void _openTeamChat() {
+    Navigator.pushNamed(context, Routes.chatListScreen);
+  }
+
   void _cancelJoinRequest(String requestId) async {
     try {
       await _teamService.cancelJoinRequest(requestId);
@@ -482,63 +826,68 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search teams by name...',
-                hintStyle: TextStyles.font14Grey400Weight,
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: ColorsManager.gray,
-                  size: 20.sp,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18.r),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.08),
+              width: 1,
+            ),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14.sp,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search teams by name, sport or city...',
+                    hintStyle: TextStyles.font14Grey400Weight.copyWith(
+                      color: Colors.white.withOpacity(0.6),
+                    ),
+                    border: InputBorder.none,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Colors.white.withOpacity(0.6),
+                      size: 20.sp,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(
+                              Icons.clear,
+                              color: Colors.white.withOpacity(0.6),
+                              size: 20.sp,
+                            ),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                              });
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value;
+                    });
+                  },
                 ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: ColorsManager.gray,
-                          size: 20.sp,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: const BorderSide(color: ColorsManager.gray),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                  borderSide: const BorderSide(color: ColorsManager.mainBlue),
-                ),
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-            ),
+              Gap(8.w),
+              _buildFilterButton(),
+            ],
           ),
-          Gap(8.w),
-          IconButton(
-            onPressed: _showFilterDialog,
-            icon: Icon(
-              Icons.filter_list,
-              color: _hasActiveFilters() ? ColorsManager.mainBlue : ColorsManager.gray,
-              size: 24.sp,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -578,10 +927,11 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
 
     if (activeFilters.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+    return Padding(
+      padding: EdgeInsets.only(top: 14.h),
       child: Wrap(
-        spacing: 8.w,
+        spacing: 10.w,
+        runSpacing: 10.h,
         children: activeFilters,
       ),
     );
@@ -657,7 +1007,8 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                               _selectedSportFilter = selected ? sport : null;
                             });
                           },
-                          selectedColor: ColorsManager.primary.withValues(alpha: 0.2),
+                          selectedColor:
+                              ColorsManager.primary.withValues(alpha: 0.2),
                           checkmarkColor: ColorsManager.primary,
                         );
                       }).toList(),
@@ -674,10 +1025,12 @@ class _TeamManagementScreenState extends State<TeamManagementScreen>
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 8.h),
                       ),
                       onChanged: (value) {
-                        _selectedLocationFilter = value.isNotEmpty ? value : null;
+                        _selectedLocationFilter =
+                            value.isNotEmpty ? value : null;
                       },
                     ),
                   ],

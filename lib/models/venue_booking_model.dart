@@ -119,9 +119,12 @@ class VenueBookingModel {
       'location': location,
       'notes': notes,
       'cancellationReason': cancellationReason,
-      'confirmedAt': confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
-      'cancelledAt': cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
-      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'confirmedAt':
+          confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
+      'cancelledAt':
+          cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
+      'completedAt':
+          completedAt != null ? Timestamp.fromDate(completedAt!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'metadata': metadata,
@@ -154,14 +157,14 @@ class VenueBookingModel {
       location: map['location'] as String,
       notes: map['notes'] as String?,
       cancellationReason: map['cancellationReason'] as String?,
-      confirmedAt: map['confirmedAt'] != null 
-          ? (map['confirmedAt'] as Timestamp).toDate() 
+      confirmedAt: map['confirmedAt'] != null
+          ? (map['confirmedAt'] as Timestamp).toDate()
           : null,
-      cancelledAt: map['cancelledAt'] != null 
-          ? (map['cancelledAt'] as Timestamp).toDate() 
+      cancelledAt: map['cancelledAt'] != null
+          ? (map['cancelledAt'] as Timestamp).toDate()
           : null,
-      completedAt: map['completedAt'] != null 
-          ? (map['completedAt'] as Timestamp).toDate() 
+      completedAt: map['completedAt'] != null
+          ? (map['completedAt'] as Timestamp).toDate()
           : null,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
@@ -223,10 +226,14 @@ class VenueBookingModel {
   }
 
   /// Check if booking is active (not cancelled or completed)
-  bool get isActive => status == VenueBookingStatus.pending || status == VenueBookingStatus.confirmed;
+  bool get isActive =>
+      status == VenueBookingStatus.pending ||
+      status == VenueBookingStatus.confirmed;
 
   /// Check if booking can be cancelled
-  bool get canBeCancelled => status == VenueBookingStatus.pending || status == VenueBookingStatus.confirmed;
+  bool get canBeCancelled =>
+      status == VenueBookingStatus.pending ||
+      status == VenueBookingStatus.confirmed;
 
   /// Get formatted date string
   String get formattedDate {

@@ -7,6 +7,7 @@ import '../../../theming/typography.dart';
 /// Standardized card system with consistent styling and elevation
 
 enum CardVariant { elevated, filled, outlined }
+
 enum CardSize { small, medium, large }
 
 /// Base App Card Component
@@ -185,7 +186,8 @@ class StatsCard extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? ColorsManager.primary).withValues(alpha: 0.1),
+                  color: (iconColor ?? ColorsManager.primary)
+                      .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: Icon(
@@ -276,7 +278,7 @@ class ProfileCard extends StatelessWidget {
                     : null,
               ),
           SizedBox(width: 12.w),
-          
+
           // Name and subtitle
           Expanded(
             child: Column(
@@ -303,7 +305,7 @@ class ProfileCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Actions
           if (actions != null) ...[
             SizedBox(width: 8.w),
@@ -353,7 +355,8 @@ class ActionCard extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: (iconColor ?? ColorsManager.primary).withValues(alpha: 0.1),
+              color:
+                  (iconColor ?? ColorsManager.primary).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
@@ -363,7 +366,6 @@ class ActionCard extends StatelessWidget {
             ),
           ),
           SizedBox(width: 16.w),
-          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +387,6 @@ class ActionCard extends StatelessWidget {
               ],
             ),
           ),
-          
           if (showArrow && onTap != null) ...[
             SizedBox(width: 8.w),
             Icon(
@@ -394,144 +395,6 @@ class ActionCard extends StatelessWidget {
               color: ColorsManager.onSurfaceVariant,
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Product Card for Shop Module
-class ProductCard extends StatelessWidget {
-  final String name;
-  final String price;
-  final String? imageUrl;
-  final String? category;
-  final double? rating;
-  final VoidCallback? onTap;
-  final VoidCallback? onAddToCart;
-  final CardVariant variant;
-
-  const ProductCard({
-    super.key,
-    required this.name,
-    required this.price,
-    this.imageUrl,
-    this.category,
-    this.rating,
-    this.onTap,
-    this.onAddToCart,
-    this.variant = CardVariant.elevated,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      variant: variant,
-      size: CardSize.medium,
-      onTap: onTap,
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Product Image
-          Container(
-            height: 120.h,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: ColorsManager.surfaceVariant,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12.r),
-                topRight: Radius.circular(12.r),
-              ),
-            ),
-            child: imageUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(12.r),
-                      topRight: Radius.circular(12.r),
-                    ),
-                    child: Image.network(
-                      imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.sports_soccer,
-                        size: 48.w,
-                        color: ColorsManager.onSurfaceVariant,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    Icons.sports_soccer,
-                    size: 48.w,
-                    color: ColorsManager.onSurfaceVariant,
-                  ),
-          ),
-          
-          // Product Details
-          Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (category != null) ...[
-                  Text(
-                    category!,
-                    style: AppTypography.labelSmall.copyWith(
-                      color: ColorsManager.primary,
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                ],
-                
-                Text(
-                  name,
-                  style: AppTypography.titleSmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 8.h),
-                
-                Row(
-                  children: [
-                    Text(
-                      price,
-                      style: AppTypography.priceText,
-                    ),
-                    const Spacer(),
-                    
-                    if (rating != null) ...[
-                      Icon(
-                        Icons.star,
-                        size: 16.w,
-                        color: ColorsManager.warning,
-                      ),
-                      SizedBox(width: 2.w),
-                      Text(
-                        rating!.toStringAsFixed(1),
-                        style: AppTypography.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
-                
-                if (onAddToCart != null) ...[
-                  SizedBox(height: 8.h),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: onAddToCart,
-                      icon: Icon(Icons.add_shopping_cart, size: 16.w),
-                      label: const Text('Add to Cart'),
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 8.h),
-                        textStyle: AppTypography.labelMedium,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
         ],
       ),
     );

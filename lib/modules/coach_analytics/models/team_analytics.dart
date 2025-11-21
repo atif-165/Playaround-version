@@ -42,23 +42,27 @@ class TeamAnalytics {
       totalMembers: map['totalMembers'] ?? 0,
       averageSkillScores: Map<SkillType, double>.from(
         (map['averageSkillScores'] as Map<String, dynamic>?)?.map(
-          (key, value) => MapEntry(
-            SkillType.fromString(key),
-            (value as num).toDouble(),
-          ),
-        ) ?? {},
+              (key, value) => MapEntry(
+                SkillType.fromString(key),
+                (value as num).toDouble(),
+              ),
+            ) ??
+            {},
       ),
       playerPerformances: Map<String, PlayerPerformanceData>.from(
         (map['playerPerformances'] as Map<String, dynamic>?)?.map(
-          (key, value) => MapEntry(
-            key,
-            PlayerPerformanceData.fromMap(value as Map<String, dynamic>),
-          ),
-        ) ?? {},
+              (key, value) => MapEntry(
+                key,
+                PlayerPerformanceData.fromMap(value as Map<String, dynamic>),
+              ),
+            ) ??
+            {},
       ),
       performanceHistory: (map['performanceHistory'] as List<dynamic>?)
-          ?.map((item) => TeamPerformanceDataPoint.fromMap(item as Map<String, dynamic>))
-          .toList() ?? [],
+              ?.map((item) => TeamPerformanceDataPoint.fromMap(
+                  item as Map<String, dynamic>))
+              .toList() ??
+          [],
       mostImprovedPlayerId: map['mostImprovedPlayerId'],
       overallTeamScore: (map['overallTeamScore'] as num?)?.toDouble() ?? 0.0,
       lastUpdated: (map['lastUpdated'] as Timestamp).toDate(),
@@ -79,7 +83,8 @@ class TeamAnalytics {
       'playerPerformances': playerPerformances.map(
         (key, value) => MapEntry(key, value.toMap()),
       ),
-      'performanceHistory': performanceHistory.map((point) => point.toMap()).toList(),
+      'performanceHistory':
+          performanceHistory.map((point) => point.toMap()).toList(),
       'mostImprovedPlayerId': mostImprovedPlayerId,
       'overallTeamScore': overallTeamScore,
       'lastUpdated': Timestamp.fromDate(lastUpdated),
@@ -106,12 +111,12 @@ class TeamAnalytics {
   /// Get team improvement percentage over time
   double get improvementPercentage {
     if (performanceHistory.length < 2) return 0.0;
-    
+
     final firstScore = performanceHistory.first.averageScore;
     final lastScore = performanceHistory.last.averageScore;
-    
+
     if (firstScore == 0) return 0.0;
-    
+
     return ((lastScore - firstScore) / firstScore) * 100;
   }
 
@@ -122,7 +127,7 @@ class TeamAnalytics {
   List<String> get topPerformers {
     final sortedPlayers = playerPerformances.entries.toList()
       ..sort((a, b) => b.value.overallScore.compareTo(a.value.overallScore));
-    
+
     return sortedPlayers.take(3).map((entry) => entry.key).toList();
   }
 
@@ -130,7 +135,7 @@ class TeamAnalytics {
   List<String> get playersNeedingImprovement {
     final sortedPlayers = playerPerformances.entries.toList()
       ..sort((a, b) => a.value.overallScore.compareTo(b.value.overallScore));
-    
+
     return sortedPlayers.take(3).map((entry) => entry.key).toList();
   }
 
@@ -199,19 +204,21 @@ class PlayerPerformanceData {
       profileImageUrl: map['profileImageUrl'],
       currentSkillScores: Map<SkillType, int>.from(
         (map['currentSkillScores'] as Map<String, dynamic>?)?.map(
-          (key, value) => MapEntry(
-            SkillType.fromString(key),
-            value as int,
-          ),
-        ) ?? {},
+              (key, value) => MapEntry(
+                SkillType.fromString(key),
+                value as int,
+              ),
+            ) ??
+            {},
       ),
       improvementPercentages: Map<SkillType, double>.from(
         (map['improvementPercentages'] as Map<String, dynamic>?)?.map(
-          (key, value) => MapEntry(
-            SkillType.fromString(key),
-            (value as num).toDouble(),
-          ),
-        ) ?? {},
+              (key, value) => MapEntry(
+                SkillType.fromString(key),
+                (value as num).toDouble(),
+              ),
+            ) ??
+            {},
       ),
       overallScore: (map['overallScore'] as num?)?.toDouble() ?? 0.0,
       totalSessions: map['totalSessions'] ?? 0,

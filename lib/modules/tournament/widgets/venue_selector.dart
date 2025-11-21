@@ -7,6 +7,7 @@ import '../../../models/venue_model.dart';
 import '../../../models/listing_model.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../theming/public_profile_theme.dart';
 import '../../venue/services/venue_service.dart';
 
 /// Widget for selecting a venue for tournament
@@ -38,18 +39,20 @@ class _VenueSelectorState extends State<VenueSelector> {
           children: [
             Text(
               'Select Venue',
-              style: TextStyles.font14DarkBlue600Weight,
+              style:
+                  TextStyles.font14DarkBlue600Weight.copyWith(color: Colors.white),
             ),
             Text(
               ' *',
-              style: TextStyles.font14DarkBlue600Weight.copyWith(color: Colors.red),
+              style: TextStyles.font14DarkBlue600Weight
+                  .copyWith(color: Colors.red),
             ),
           ],
         ),
         Gap(8.h),
         Text(
           'Choose a venue where the tournament will be held',
-          style: TextStyles.font12Grey400Weight,
+          style: TextStyles.font12Grey400Weight.copyWith(color: Colors.white70),
         ),
         Gap(12.h),
         _buildVenueSelection(),
@@ -67,13 +70,14 @@ class _VenueSelectorState extends State<VenueSelector> {
 
   Widget _buildSelectedVenue() {
     final venue = widget.selectedVenue!;
-    
+
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: ColorsManager.mainBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -170,19 +174,17 @@ class _VenueSelectorState extends State<VenueSelector> {
       child: Container(
         padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(
-            color: Colors.grey[300]!,
-            style: BorderStyle.solid,
-          ),
+          color: PublicProfileTheme.panelOverlayColor,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          boxShadow: PublicProfileTheme.defaultShadow(),
         ),
         child: Row(
           children: [
             Icon(
               Icons.location_city_outlined,
               size: 24.sp,
-              color: Colors.grey[600],
+              color: Colors.white70,
             ),
             Gap(12.w),
             Expanded(
@@ -191,12 +193,14 @@ class _VenueSelectorState extends State<VenueSelector> {
                 children: [
                   Text(
                     'Select Venue',
-                    style: TextStyles.font14DarkBlue600Weight,
+                    style: TextStyles.font14DarkBlue600Weight
+                        .copyWith(color: Colors.white),
                   ),
                   Gap(2.h),
                   Text(
                     'Tap to choose from available venues',
-                    style: TextStyles.font12Grey400Weight,
+                    style: TextStyles.font12Grey400Weight
+                        .copyWith(color: Colors.white70),
                   ),
                 ],
               ),
@@ -204,7 +208,7 @@ class _VenueSelectorState extends State<VenueSelector> {
             Icon(
               Icons.arrow_forward_ios,
               size: 16.sp,
-              color: Colors.grey[600],
+              color: Colors.white54,
             ),
           ],
         ),
@@ -232,26 +236,35 @@ class _VenueSelectorState extends State<VenueSelector> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
+          borderRadius: BorderRadius.circular(24.r),
         ),
         child: Container(
           width: double.infinity,
           height: MediaQuery.of(context).size.height * 0.7,
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            color: PublicProfileTheme.panelColor,
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(color: Colors.white.withOpacity(0.06)),
+            boxShadow: PublicProfileTheme.defaultShadow(),
+          ),
           child: Column(
             children: [
               Row(
                 children: [
                   Text(
                     'Select Venue',
-                    style: TextStyles.font18DarkBlueBold,
+                    style:
+                        TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
                   ),
                   const Spacer(),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close),
-                    color: Colors.grey[600],
+                    color: Colors.white60,
                   ),
                 ],
               ),
@@ -275,12 +288,13 @@ class _VenueSelectorState extends State<VenueSelector> {
                             Icon(
                               Icons.error_outline,
                               size: 48.sp,
-                              color: Colors.grey[400],
+                              color: Colors.white30,
                             ),
                             Gap(16.h),
                             Text(
                               'Error loading venues',
-                              style: TextStyles.font16Grey400Weight,
+                              style: TextStyles.font16Grey400Weight
+                                  .copyWith(color: Colors.white),
                             ),
                           ],
                         ),
@@ -297,19 +311,21 @@ class _VenueSelectorState extends State<VenueSelector> {
                             Icon(
                               Icons.location_city_outlined,
                               size: 64.sp,
-                              color: Colors.grey[400],
+                              color: Colors.white24,
                             ),
                             Gap(16.h),
                             Text(
                               'No venues available',
-                              style: TextStyles.font16DarkBlue600Weight,
+                              style: TextStyles.font16DarkBlue600Weight
+                                  .copyWith(color: Colors.white),
                             ),
                             Gap(8.h),
                             Text(
                               widget.sportType != null
                                   ? 'No venues found for ${widget.sportType!.displayName}'
                                   : 'No venues found',
-                              style: TextStyles.font12Grey400Weight,
+                              style: TextStyles.font12Grey400Weight
+                                  .copyWith(color: Colors.white70),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -342,11 +358,12 @@ class _VenueSelectorState extends State<VenueSelector> {
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 12.h),
-        padding: EdgeInsets.all(12.w),
+        padding: EdgeInsets.all(16.w),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.r),
-          border: Border.all(color: Colors.grey[200]!),
+          color: PublicProfileTheme.panelOverlayColor,
+          borderRadius: BorderRadius.circular(18.r),
+          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          boxShadow: PublicProfileTheme.defaultShadow(),
         ),
         child: Row(
           children: [
@@ -354,8 +371,8 @@ class _VenueSelectorState extends State<VenueSelector> {
               width: 50.w,
               height: 50.h,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6.r),
-                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12.r),
+                color: Colors.white.withOpacity(0.08),
               ),
               child: venue.images.isNotEmpty
                   ? ClipRRect(
@@ -377,7 +394,8 @@ class _VenueSelectorState extends State<VenueSelector> {
                 children: [
                   Text(
                     venue.title,
-                    style: TextStyles.font14DarkBlueBold,
+                    style:
+                        TextStyles.font14DarkBlueBold.copyWith(color: Colors.white),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -387,13 +405,14 @@ class _VenueSelectorState extends State<VenueSelector> {
                       Icon(
                         Icons.location_on_outlined,
                         size: 12.sp,
-                        color: Colors.grey[600],
+                        color: Colors.white60,
                       ),
                       Gap(2.w),
                       Expanded(
                         child: Text(
                           venue.location,
-                          style: TextStyles.font10Grey400Weight,
+                          style: TextStyles.font10Grey400Weight
+                              .copyWith(color: Colors.white70),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -406,9 +425,9 @@ class _VenueSelectorState extends State<VenueSelector> {
                       Text(
                         '₹${venue.hourlyRate.toStringAsFixed(0)}/hour',
                         style: TextStyle(
-                          fontSize: 10.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.green[700],
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.w600,
+                          color: ColorsManager.success,
                         ),
                       ),
                       const Spacer(),
@@ -417,13 +436,14 @@ class _VenueSelectorState extends State<VenueSelector> {
                           children: [
                             Icon(
                               Icons.star,
-                              size: 10.sp,
+                              size: 12.sp,
                               color: Colors.amber,
                             ),
                             Gap(2.w),
                             Text(
                               venue.averageRating.toStringAsFixed(1),
-                              style: TextStyles.font10DarkBlue600Weight,
+                              style: TextStyles.font10DarkBlue600Weight
+                                  .copyWith(color: Colors.white),
                             ),
                           ],
                         ),

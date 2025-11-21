@@ -236,7 +236,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _selectedListingType == listing.ListingType.coach ? 'Service Title' : 'Venue Name',
+          _selectedListingType == listing.ListingType.coach
+              ? 'Service Title'
+              : 'Venue Name',
           style: TextStyles.font14DarkBlueMedium,
         ),
         Gap(8.h),

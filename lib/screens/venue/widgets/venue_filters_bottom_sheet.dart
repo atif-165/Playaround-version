@@ -12,7 +12,8 @@ class VenueFiltersBottomSheet extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<VenueFiltersBottomSheet> createState() => _VenueFiltersBottomSheetState();
+  State<VenueFiltersBottomSheet> createState() =>
+      _VenueFiltersBottomSheetState();
 }
 
 class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
@@ -89,14 +90,15 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                 Text(
                   'Filters',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                 ),
                 const Spacer(),
                 TextButton(
                   onPressed: _resetFilters,
-                  child: const Text('Reset', style: TextStyle(color: Colors.blue)),
+                  child:
+                      const Text('Reset', style: TextStyle(color: Colors.blue)),
                 ),
               ],
             ),
@@ -141,7 +143,8 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                     min: 0,
                     max: 5,
                     divisions: 10,
-                    label: '${(_filter.minRating ?? 0).toStringAsFixed(1)} stars',
+                    label:
+                        '${(_filter.minRating ?? 0).toStringAsFixed(1)} stars',
                     onChanged: (value) {
                       setState(() {
                         _filter = _filter.copyWith(minRating: value);
@@ -168,7 +171,9 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                               );
                             } else {
                               _filter = _filter.copyWith(
-                                sports: _filter.sports.where((s) => s != sport).toList(),
+                                sports: _filter.sports
+                                    .where((s) => s != sport)
+                                    .toList(),
                               );
                             }
                           });
@@ -196,7 +201,9 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                               );
                             } else {
                               _filter = _filter.copyWith(
-                                amenities: _filter.amenities.where((a) => a != amenity).toList(),
+                                amenities: _filter.amenities
+                                    .where((a) => a != amenity)
+                                    .toList(),
                               );
                             }
                           });
@@ -209,7 +216,8 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                   _buildSectionTitle('Verification'),
                   const SizedBox(height: 12),
                   SwitchListTile(
-                    title: const Text('Verified venues only', style: TextStyle(color: Colors.white)),
+                    title: const Text('Verified venues only',
+                        style: TextStyle(color: Colors.white)),
                     value: _filter.isVerified ?? false,
                     onChanged: (value) {
                       setState(() {
@@ -223,7 +231,8 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                   _buildSectionTitle('Availability'),
                   const SizedBox(height: 12),
                   SwitchListTile(
-                    title: const Text('Available today', style: TextStyle(color: Colors.white)),
+                    title: const Text('Available today',
+                        style: TextStyle(color: Colors.white)),
                     value: _filter.hasAvailability ?? false,
                     onChanged: (value) {
                       setState(() {
@@ -253,15 +262,28 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
                       focusedBorder: OutlineInputBorder(
                         borderSide: BorderSide(color: Colors.white),
                       ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       fillColor: Colors.black,
                       filled: true,
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'rating', child: Text('Rating', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'price', child: Text('Price', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'distance', child: Text('Distance', style: TextStyle(color: Colors.white))),
-                      DropdownMenuItem(value: 'newest', child: Text('Newest', style: TextStyle(color: Colors.white))),
+                      DropdownMenuItem(
+                          value: 'rating',
+                          child: Text('Rating',
+                              style: TextStyle(color: Colors.white))),
+                      DropdownMenuItem(
+                          value: 'price',
+                          child: Text('Price',
+                              style: TextStyle(color: Colors.white))),
+                      DropdownMenuItem(
+                          value: 'distance',
+                          child: Text('Distance',
+                              style: TextStyle(color: Colors.white))),
+                      DropdownMenuItem(
+                          value: 'newest',
+                          child: Text('Newest',
+                              style: TextStyle(color: Colors.white))),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -325,9 +347,9 @@ class _VenueFiltersBottomSheetState extends State<VenueFiltersBottomSheet> {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-      ),
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
     );
   }
 }

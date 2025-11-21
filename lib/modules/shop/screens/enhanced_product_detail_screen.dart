@@ -28,16 +28,17 @@ class EnhancedProductDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<EnhancedProductDetailScreen> createState() => _EnhancedProductDetailScreenState();
+  State<EnhancedProductDetailScreen> createState() =>
+      _EnhancedProductDetailScreenState();
 }
 
-class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScreen>
-    with TickerProviderStateMixin {
+class _EnhancedProductDetailScreenState
+    extends State<EnhancedProductDetailScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   late AnimationController _animationController;
 
   final _productService = ProductService();
-  
+
   Product? _product;
   Shop? _shop;
   List<Review> _reviews = [];
@@ -59,11 +60,11 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _product = widget.product;
     _selectedSize = _product!.sizes.isNotEmpty ? _product!.sizes.first : '';
     _selectedColor = _product!.colors.isNotEmpty ? _product!.colors.first : '';
-    
+
     _loadProductDetails();
   }
 
@@ -115,7 +116,7 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
     try {
       final reviews = await ReviewService.getProductReviews(_product!.id);
       final summary = await ReviewService.getProductReviewSummary(_product!.id);
-      
+
       setState(() {
         _reviews = reviews;
         _reviewSummary = summary;
@@ -128,7 +129,7 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
   Future<void> _loadRelatedProducts() async {
     try {
       final products = await _productService.getRelatedProducts(_product!.id);
-      
+
       setState(() {
         _relatedProducts = products;
       });
@@ -369,19 +370,27 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
                   });
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   decoration: BoxDecoration(
-                    color: isSelected ? ColorsManager.primary : ColorsManager.surfaceVariant,
+                    color: isSelected
+                        ? ColorsManager.primary
+                        : ColorsManager.surfaceVariant,
                     borderRadius: BorderRadius.circular(20.r),
                     border: Border.all(
-                      color: isSelected ? ColorsManager.primary : ColorsManager.outline,
+                      color: isSelected
+                          ? ColorsManager.primary
+                          : ColorsManager.outline,
                     ),
                   ),
                   child: Text(
                     size,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: isSelected ? ColorsManager.onPrimary : ColorsManager.onSurface,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? ColorsManager.onPrimary
+                          : ColorsManager.onSurface,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -415,7 +424,9 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
                     color: _getColorFromString(color),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? ColorsManager.primary : ColorsManager.outline,
+                      color: isSelected
+                          ? ColorsManager.primary
+                          : ColorsManager.outline,
                       width: isSelected ? 3 : 1,
                     ),
                   ),
@@ -469,7 +480,8 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
                 ),
               ),
               IconButton(
-                onPressed: _quantity < _product!.stock ? _increaseQuantity : null,
+                onPressed:
+                    _quantity < _product!.stock ? _increaseQuantity : null,
                 icon: const Icon(Icons.add),
                 iconSize: 20.w,
               ),
@@ -670,14 +682,18 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: _product!.stock < 10 ? ColorsManager.errorContainer : ColorsManager.primaryContainer,
+        color: _product!.stock < 10
+            ? ColorsManager.errorContainer
+            : ColorsManager.primaryContainer,
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: Row(
         children: [
           Icon(
             _product!.stock < 10 ? Icons.warning : Icons.inventory,
-            color: _product!.stock < 10 ? ColorsManager.onErrorContainer : ColorsManager.onPrimaryContainer,
+            color: _product!.stock < 10
+                ? ColorsManager.onErrorContainer
+                : ColorsManager.onPrimaryContainer,
           ),
           Gap(12.w),
           Expanded(
@@ -686,7 +702,9 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
                   ? 'Only ${_product!.stock} left in stock!'
                   : '${_product!.stock} items available',
               style: AppTypography.bodyMedium.copyWith(
-                color: _product!.stock < 10 ? ColorsManager.onErrorContainer : ColorsManager.onPrimaryContainer,
+                color: _product!.stock < 10
+                    ? ColorsManager.onErrorContainer
+                    : ColorsManager.onPrimaryContainer,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -823,7 +841,7 @@ class _EnhancedProductDetailScreenState extends State<EnhancedProductDetailScree
 
   Future<void> _addToCart([Product? product]) async {
     final productToAdd = product ?? _product!;
-    
+
     setState(() {
       _isAddingToCart = true;
     });

@@ -36,13 +36,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<void> _pickAndUploadImage() async {
     try {
-      final picked = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+      final picked = await _imagePicker.pickImage(
+          source: ImageSource.gallery, imageQuality: 80);
       if (picked == null) return;
-      final url = await _cloudinary.uploadImage(File(picked.path), folder: 'products');
+      final url =
+          await _cloudinary.uploadImage(File(picked.path), folder: 'products');
       setState(() => _images.add(url));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Image upload failed: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Image upload failed: $e')));
     }
   }
 
@@ -83,7 +86,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to add product: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to add product: $e')));
     }
   }
 
@@ -99,7 +103,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
             TextFormField(
               controller: _title,
               decoration: const InputDecoration(labelText: 'Title'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Required' : null,
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -117,7 +122,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Category'),
               initialValue: _category,
-              items: SportsCategories.all.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+              items: SportsCategories.all
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
               onChanged: (v) => setState(() => _category = v),
             ),
             const SizedBox(height: 12),
@@ -129,7 +136,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   Stack(
                     alignment: Alignment.topRight,
                     children: [
-                      Image.network(url, width: 100, height: 100, fit: BoxFit.cover),
+                      Image.network(url,
+                          width: 100, height: 100, fit: BoxFit.cover),
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () => setState(() => _images.remove(url)),
@@ -155,4 +163,3 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 }
-

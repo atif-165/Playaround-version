@@ -25,10 +25,11 @@ class MyVenueBookingsScreen extends StatefulWidget {
 class _MyVenueBookingsScreenState extends State<MyVenueBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final VenueBookingHistoryService _bookingHistoryService = VenueBookingHistoryService();
+  final VenueBookingHistoryService _bookingHistoryService =
+      VenueBookingHistoryService();
   final VenueService _venueService = VenueService();
   final UserRepository _userRepository = UserRepository();
-  
+
   UserProfile? _userProfile;
   bool _isLoading = true;
 
@@ -188,7 +189,8 @@ class _MyVenueBookingsScreenState extends State<MyVenueBookingsScreen>
     );
   }
 
-  Widget _buildBookingsList(List<VenueBookingModel> bookings, {bool showActions = false}) {
+  Widget _buildBookingsList(List<VenueBookingModel> bookings,
+      {bool showActions = false}) {
     return RefreshIndicator(
       onRefresh: () async {
         setState(() {}); // Trigger rebuild to refresh streams
@@ -205,8 +207,10 @@ class _MyVenueBookingsScreenState extends State<MyVenueBookingsScreen>
               userRole: _userProfile?.role ?? UserRole.player,
               onTap: () => _navigateToBookingDetail(booking),
               onCancel: showActions ? () => _showCancelDialog(booking) : null,
-              onReschedule: showActions ? () => _navigateToReschedule(booking) : null,
-              onComplete: showActions ? () => _showCompleteDialog(booking) : null,
+              onReschedule:
+                  showActions ? () => _navigateToReschedule(booking) : null,
+              onComplete:
+                  showActions ? () => _showCompleteDialog(booking) : null,
             ),
           );
         },
@@ -345,7 +349,8 @@ class _MyVenueBookingsScreenState extends State<MyVenueBookingsScreen>
             ),
           ),
           ElevatedButton(
-            onPressed: () => _cancelBooking(booking, reasonController.text.trim()),
+            onPressed: () =>
+                _cancelBooking(booking, reasonController.text.trim()),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,

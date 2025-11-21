@@ -7,7 +7,7 @@ import '../../theming/styles.dart';
 
 class BookCoachScreen extends StatelessWidget {
   final String coachId;
-  
+
   const BookCoachScreen({super.key, required this.coachId});
 
   @override
@@ -15,7 +15,8 @@ class BookCoachScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Book Coach', style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
+        title: Text('Book Coach',
+            style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
         backgroundColor: Colors.grey[900],
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -35,16 +36,23 @@ class BookCoachScreen extends StatelessWidget {
                   CircleAvatar(
                     radius: 32.r,
                     backgroundColor: ColorsManager.primary,
-                    child: const Icon(Icons.person, color: Colors.white, size: 32),
+                    child:
+                        const Icon(Icons.person, color: Colors.white, size: 32),
                   ),
                   Gap(16.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Coach Mike Wilson', style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
-                        Text('Basketball • 5 years exp', style: TextStyles.font14Grey400Weight.copyWith(color: Colors.grey[400])),
-                        Text('\$50/hour', style: TextStyles.font16DarkBlueBold.copyWith(color: ColorsManager.primary)),
+                        Text('Coach Mike Wilson',
+                            style: TextStyles.font18DarkBlueBold
+                                .copyWith(color: Colors.white)),
+                        Text('Basketball • 5 years exp',
+                            style: TextStyles.font14Grey400Weight
+                                .copyWith(color: Colors.grey[400])),
+                        Text('\$50/hour',
+                            style: TextStyles.font16DarkBlueBold
+                                .copyWith(color: ColorsManager.primary)),
                       ],
                     ),
                   ),
@@ -52,7 +60,9 @@ class BookCoachScreen extends StatelessWidget {
               ),
             ),
             Gap(24.h),
-            Text('Select Date & Time', style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.white)),
+            Text('Select Date & Time',
+                style: TextStyles.font16DarkBlueBold
+                    .copyWith(color: Colors.white)),
             Gap(16.h),
             Container(
               padding: EdgeInsets.all(16.w),
@@ -78,8 +88,10 @@ class BookCoachScreen extends StatelessWidget {
                 color: ColorsManager.primary,
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text('Book Session - \$50', textAlign: TextAlign.center, 
-                          style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.white)),
+              child: Text('Book Session - \$50',
+                  textAlign: TextAlign.center,
+                  style: TextStyles.font16DarkBlueBold
+                      .copyWith(color: Colors.white)),
             ),
           ],
         ),
@@ -98,7 +110,9 @@ class BookCoachScreen extends StatelessWidget {
         children: [
           Icon(Icons.schedule, color: ColorsManager.primary, size: 20.sp),
           Gap(12.w),
-          Text(time, style: TextStyles.font14Grey400Weight.copyWith(color: Colors.white)),
+          Text(time,
+              style:
+                  TextStyles.font14Grey400Weight.copyWith(color: Colors.white)),
         ],
       ),
     );

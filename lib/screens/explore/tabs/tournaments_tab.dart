@@ -8,7 +8,6 @@ import '../../../services/location_service.dart';
 import '../widgets/tournament_card.dart';
 import '../../../core/widgets/progress_indicaror.dart';
 
-
 /// Tournaments tab for explore screen
 class TournamentsTab extends StatefulWidget {
   final String searchQuery;
@@ -65,25 +64,24 @@ class _TournamentsTabState extends State<TournamentsTab> {
 
       // Apply search filter
       if (widget.searchQuery.isNotEmpty) {
-        query = query.where('name', 
-            isGreaterThanOrEqualTo: widget.searchQuery)
-            .where('name', 
-            isLessThanOrEqualTo: '${widget.searchQuery}\uf8ff');
+        query = query
+            .where('name', isGreaterThanOrEqualTo: widget.searchQuery)
+            .where('name', isLessThanOrEqualTo: '${widget.searchQuery}\uf8ff');
       }
 
       // Apply sport filter
-      if (widget.filters['sports'] != null && 
+      if (widget.filters['sports'] != null &&
           (widget.filters['sports'] as List).isNotEmpty) {
-        query = query.where('sportType', 
-            whereIn: widget.filters['sports']);
+        query = query.where('sportType', whereIn: widget.filters['sports']);
       }
 
       // Apply public filter and upcoming tournaments
-      query = query.where('isPublic', isEqualTo: true)
-                  .where('status', whereIn: ['upcoming', 'registration_open']);
+      query = query
+          .where('isPublic', isEqualTo: true)
+          .where('status', whereIn: ['upcoming', 'registration_open']);
 
       final querySnapshot = await query.get();
-      
+
       List<GeoTournament> tournaments = querySnapshot.docs
           .map((doc) => GeoTournament.fromFirestore(doc))
           .toList();
@@ -97,15 +95,15 @@ class _TournamentsTabState extends State<TournamentsTab> {
             final approxLocation = _locationService
                 .getApproximateLocationFromString(tournament.location);
             if (approxLocation != null) {
-              final distance = _locationService
-                  .calculateDistance(_userLocation!, approxLocation);
+              final distance = _locationService.calculateDistance(
+                  _userLocation!, approxLocation);
               return distance <= radiusKm;
             }
             return false;
           }
-          
-          final distance = _locationService
-              .calculateDistance(_userLocation!, tournament.geoPoint!);
+
+          final distance = _locationService.calculateDistance(
+              _userLocation!, tournament.geoPoint!);
           return distance <= radiusKm;
         }).toList();
       }
@@ -118,8 +116,10 @@ class _TournamentsTabState extends State<TournamentsTab> {
         tournaments = _locationService.sortByDistance<GeoTournament>(
           tournaments,
           _userLocation!,
-          (tournament) => tournament.geoPoint ?? 
-              _locationService.getApproximateLocationFromString(tournament.location) ??
+          (tournament) =>
+              tournament.geoPoint ??
+              _locationService
+                  .getApproximateLocationFromString(tournament.location) ??
               const GeoPoint(0, 0),
         );
       }
@@ -215,13 +215,14 @@ class _TournamentsTabState extends State<TournamentsTab> {
         itemBuilder: (context, index) {
           final tournament = _tournaments[index];
           double? distance;
-          
+
           if (_userLocation != null) {
-            final tournamentLocation = tournament.geoPoint ?? 
-                _locationService.getApproximateLocationFromString(tournament.location);
+            final tournamentLocation = tournament.geoPoint ??
+                _locationService
+                    .getApproximateLocationFromString(tournament.location);
             if (tournamentLocation != null) {
               distance = _locationService.calculateDistance(
-                _userLocation!, 
+                _userLocation!,
                 tournamentLocation,
               );
             }

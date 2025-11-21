@@ -17,8 +17,8 @@ class VenuePricingSection extends StatelessWidget {
         Text(
           'Pricing',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 12),
         // Basic Pricing
@@ -62,8 +62,8 @@ class VenuePricingSection extends StatelessWidget {
           Text(
             'Pricing Tiers',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 8),
           ...pricing.tiers.map((tier) => _buildTierCard(context, tier)),
@@ -86,8 +86,8 @@ class VenuePricingSection extends StatelessWidget {
                   child: Text(
                     'Peak pricing may apply during high-demand periods',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.amber[700],
-                    ),
+                          color: Colors.amber[700],
+                        ),
                   ),
                 ),
               ],
@@ -124,8 +124,8 @@ class VenuePricingSection extends StatelessWidget {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
               ),
             ],
@@ -134,15 +134,15 @@ class VenuePricingSection extends StatelessWidget {
           Text(
             price,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
           ),
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+                  color: Colors.grey[600],
+                ),
           ),
         ],
       ),
@@ -167,15 +167,15 @@ class VenuePricingSection extends StatelessWidget {
                 Text(
                   tier.name,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 if (tier.description.isNotEmpty)
                   Text(
                     tier.description,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                          color: Colors.grey[600],
+                        ),
                   ),
               ],
             ),
@@ -186,15 +186,15 @@ class VenuePricingSection extends StatelessWidget {
               Text(
                 '\$${tier.price.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               if (tier.minHours > 1)
                 Text(
                   '${tier.minHours}+ hours',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
-                  ),
+                        color: Colors.grey[600],
+                      ),
                 ),
             ],
           ),

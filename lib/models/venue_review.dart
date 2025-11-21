@@ -54,8 +54,9 @@ class VenueReview {
       comment: data['comment'] ?? '',
       images: List<String>.from(data['images'] ?? []),
       categories: (data['categories'] as List<dynamic>?)
-          ?.map((e) => ReviewCategory.fromMap(e))
-          .toList() ?? [],
+              ?.map((e) => ReviewCategory.fromMap(e))
+              .toList() ??
+          [],
       isVerified: data['isVerified'] ?? false,
       bookingId: data['bookingId'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
@@ -287,7 +288,7 @@ class VenueFilter {
 
   /// Check if any filters are active
   bool get isActive {
-    return searchQuery != null ||
+    return (searchQuery?.isNotEmpty ?? false) ||
         city != null ||
         state != null ||
         country != null ||

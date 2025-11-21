@@ -13,6 +13,7 @@ import '../widgets/notifications_panel.dart';
 import '../widgets/admin_controls_widget.dart';
 import '../models/dashboard_models.dart';
 import '../services/dashboard_service.dart';
+import '../../../routing/routes.dart';
 
 class MVPDashboardScreen extends StatefulWidget {
   final UserRole userRole;
@@ -156,22 +157,22 @@ class _MVPDashboardScreenState extends State<MVPDashboardScreen> {
   void _handleQuickAction(QuickActionType action) {
     switch (action) {
       case QuickActionType.bookFacility:
-        Navigator.pushNamed(context, '/venue-booking');
+        Navigator.pushNamed(context, Routes.venueBookingScreen);
         break;
-      case QuickActionType.findCoach:
-        Navigator.pushNamed(context, '/coaches');
+      case QuickActionType.userMatchmaking:
+        Navigator.pushNamed(context, Routes.playerMatchmakingScreen);
         break;
       case QuickActionType.joinTeam:
-        Navigator.pushNamed(context, '/team-finder');
+        Navigator.pushNamed(context, Routes.teamFinderScreen);
         break;
       case QuickActionType.trackSkills:
-        Navigator.pushNamed(context, '/skill-tracking');
+        Navigator.pushNamed(context, Routes.skillDashboardScreen);
         break;
       case QuickActionType.communityForums:
-        Navigator.pushNamed(context, '/community');
+        Navigator.pushNamed(context, Routes.communityHome);
         break;
       case QuickActionType.tournaments:
-        Navigator.pushNamed(context, '/tournaments');
+        Navigator.pushNamed(context, Routes.tournamentListScreen);
         break;
     }
   }

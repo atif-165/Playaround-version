@@ -20,8 +20,10 @@ class VenueService {
 
   // Collection references
   CollectionReference get _venuesCollection => _firestore.collection('venues');
-  CollectionReference get _venueBookingsCollection => _firestore.collection('venue_bookings');
-  CollectionReference get _venueReviewsCollection => _firestore.collection('venue_reviews');
+  CollectionReference get _venueBookingsCollection =>
+      _firestore.collection('venue_bookings');
+  CollectionReference get _venueReviewsCollection =>
+      _firestore.collection('venue_reviews');
 
   /// Create a new venue
   Future<String> createVenue({
@@ -29,13 +31,25 @@ class VenueService {
     required SportType sportType,
     required String description,
     required String location,
+    String? city,
+    String? state,
+    String? country,
+    double? latitude,
+    double? longitude,
+    String? googleMapsLink,
     String? gpsCoordinates,
     required double hourlyRate,
+    double? dailyRate,
+    double? weeklyRate,
+    String? currency,
+    List<String>? sports,
     List<String> images = const [],
     required List<TimeSlot> availableTimeSlots,
     required List<String> availableDays,
     List<String> amenities = const [],
     String? contactInfo,
+    String? phoneNumber,
+    Map<String, dynamic>? hours,
     Map<String, dynamic>? metadata,
   }) async {
     try {
@@ -54,21 +68,67 @@ class VenueService {
         'sportType': sportType.displayName,
         'description': description,
         'location': location,
+        if (city != null && city.isNotEmpty) 'city': city,
+        if (state != null && state.isNotEmpty) 'state': state,
+        if (country != null && country.isNotEmpty) 'country': country,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
         'gpsCoordinates': gpsCoordinates,
+        if (googleMapsLink != null && googleMapsLink.isNotEmpty)
+          'googleMapsLink': googleMapsLink,
         'hourlyRate': hourlyRate,
+        'pricing': {
+          'hourlyRate': hourlyRate,
+          if (dailyRate != null) 'dailyRate': dailyRate,
+          if (weeklyRate != null) 'weeklyRate': weeklyRate,
+          'currency': (currency ?? 'PKR').toUpperCase(),
+        },
+        'sports': (sports != null && sports.isNotEmpty)
+            ? sports
+            : [sportType.displayName],
         'images': images,
-        'availableTimeSlots': availableTimeSlots.map((slot) => slot.toMap()).toList(),
+        'availableTimeSlots':
+            availableTimeSlots.map((slot) => slot.toMap()).toList(),
         'availableDays': availableDays,
         'amenities': amenities,
-        'contactInfo': contactInfo,
+        'contactInfo': contactInfo ?? phoneNumber,
+        if (phoneNumber != null && phoneNumber.isNotEmpty)
+          'phoneNumber': phoneNumber,
+        if (hours != null) 'hours': hours,
         'isActive': true,
         'averageRating': 0.0,
         'totalBookings': 0,
         'totalReviews': 0,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
-        'metadata': metadata,
       };
+
+      final metadataPayload = <String, dynamic>{
+        if (metadata != null) ...metadata,
+        if (googleMapsLink != null && googleMapsLink.isNotEmpty)
+          'googleMapsLink': googleMapsLink,
+        if (phoneNumber != null && phoneNumber.isNotEmpty)
+          'phoneNumber': phoneNumber,
+        if (sports != null && sports.isNotEmpty) 'sportsOffered': sports,
+        if (city != null && city.isNotEmpty) 'city': city,
+        if (state != null && state.isNotEmpty) 'state': state,
+        if (country != null && country.isNotEmpty) 'country': country,
+        if (latitude != null && longitude != null)
+          'coordinates': {
+            'latitude': latitude,
+            'longitude': longitude,
+          },
+      }..removeWhere((key, value) {
+          if (value == null) return true;
+          if (value is String) return value.trim().isEmpty;
+          if (value is Map) return value.isEmpty;
+          if (value is Iterable) return value.isEmpty;
+          return false;
+        });
+
+      if (metadataPayload.isNotEmpty) {
+        venueData['metadata'] = metadataPayload;
+      }
 
       await _venuesCollection.doc(venueId).set(venueData);
       return venueId;
@@ -90,6 +150,41 @@ class VenueService {
     }
   }
 
+  /// Fallback lookup when only the venue name is known.
+  Future<VenueModel?> findVenueByName(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return null;
+    final lower = trimmed.toLowerCase();
+
+    try {
+      final exactMatch = await _venuesCollection
+          .where('title', isEqualTo: trimmed)
+          .limit(1)
+          .get();
+      if (exactMatch.docs.isNotEmpty) {
+        return VenueModel.fromMap(
+            exactMatch.docs.first.data() as Map<String, dynamic>);
+      }
+
+      final snapshot = await _venuesCollection
+          .where('isActive', isEqualTo: true)
+          .limit(50)
+          .get();
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final title = (data['title']?.toString() ?? '').toLowerCase();
+        if (title == lower) {
+          return VenueModel.fromMap(data);
+        }
+      }
+
+      return null;
+    } catch (error) {
+      throw Exception('Failed to find venue: $error');
+    }
+  }
+
   /// Get all venues with optional filters
   Stream<List<VenueModel>> getVenues({
     SportType? sportType,
@@ -105,8 +200,9 @@ class VenueService {
       }
 
       if (location != null && location.isNotEmpty) {
-        query = query.where('location', isGreaterThanOrEqualTo: location)
-                    .where('location', isLessThanOrEqualTo: '$location\uf8ff');
+        query = query
+            .where('location', isGreaterThanOrEqualTo: location)
+            .where('location', isLessThanOrEqualTo: '$location\uf8ff');
       }
 
       query = query.orderBy('createdAt', descending: true);
@@ -118,17 +214,19 @@ class VenueService {
       return query.snapshots().map((snapshot) {
         try {
           var venues = snapshot.docs
-              .map((doc) => VenueModel.fromMap(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  VenueModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList();
 
           // Apply search filter if provided
           if (searchQuery != null && searchQuery.isNotEmpty) {
             final searchLower = searchQuery.toLowerCase();
-            venues = venues.where((venue) =>
-                venue.title.toLowerCase().contains(searchLower) ||
-                venue.description.toLowerCase().contains(searchLower) ||
-                venue.location.toLowerCase().contains(searchLower)
-            ).toList();
+            venues = venues
+                .where((venue) =>
+                    venue.title.toLowerCase().contains(searchLower) ||
+                    venue.description.toLowerCase().contains(searchLower) ||
+                    venue.location.toLowerCase().contains(searchLower))
+                .toList();
           }
 
           return venues;
@@ -154,7 +252,8 @@ class VenueService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => VenueModel.fromMap(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  VenueModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList())
           .asBroadcastStream();
     } catch (e) {
@@ -169,19 +268,29 @@ class VenueService {
     SportType? sportType,
     String? description,
     String? location,
+    String? city,
+    String? state,
+    String? country,
+    double? latitude,
+    double? longitude,
+    String? googleMapsLink,
     String? gpsCoordinates,
     double? hourlyRate,
+    double? dailyRate,
+    double? weeklyRate,
+    String? currency,
+    List<String>? sports,
     List<String>? images,
     List<TimeSlot>? availableTimeSlots,
     List<String>? availableDays,
     List<String>? amenities,
     String? contactInfo,
+    String? phoneNumber,
+    Map<String, dynamic>? hours,
     bool? isActive,
     Map<String, dynamic>? metadata,
   }) async {
     try {
-
-
       final user = _auth.currentUser;
       if (user == null) {
         throw Exception('User not authenticated');
@@ -205,19 +314,61 @@ class VenueService {
       if (sportType != null) updateData['sportType'] = sportType.displayName;
       if (description != null) updateData['description'] = description;
       if (location != null) updateData['location'] = location;
+      if (city != null) updateData['city'] = city;
+      if (state != null) updateData['state'] = state;
+      if (country != null) updateData['country'] = country;
+      if (latitude != null) updateData['latitude'] = latitude;
+      if (longitude != null) updateData['longitude'] = longitude;
+      if (googleMapsLink != null) updateData['googleMapsLink'] = googleMapsLink;
       if (gpsCoordinates != null) updateData['gpsCoordinates'] = gpsCoordinates;
       if (hourlyRate != null) updateData['hourlyRate'] = hourlyRate;
+      if (hourlyRate != null ||
+          dailyRate != null ||
+          weeklyRate != null ||
+          currency != null) {
+        final pricing = Map<String, dynamic>.from(
+          venue.metadata?['pricing'] as Map<String, dynamic>? ??
+              {
+                'hourlyRate': venue.hourlyRate,
+                if (venue.metadata?['pricing'] is Map<String, dynamic>)
+                  ...Map<String, dynamic>.from(
+                      venue.metadata!['pricing'] as Map<String, dynamic>),
+              },
+        );
+        if (hourlyRate != null) pricing['hourlyRate'] = hourlyRate;
+        if (dailyRate != null) pricing['dailyRate'] = dailyRate;
+        if (weeklyRate != null) pricing['weeklyRate'] = weeklyRate;
+        if (currency != null) pricing['currency'] = currency;
+        updateData['pricing'] = pricing;
+      }
+      if (sports != null) updateData['sports'] = sports;
       if (images != null) updateData['images'] = images;
       if (availableTimeSlots != null) {
-        updateData['availableTimeSlots'] = availableTimeSlots.map((slot) => slot.toMap()).toList();
+        updateData['availableTimeSlots'] =
+            availableTimeSlots.map((slot) => slot.toMap()).toList();
       }
       if (availableDays != null) updateData['availableDays'] = availableDays;
       if (amenities != null) updateData['amenities'] = amenities;
       if (contactInfo != null) updateData['contactInfo'] = contactInfo;
+      if (phoneNumber != null) updateData['phoneNumber'] = phoneNumber;
+      if (hours != null) updateData['hours'] = hours;
       if (isActive != null) updateData['isActive'] = isActive;
       if (metadata != null) updateData['metadata'] = metadata;
-
-
+      if (googleMapsLink != null || phoneNumber != null || sports != null) {
+        final existingMeta = Map<String, dynamic>.from(
+          venue.metadata ?? const <String, dynamic>{},
+        );
+        if (googleMapsLink != null) {
+          existingMeta['googleMapsLink'] = googleMapsLink;
+        }
+        if (phoneNumber != null) {
+          existingMeta['phoneNumber'] = phoneNumber;
+        }
+        if (sports != null) {
+          existingMeta['sportsOffered'] = sports;
+        }
+        updateData['metadata'] = existingMeta;
+      }
 
       await _venuesCollection.doc(venueId).update(updateData);
     } catch (e) {
@@ -242,8 +393,7 @@ class VenueService {
       // Check for active bookings
       final activeBookings = await _venueBookingsCollection
           .where('venueId', isEqualTo: venueId)
-          .where('status', whereIn: ['pending', 'confirmed'])
-          .get();
+          .where('status', whereIn: ['pending', 'confirmed']).get();
 
       if (activeBookings.docs.isNotEmpty) {
         throw Exception('Cannot delete venue with active bookings');
@@ -265,11 +415,11 @@ class VenueService {
       final bookings = await _venueBookingsCollection
           .where('venueId', isEqualTo: venueId)
           .where('selectedDate', isEqualTo: Timestamp.fromDate(date))
-          .where('status', whereIn: ['pending', 'confirmed'])
-          .get();
+          .where('status', whereIn: ['pending', 'confirmed']).get();
 
       for (final doc in bookings.docs) {
-        final booking = VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>);
+        final booking =
+            VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>);
         if (booking.timeSlot.overlaps(timeSlot)) {
           return false;
         }
@@ -297,7 +447,8 @@ class VenueService {
       if (venue == null) throw Exception('Venue not found');
 
       // Check if venue is active
-      if (!venue.isActive) throw Exception('Venue is not available for booking');
+      if (!venue.isActive)
+        throw Exception('Venue is not available for booking');
 
       // Validate booking date and time
       await _validateBookingDateTime(selectedDate, timeSlot);
@@ -405,7 +556,8 @@ class VenueService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       throw Exception('Failed to get user bookings: $e');
@@ -420,7 +572,8 @@ class VenueService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       throw Exception('Failed to get venue bookings: $e');
@@ -470,7 +623,8 @@ class VenueService {
       // Trigger automated skill updates if booking is completed
       if (status == VenueBookingStatus.completed) {
         try {
-          final booking = VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>);
+          final booking =
+              VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>);
           final sessionDuration = _calculateSessionDuration(booking.timeSlot);
 
           await _automatedSkillService.onVenueBookingCompleted(
@@ -489,7 +643,8 @@ class VenueService {
         } catch (skillUpdateError) {
           // Log skill update error but don't fail the booking status update
           if (kDebugMode) {
-            debugPrint('⚠️ VenueService: Skill update failed: $skillUpdateError');
+            debugPrint(
+                '⚠️ VenueService: Skill update failed: $skillUpdateError');
           }
         }
       }
@@ -504,7 +659,8 @@ class VenueService {
       final startParts = timeSlot.start.split(':');
       final endParts = timeSlot.end.split(':');
 
-      final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+      final startMinutes =
+          int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
       final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
 
       return (endMinutes - startMinutes) / 60.0;
@@ -570,7 +726,9 @@ class VenueService {
       final venue = await getVenue(venueId);
       if (venue != null) {
         final newTotalReviews = venue.totalReviews + 1;
-        final newAverageRating = ((venue.averageRating * venue.totalReviews) + rating) / newTotalReviews;
+        final newAverageRating =
+            ((venue.averageRating * venue.totalReviews) + rating) /
+                newTotalReviews;
 
         batch.update(_venuesCollection.doc(venueId), {
           'averageRating': newAverageRating,
@@ -594,7 +752,8 @@ class VenueService {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .map((snapshot) => snapshot.docs
-              .map((doc) => VenueReview.fromMap(doc.data() as Map<String, dynamic>))
+              .map((doc) =>
+                  VenueReview.fromMap(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       throw Exception('Failed to get venue reviews: $e');
@@ -622,17 +781,18 @@ class VenueService {
       final bookings = await _venueBookingsCollection
           .where('venueId', isEqualTo: venueId)
           .where('selectedDate', isEqualTo: Timestamp.fromDate(date))
-          .where('status', whereIn: ['pending', 'confirmed'])
-          .get();
+          .where('status', whereIn: ['pending', 'confirmed']).get();
 
       final bookedTimeSlots = bookings.docs
-          .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+              VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
           .map((booking) => booking.timeSlot)
           .toList();
 
       // Filter out booked time slots
       final availableTimeSlots = venue.availableTimeSlots.where((timeSlot) {
-        return !bookedTimeSlots.any((bookedSlot) => bookedSlot.overlaps(timeSlot));
+        return !bookedTimeSlots
+            .any((bookedSlot) => bookedSlot.overlaps(timeSlot));
       }).toList();
 
       return availableTimeSlots;
@@ -654,11 +814,13 @@ class VenueService {
       final bookingDoc = await _venueBookingsCollection.doc(bookingId).get();
       if (!bookingDoc.exists) throw Exception('Booking not found');
 
-      final booking = VenueBookingModel.fromMap(bookingDoc.data() as Map<String, dynamic>);
+      final booking =
+          VenueBookingModel.fromMap(bookingDoc.data() as Map<String, dynamic>);
 
       // Check if user can cancel this booking
       if (booking.userId != user.uid && booking.venueOwnerId != user.uid) {
-        throw Exception('You can only cancel your own bookings or bookings for your venues');
+        throw Exception(
+            'You can only cancel your own bookings or bookings for your venues');
       }
 
       // Check if booking can be cancelled (not already completed or cancelled)
@@ -694,10 +856,10 @@ class VenueService {
       // Send notification to the other party
       try {
         final isUserCancelling = booking.userId == user.uid;
-        final notificationUserId = isUserCancelling ? booking.venueOwnerId : booking.userId;
-        final notificationTitle = isUserCancelling
-            ? 'Booking Cancelled'
-            : 'Venue Booking Cancelled';
+        final notificationUserId =
+            isUserCancelling ? booking.venueOwnerId : booking.userId;
+        final notificationTitle =
+            isUserCancelling ? 'Booking Cancelled' : 'Venue Booking Cancelled';
         final notificationMessage = isUserCancelling
             ? '${booking.userName} cancelled their booking for ${booking.venueTitle}'
             : 'Your booking for ${booking.venueTitle} has been cancelled by the venue owner';
@@ -715,11 +877,10 @@ class VenueService {
       } catch (e) {
         // Log notification error but don't fail the cancellation
         if (kDebugMode) {
-          debugPrint('⚠️ VenueService: Failed to send cancellation notification: $e');
+          debugPrint(
+              '⚠️ VenueService: Failed to send cancellation notification: $e');
         }
       }
-
-
     } catch (e) {
       throw Exception('Failed to cancel venue booking: $e');
     }
@@ -740,7 +901,8 @@ class VenueService {
       final bookingDoc = await _venueBookingsCollection.doc(bookingId).get();
       if (!bookingDoc.exists) throw Exception('Booking not found');
 
-      final booking = VenueBookingModel.fromMap(bookingDoc.data() as Map<String, dynamic>);
+      final booking =
+          VenueBookingModel.fromMap(bookingDoc.data() as Map<String, dynamic>);
 
       // Check if user can reschedule this booking
       if (booking.userId != user.uid) {
@@ -799,7 +961,8 @@ class VenueService {
         await _notificationService.createGeneralNotification(
           userId: booking.venueOwnerId,
           title: 'Booking Rescheduled',
-          message: '${booking.userName} rescheduled their booking for ${booking.venueTitle}',
+          message:
+              '${booking.userName} rescheduled their booking for ${booking.venueTitle}',
           data: {
             'bookingId': bookingId,
             'venueId': booking.venueId,
@@ -811,11 +974,10 @@ class VenueService {
       } catch (e) {
         // Log notification error but don't fail the reschedule
         if (kDebugMode) {
-          debugPrint('⚠️ VenueService: Failed to send reschedule notification: $e');
+          debugPrint(
+              '⚠️ VenueService: Failed to send reschedule notification: $e');
         }
       }
-
-
     } catch (e) {
       throw Exception('Failed to reschedule venue booking: $e');
     }
@@ -849,7 +1011,8 @@ class VenueService {
       final bookings = await query.get();
 
       for (final doc in bookings.docs) {
-        final booking = VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>);
+        final booking =
+            VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>);
 
         // Skip the booking being rescheduled
         if (excludeBookingId != null && booking.id == excludeBookingId) {
@@ -869,11 +1032,13 @@ class VenueService {
   }
 
   /// Validate booking date and time
-  Future<void> _validateBookingDateTime(DateTime selectedDate, TimeSlot timeSlot) async {
+  Future<void> _validateBookingDateTime(
+      DateTime selectedDate, TimeSlot timeSlot) async {
     final now = DateTime.now();
 
     // Check if booking date is in the past
-    final bookingDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final bookingDate =
+        DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final today = DateTime(now.year, now.month, now.day);
 
     if (bookingDate.isBefore(today)) {
@@ -915,8 +1080,12 @@ class VenueService {
       final endMinute = int.parse(endParts[1]);
 
       // Validate hour and minute ranges
-      if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23) return false;
-      if (startMinute < 0 || startMinute > 59 || endMinute < 0 || endMinute > 59) return false;
+      if (startHour < 0 || startHour > 23 || endHour < 0 || endHour > 23)
+        return false;
+      if (startMinute < 0 ||
+          startMinute > 59 ||
+          endMinute < 0 ||
+          endMinute > 59) return false;
 
       // Check if end time is after start time
       final startTotalMinutes = startHour * 60 + startMinute;
@@ -953,14 +1122,22 @@ class VenueService {
   /// Helper method to get day of week string
   String _getDayOfWeek(int weekday) {
     switch (weekday) {
-      case 1: return 'Monday';
-      case 2: return 'Tuesday';
-      case 3: return 'Wednesday';
-      case 4: return 'Thursday';
-      case 5: return 'Friday';
-      case 6: return 'Saturday';
-      case 7: return 'Sunday';
-      default: return 'Monday';
+      case 1:
+        return 'Monday';
+      case 2:
+        return 'Tuesday';
+      case 3:
+        return 'Wednesday';
+      case 4:
+        return 'Thursday';
+      case 5:
+        return 'Friday';
+      case 6:
+        return 'Saturday';
+      case 7:
+        return 'Sunday';
+      default:
+        return 'Monday';
     }
   }
 }

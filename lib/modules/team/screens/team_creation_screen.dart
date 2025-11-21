@@ -123,13 +123,17 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
       final teamId = await _teamService.createTeam(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        bio: _bioController.text.trim().isNotEmpty ? _bioController.text.trim() : null,
+        bio: _bioController.text.trim().isNotEmpty
+            ? _bioController.text.trim()
+            : null,
         sportType: _selectedSportType,
         maxMembers: _maxMembers,
         isPublic: _isPublic,
         teamImageUrl: profileImageUrl,
         backgroundImageUrl: backgroundImageUrl,
-        location: _locationController.text.trim().isNotEmpty ? _locationController.text.trim() : null,
+        location: _locationController.text.trim().isNotEmpty
+            ? _locationController.text.trim()
+            : null,
         coachId: _selectedCoachId,
         coachName: _selectedCoachName,
         initialMemberIds: _selectedMemberIds,
@@ -168,7 +172,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
       appBar: AppBar(
         title: Text(
           'Create Team',
-          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
+          style:
+              TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
         backgroundColor: Colors.black,
         elevation: 0,
@@ -231,7 +236,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: ColorsManager.mainBlue),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           ),
           validator: (value) => AppRegex.validateTeamName(value),
           maxLength: 50,
@@ -262,7 +268,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: ColorsManager.mainBlue),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           ),
           maxLines: 3,
           maxLength: 200,
@@ -299,7 +306,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: ColorsManager.mainBlue),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           ),
           maxLines: 4,
           maxLength: 500,
@@ -369,7 +377,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: ColorsManager.mainBlue),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           ),
           maxLength: 100,
         ),
@@ -420,7 +429,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
                   });
                 }
               },
-              items: SportType.values.map<DropdownMenuItem<SportType>>((SportType value) {
+              items: SportType.values
+                  .map<DropdownMenuItem<SportType>>((SportType value) {
                 return DropdownMenuItem<SportType>(
                   value: value,
                   child: Text(
@@ -492,7 +502,7 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
               ),
               Gap(4.h),
               Text(
-                _isPublic 
+                _isPublic
                     ? 'Public - Anyone can find and request to join'
                     : 'Private - Only you can invite members',
                 style: TextStyles.font13Grey400Weight,
@@ -551,7 +561,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
                         _selectedCoachName = null;
                       });
                     },
-                    child: Icon(Icons.clear, color: ColorsManager.gray, size: 20.sp),
+                    child: Icon(Icons.clear,
+                        color: ColorsManager.gray, size: 20.sp),
                   ),
               ],
             ),
@@ -593,7 +604,8 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
                         : TextStyles.font13Grey400Weight,
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios, color: ColorsManager.gray, size: 16.sp),
+                Icon(Icons.arrow_forward_ios,
+                    color: ColorsManager.gray, size: 16.sp),
               ],
             ),
           ),
@@ -660,7 +672,7 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add_photo_alternate_outlined,
-                           color: ColorsManager.gray, size: 32.sp),
+                          color: ColorsManager.gray, size: 32.sp),
                       Gap(8.h),
                       Text(title, style: TextStyles.font12DarkBlue400Weight),
                       Text(subtitle, style: TextStyles.font10Grey400Weight),
@@ -796,10 +808,14 @@ class _TeamCreationScreenState extends State<TeamCreationScreen> {
                   itemCount: _availableConnections.length,
                   itemBuilder: (context, index) {
                     final connection = _availableConnections[index];
-                    final currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
-                    final otherUserId = connection.getOtherUserId(currentUserId);
-                    final otherUserName = connection.getOtherUserName(currentUserId);
-                    final otherUserImageUrl = connection.getOtherUserImageUrl(currentUserId);
+                    final currentUserId =
+                        FirebaseAuth.instance.currentUser?.uid ?? '';
+                    final otherUserId =
+                        connection.getOtherUserId(currentUserId);
+                    final otherUserName =
+                        connection.getOtherUserName(currentUserId);
+                    final otherUserImageUrl =
+                        connection.getOtherUserImageUrl(currentUserId);
                     final isSelected = _selectedMemberIds.contains(otherUserId);
 
                     return CheckboxListTile(

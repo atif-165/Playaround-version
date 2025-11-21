@@ -18,9 +18,10 @@ class UserActivityService {
       final user = _auth.currentUser;
       if (user != null) {
         await _userRepository.updateUserLastActive(user.uid);
-        
+
         if (kDebugMode) {
-          debugPrint('🔄 UserActivityService: Activity tracked for user ${user.uid}');
+          debugPrint(
+              '🔄 UserActivityService: Activity tracked for user ${user.uid}');
         }
       }
     } catch (e) {
@@ -35,13 +36,14 @@ class UserActivityService {
   Future<void> trackActivityForUser(String userId) async {
     try {
       await _userRepository.updateUserLastActive(userId);
-      
+
       if (kDebugMode) {
         debugPrint('🔄 UserActivityService: Activity tracked for user $userId');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ UserActivityService: Error tracking activity for user $userId: $e');
+        debugPrint(
+            '❌ UserActivityService: Error tracking activity for user $userId: $e');
       }
       // Don't throw - activity tracking shouldn't break app flow
     }
@@ -52,7 +54,7 @@ class UserActivityService {
     try {
       final targetUserId = userId ?? _auth.currentUser?.uid;
       if (targetUserId == null) return null;
-      
+
       return await _userRepository.getUserLastActive(targetUserId);
     } catch (e) {
       if (kDebugMode) {
@@ -69,11 +71,12 @@ class UserActivityService {
       if (lastActive == null) {
         return 30; // Default to 30 days if no activity found
       }
-      
+
       return DateTime.now().difference(lastActive).inDays;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ UserActivityService: Error calculating days since last active: $e');
+        debugPrint(
+            '❌ UserActivityService: Error calculating days since last active: $e');
       }
       return 30;
     }
@@ -86,7 +89,8 @@ class UserActivityService {
       return daysSinceActive >= thresholdDays;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ UserActivityService: Error checking if user is inactive: $e');
+        debugPrint(
+            '❌ UserActivityService: Error checking if user is inactive: $e');
       }
       return false;
     }
@@ -113,9 +117,10 @@ class UserActivityService {
         final lastActive = await getLastActive();
         if (lastActive == null) {
           await trackActivity();
-          
+
           if (kDebugMode) {
-            debugPrint('🔄 UserActivityService: Initialized activity tracking for user ${user.uid}');
+            debugPrint(
+                '🔄 UserActivityService: Initialized activity tracking for user ${user.uid}');
           }
         } else {
           // Update activity on app start
@@ -124,7 +129,8 @@ class UserActivityService {
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ UserActivityService: Error initializing activity tracking: $e');
+        debugPrint(
+            '❌ UserActivityService: Error initializing activity tracking: $e');
       }
     }
   }

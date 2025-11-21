@@ -35,13 +35,16 @@ class VenueService {
           query = query.where('sports', arrayContainsAny: filter.sports);
         }
         if (filter.minPrice != null) {
-          query = query.where('pricing.hourlyRate', isGreaterThanOrEqualTo: filter.minPrice);
+          query = query.where('pricing.hourlyRate',
+              isGreaterThanOrEqualTo: filter.minPrice);
         }
         if (filter.maxPrice != null) {
-          query = query.where('pricing.hourlyRate', isLessThanOrEqualTo: filter.maxPrice);
+          query = query.where('pricing.hourlyRate',
+              isLessThanOrEqualTo: filter.maxPrice);
         }
         if (filter.minRating != null) {
-          query = query.where('rating', isGreaterThanOrEqualTo: filter.minRating);
+          query =
+              query.where('rating', isGreaterThanOrEqualTo: filter.minRating);
         }
         if (filter.isVerified != null) {
           query = query.where('isVerified', isEqualTo: filter.isVerified);
@@ -55,13 +58,16 @@ class VenueService {
       if (filter?.sortBy != null) {
         switch (filter!.sortBy) {
           case 'rating':
-            query = query.orderBy('rating', descending: !(filter.sortAscending ?? false));
+            query = query.orderBy('rating',
+                descending: !(filter.sortAscending ?? false));
             break;
           case 'price':
-            query = query.orderBy('pricing.hourlyRate', descending: filter.sortAscending ?? false);
+            query = query.orderBy('pricing.hourlyRate',
+                descending: filter.sortAscending ?? false);
             break;
           case 'newest':
-            query = query.orderBy('createdAt', descending: !(filter.sortAscending ?? false));
+            query = query.orderBy('createdAt',
+                descending: !(filter.sortAscending ?? false));
             break;
         }
       } else {
@@ -75,19 +81,21 @@ class VenueService {
       query = query.limit(limit);
 
       QuerySnapshot snapshot = await query.get();
-      List<Venue> venues = snapshot.docs
-          .map((doc) => Venue.fromFirestore(doc))
-          .toList();
+      List<Venue> venues =
+          snapshot.docs.map((doc) => Venue.fromFirestore(doc)).toList();
 
       // Apply location-based filtering if coordinates are provided
-      if (filter?.latitude != null && filter?.longitude != null && filter?.radius != null) {
+      if (filter?.latitude != null &&
+          filter?.longitude != null &&
+          filter?.radius != null) {
         venues = venues.where((venue) {
           double distance = Geolocator.distanceBetween(
-            filter!.latitude!,
-            filter.longitude!,
-            venue.latitude,
-            venue.longitude,
-          ) / 1000; // Convert to kilometers
+                filter!.latitude!,
+                filter.longitude!,
+                venue.latitude,
+                venue.longitude,
+              ) /
+              1000; // Convert to kilometers
           return distance <= filter.radius!;
         }).toList();
       }
@@ -99,7 +107,8 @@ class VenueService {
           return venue.name.toLowerCase().contains(searchQuery) ||
               venue.description.toLowerCase().contains(searchQuery) ||
               venue.address.toLowerCase().contains(searchQuery) ||
-              venue.sports.any((sport) => sport.toLowerCase().contains(searchQuery));
+              venue.sports
+                  .any((sport) => sport.toLowerCase().contains(searchQuery));
         }).toList();
       }
 
@@ -111,11 +120,9 @@ class VenueService {
 
   static Future<Venue?> getVenueById(String venueId) async {
     try {
-      DocumentSnapshot doc = await _firestore
-          .collection(_venuesCollection)
-          .doc(venueId)
-          .get();
-      
+      DocumentSnapshot doc =
+          await _firestore.collection(_venuesCollection).doc(venueId).get();
+
       if (doc.exists) {
         return Venue.fromFirestore(doc);
       }
@@ -202,12 +209,10 @@ class VenueService {
     }
   }
 
-  static Future<void> updateBookingStatus(String bookingId, BookingStatus status) async {
+  static Future<void> updateBookingStatus(
+      String bookingId, BookingStatus status) async {
     try {
-      await _firestore
-          .collection(_bookingsCollection)
-          .doc(bookingId)
-          .update({
+      await _firestore.collection(_bookingsCollection).doc(bookingId).update({
         'status': status.name,
         'updatedAt': Timestamp.now(),
       });
@@ -218,10 +223,7 @@ class VenueService {
 
   static Future<void> cancelBooking(String bookingId, String reason) async {
     try {
-      await _firestore
-          .collection(_bookingsCollection)
-          .doc(bookingId)
-          .update({
+      await _firestore.collection(_bookingsCollection).doc(bookingId).update({
         'status': BookingStatus.cancelled.name,
         'cancellationReason': reason,
         'cancelledAt': Timestamp.now(),
@@ -238,10 +240,10 @@ class VenueService {
       DocumentReference docRef = await _firestore
           .collection(_reviewsCollection)
           .add(review.toFirestore());
-      
+
       // Update venue rating
       await _updateVenueRating(review.venueId);
-      
+
       return docRef.id;
     } catch (e) {
       throw Exception('Failed to create review: $e');
@@ -279,10 +281,7 @@ class VenueService {
         }
         double averageRating = totalRating / reviewsSnapshot.docs.length;
 
-        await _firestore
-            .collection(_venuesCollection)
-            .doc(venueId)
-            .update({
+        await _firestore.collection(_venuesCollection).doc(venueId).update({
           'rating': averageRating,
           'totalReviews': reviewsSnapshot.docs.length,
           'updatedAt': Timestamp.now(),
@@ -326,12 +325,13 @@ class VenueService {
   ) async {
     try {
       WriteBatch batch = _firestore.batch();
-      
+
       for (BookingSlot slot in slots) {
-        DocumentReference docRef = _firestore.collection(_slotsCollection).doc();
+        DocumentReference docRef =
+            _firestore.collection(_slotsCollection).doc();
         batch.set(docRef, slot.toFirestore());
       }
-      
+
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to create booking slots: $e');
@@ -344,10 +344,7 @@ class VenueService {
     String? bookingId,
   ) async {
     try {
-      await _firestore
-          .collection(_slotsCollection)
-          .doc(slotId)
-          .update({
+      await _firestore.collection(_slotsCollection).doc(slotId).update({
         'isAvailable': isAvailable,
         'bookingId': bookingId,
         'updatedAt': Timestamp.now(),
@@ -367,9 +364,8 @@ class VenueService {
           .where('isActive', isEqualTo: true)
           .get();
 
-      List<Venue> allVenues = snapshot.docs
-          .map((doc) => Venue.fromFirestore(doc))
-          .toList();
+      List<Venue> allVenues =
+          snapshot.docs.map((doc) => Venue.fromFirestore(doc)).toList();
 
       String searchQuery = query.toLowerCase();
       return allVenues.where((venue) {
@@ -377,7 +373,8 @@ class VenueService {
             venue.description.toLowerCase().contains(searchQuery) ||
             venue.address.toLowerCase().contains(searchQuery) ||
             venue.city.toLowerCase().contains(searchQuery) ||
-            venue.sports.any((sport) => sport.toLowerCase().contains(searchQuery));
+            venue.sports
+                .any((sport) => sport.toLowerCase().contains(searchQuery));
       }).toList();
     } catch (e) {
       throw Exception('Failed to search venues: $e');
@@ -395,7 +392,8 @@ class VenueService {
 
       int totalBookings = bookingsSnapshot.docs.length;
       int completedBookings = bookingsSnapshot.docs
-          .where((doc) => (doc.data() as Map<String, dynamic>)['status'] == 'completed')
+          .where((doc) =>
+              (doc.data() as Map<String, dynamic>)['status'] == 'completed')
           .length;
 
       // Get revenue statistics

@@ -11,7 +11,7 @@ import '../services/venue_service.dart';
 import '../widgets/venue_card.dart';
 import '../widgets/venue_filter_sheet.dart';
 import 'add_venue_screen.dart';
-import 'venue_detail_screen.dart';
+import '../../../screens/venue/venue_profile_screen.dart';
 import 'my_venue_bookings_screen.dart';
 import 'owner_bookings_screen.dart';
 
@@ -26,7 +26,7 @@ class VenuesScreen extends StatefulWidget {
 class _VenuesScreenState extends State<VenuesScreen> {
   final VenueService _venueService = VenueService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   SportType? _selectedSportType;
   String? _selectedLocation;
   String _searchQuery = '';
@@ -151,10 +151,14 @@ class _VenuesScreenState extends State<VenuesScreen> {
             child: Container(
               padding: EdgeInsets.all(12.w),
               decoration: BoxDecoration(
-                color: _hasActiveFilters() ? ColorsManager.mainBlue : Colors.grey[50],
+                color: _hasActiveFilters()
+                    ? ColorsManager.mainBlue
+                    : Colors.grey[50],
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(
-                  color: _hasActiveFilters() ? ColorsManager.mainBlue : Colors.grey[300]!,
+                  color: _hasActiveFilters()
+                      ? ColorsManager.mainBlue
+                      : Colors.grey[300]!,
                 ),
               ),
               child: Icon(
@@ -196,7 +200,9 @@ class _VenuesScreenState extends State<VenuesScreen> {
                 ),
                 Gap(16.h),
                 Text(
-                  isPermissionError ? 'Permission Error' : 'Error loading venues',
+                  isPermissionError
+                      ? 'Permission Error'
+                      : 'Error loading venues',
                   style: TextStyles.font16Grey400Weight,
                 ),
                 Gap(8.h),
@@ -289,8 +295,8 @@ class _VenuesScreenState extends State<VenuesScreen> {
   }
 
   bool _hasActiveFilters() {
-    return _selectedSportType != null || 
-           (_selectedLocation != null && _selectedLocation!.isNotEmpty);
+    return _selectedSportType != null ||
+        (_selectedLocation != null && _selectedLocation!.isNotEmpty);
   }
 
   void _showFilterSheet() {
@@ -330,7 +336,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => VenueDetailScreen(venue: venue),
+        builder: (context) => VenueProfileScreen(venue: venue),
       ),
     );
   }

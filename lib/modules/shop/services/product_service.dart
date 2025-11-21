@@ -6,10 +6,12 @@ import '../models/review.dart';
 class ProductService {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
-  CollectionReference<Map<String, dynamic>> get _products => _db.collection('products');
+  CollectionReference<Map<String, dynamic>> get _products =>
+      _db.collection('products');
 
   Future<List<Product>> listProducts({String? category, String? query}) async {
-    Query<Map<String, dynamic>> q = _products.orderBy('createdAt', descending: true);
+    Query<Map<String, dynamic>> q =
+        _products.orderBy('createdAt', descending: true);
     if (category != null && category.isNotEmpty) {
       q = q.where('category', isEqualTo: category);
     }
@@ -18,7 +20,9 @@ class ProductService {
     if (query != null && query.trim().isNotEmpty) {
       final ql = query.toLowerCase();
       items = items
-          .where((p) => p.title.toLowerCase().contains(ql) || p.description.toLowerCase().contains(ql))
+          .where((p) =>
+              p.title.toLowerCase().contains(ql) ||
+              p.description.toLowerCase().contains(ql))
           .toList();
     }
     return items;
@@ -31,7 +35,10 @@ class ProductService {
   }
 
   Future<List<Product>> listByOwner(String ownerId) async {
-    final snap = await _products.where('ownerId', isEqualTo: ownerId).orderBy('createdAt', descending: true).get();
+    final snap = await _products
+        .where('ownerId', isEqualTo: ownerId)
+        .orderBy('createdAt', descending: true)
+        .get();
     return snap.docs.map(Product.fromDoc).toList();
   }
 
@@ -55,7 +62,8 @@ class ProductService {
       _products.doc(productId).collection('reviews');
 
   Future<List<Review>> getReviews(String productId) async {
-    final snap = await _reviews(productId).orderBy('timestamp', descending: true).get();
+    final snap =
+        await _reviews(productId).orderBy('timestamp', descending: true).get();
     return snap.docs.map(Review.fromDoc).toList();
   }
 
@@ -105,7 +113,7 @@ class ProductService {
     // Get the current product to find related products by category
     final product = await getProduct(productId);
     if (product == null) return [];
-    
+
     final snap = await _products
         .where('category', isEqualTo: product.category)
         .where('id', isNotEqualTo: productId)
@@ -114,4 +122,3 @@ class ProductService {
     return snap.docs.map(Product.fromDoc).toList();
   }
 }
-

@@ -95,11 +95,14 @@ class CloudinaryService {
         debugPrint('🔧 Upload parameters (SIGNED CONFIG + UNSIGNED PRESET):');
         debugPrint('   - Cloud Name: ${CloudinaryConfig.cloudName}');
         debugPrint('   - API Key: ${CloudinaryConfig.apiKey}');
-        debugPrint('   - API Secret: ${CloudinaryConfig.apiSecret.substring(0, 5)}...');
-        debugPrint('   - Upload Preset: ${CloudinaryConfig.uploadPreset} (unsigned preset)');
+        debugPrint(
+            '   - API Secret: ${CloudinaryConfig.apiSecret.substring(0, 5)}...');
+        debugPrint(
+            '   - Upload Preset: ${CloudinaryConfig.uploadPreset} (unsigned preset)');
         debugPrint('   - File path: ${imageFile.path}');
         debugPrint('   - File size: ${imageFile.lengthSync()} bytes');
-        debugPrint('   - Target Folder: ${CloudinaryConfig.profileImagesFolder}');
+        debugPrint(
+            '   - Target Folder: ${CloudinaryConfig.profileImagesFolder}');
       }
 
       // Use upload preset approach (unsigned upload with preset)
@@ -151,7 +154,8 @@ class CloudinaryService {
           debugPrint('Current credentials:');
           debugPrint('- Cloud Name: ${CloudinaryConfig.cloudName}');
           debugPrint('- API Key: ${CloudinaryConfig.apiKey}');
-          debugPrint('- API Secret: ${CloudinaryConfig.apiSecret.substring(0, 5)}...');
+          debugPrint(
+              '- API Secret: ${CloudinaryConfig.apiSecret.substring(0, 5)}...');
         }
       }
       throw Exception('Failed to upload profile image: ${e.toString()}');
@@ -159,14 +163,14 @@ class CloudinaryService {
   }
 
   /// Delete profile image from Cloudinary
-  /// 
+  ///
   /// [imageUrl] - The URL of the image to delete
   Future<void> deleteProfileImage(String imageUrl) async {
     try {
       // Extract public ID from URL
       final uri = Uri.parse(imageUrl);
       final pathSegments = uri.pathSegments;
-      
+
       // Find the public ID (usually after 'upload' and version)
       int uploadIndex = pathSegments.indexOf('upload');
       if (uploadIndex != -1 && uploadIndex + 2 < pathSegments.length) {
@@ -175,17 +179,20 @@ class CloudinaryService {
         if (pathSegments[publicIdIndex].startsWith('v')) {
           publicIdIndex++;
         }
-        
+
         // Reconstruct public ID from remaining segments
         final publicIdParts = pathSegments.sublist(publicIdIndex);
-        final publicId = publicIdParts.join('/').replaceAll(RegExp(r'\.[^.]+$'), ''); // Remove file extension
-        
+        final publicId = publicIdParts
+            .join('/')
+            .replaceAll(RegExp(r'\.[^.]+$'), ''); // Remove file extension
+
         if (kDebugMode) {
-          debugPrint('Attempting to delete Cloudinary image with public ID: $publicId');
+          debugPrint(
+              'Attempting to delete Cloudinary image with public ID: $publicId');
         }
 
         final response = await _cloudinary.destroy(publicId);
-        
+
         if (response.isSuccessful) {
           if (kDebugMode) {
             debugPrint('Cloudinary image deleted successfully');
@@ -206,12 +213,12 @@ class CloudinaryService {
   }
 
   /// Generate a transformation URL for displaying images with specific dimensions
-  /// 
+  ///
   /// [imageUrl] - The original Cloudinary URL
   /// [width] - Desired width
   /// [height] - Desired height
   /// [crop] - Crop mode (default: 'fill')
-  /// 
+  ///
   /// Returns the transformed URL
   String getTransformedImageUrl(
     String imageUrl, {
@@ -224,11 +231,11 @@ class CloudinaryService {
     try {
       final uri = Uri.parse(imageUrl);
       final pathSegments = uri.pathSegments.toList();
-      
+
       // Find upload segment
       int uploadIndex = pathSegments.indexOf('upload');
       if (uploadIndex == -1) return imageUrl;
-      
+
       // Build transformation string
       List<String> transformations = [];
       if (width != null) transformations.add('w_$width');
@@ -236,12 +243,12 @@ class CloudinaryService {
       transformations.add('c_$crop');
       transformations.add('q_$quality');
       transformations.add('f_$format');
-      
+
       final transformationString = transformations.join(',');
-      
+
       // Insert transformation after 'upload'
       pathSegments.insert(uploadIndex + 1, transformationString);
-      
+
       // Rebuild URL
       final newUri = uri.replace(pathSegments: pathSegments);
       return newUri.toString();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../modules/coach/screens/coach_listing_screen.dart';
+import '../../modules/coach/services/coach_service.dart';
 import '../../screens/venue/venue_discovery_screen.dart';
 import '../../modules/tournament/screens/tournament_list_screen.dart';
 import '../../modules/team/screens/team_management_screen.dart';
@@ -10,7 +11,8 @@ import '../../theming/colors.dart';
 import '../../core/widgets/notification_badge.dart' as notification_badge;
 import '../dashboard/ui/dashboard_screen.dart';
 import '../dashboard/dashboard_integration.dart';
-import '../../modules/shop/screens/enhanced_shop_home_screen.dart';
+import 'package:playaround/features/community_feed/ui/pages/community_feed_screen.dart';
+import '../explore/screens/player_matchmaking_screen.dart';
 import '../../routing/routes.dart';
 import 'package:flutter/material.dart' as material;
 
@@ -24,21 +26,21 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen>
     with TickerProviderStateMixin {
-  int _currentIndex = 0;
+  int _currentIndex = 3; // Community as default landing
   late PageController _pageController;
   late AnimationController _animationController;
+  final CoachService _coachService = CoachService();
+  bool _isCoachAdminLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _pageController = PageController(initialPage: _currentIndex);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
   }
-
-
 
   @override
   void dispose() {
@@ -49,14 +51,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
 
   final List<NavigationDestination> _destinations = [
     const NavigationDestination(
-      icon: Icon(Icons.dashboard_outlined),
-      selectedIcon: Icon(Icons.dashboard),
-      label: 'Dashboard',
+      icon: Icon(Icons.person_outline),
+      selectedIcon: Icon(Icons.person),
+      label: 'Profile',
     ),
     const NavigationDestination(
       icon: Icon(Icons.sports_outlined),
       selectedIcon: Icon(Icons.sports),
       label: 'Coaches',
+    ),
+    const NavigationDestination(
+      icon: Icon(Icons.swap_horiz),
+      selectedIcon: Icon(Icons.swap_horiz),
+      label: 'Swipe',
+    ),
+    const NavigationDestination(
+      icon: Icon(Icons.forum_outlined),
+      selectedIcon: Icon(Icons.forum),
+      label: 'Community',
     ),
     const NavigationDestination(
       icon: Icon(Icons.location_on_outlined),
@@ -73,20 +85,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
       selectedIcon: Icon(Icons.emoji_events),
       label: 'Tournaments',
     ),
-    const NavigationDestination(
-      icon: Icon(Icons.storefront_outlined),
-      selectedIcon: Icon(Icons.storefront),
-      label: 'Shop',
-    ),
   ];
 
   final List<Widget> _screens = [
-    const DashboardScreen(),     // Dashboard (main hub)
-    const CoachListingScreen(),  // Coach
+    const DashboardScreen(), // Profile
+    const CoachListingScreen(), // Coaches
+    const PlayerMatchmakingScreen(showBackButton: false), // Swipe Matches from nav
+    const CommunityFeedScreen(), // Community (home)
     const VenueDiscoveryScreen(), // Venues
     const TeamManagementScreen(), // Teams
     const TournamentListScreen(), // Tournaments
-    const EnhancedShopHomeScreen(),      // Shop
   ];
 
   @override
@@ -115,12 +123,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
           _currentIndex = index;
         });
       },
-      children: _screens.map((screen) =>
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: screen,
-        ),
-      ).toList(),
+      children: _screens
+          .map(
+            (screen) => AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: screen,
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -150,16 +160,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
             final isSelected = index == _currentIndex;
 
             Widget icon = IconTheme(
-              data: IconThemeData(color: isSelected ? Colors.red : Colors.grey[400], size: 24),
-              child: isSelected ? (destination.selectedIcon ?? destination.icon) : destination.icon,
+              data: IconThemeData(
+                  color: isSelected ? Colors.red : Colors.grey[400], size: 24),
+              child: isSelected
+                  ? (destination.selectedIcon ?? destination.icon)
+                  : destination.icon,
             );
 
-            if (destination.label == 'Dashboard' && index == 0) {
+            if (destination.label == 'Profile' && index == 0) {
               icon = notification_badge.NotificationBadge(
                 count: 0,
                 child: IconTheme(
-                  data: IconThemeData(color: isSelected ? Colors.red : Colors.grey[400], size: 24),
-                  child: isSelected ? (destination.selectedIcon ?? destination.icon) : destination.icon,
+                  data: IconThemeData(
+                      color: isSelected ? Colors.red : Colors.grey[400],
+                      size: 24),
+                  child: isSelected
+                      ? (destination.selectedIcon ?? destination.icon)
+                      : destination.icon,
                 ),
               );
             }
@@ -168,10 +185,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
               onTap: () => _onDestinationSelected(index),
               child: Container(
                 padding: EdgeInsets.all(8.w),
-                decoration: isSelected ? BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ) : null,
+                decoration: isSelected
+                    ? BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12.r),
+                      )
+                    : null,
                 child: icon,
               ),
             );
@@ -184,40 +203,49 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   Widget? _buildFloatingActionButton() {
     // Show different FABs based on current screen
     switch (_currentIndex) {
-      case 1: // Listings/Book
+      case 1: // Coaches - admin panel
         return material.FloatingActionButton(
-          onPressed: _navigateToCreateListing,
+          onPressed: _isCoachAdminLoading ? null : _navigateToCoachAdminPanel,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
-          child: const Icon(Icons.add),
+          child: _isCoachAdminLoading
+              ? SizedBox(
+                  width: 20.w,
+                  height: 20.w,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.admin_panel_settings_outlined),
         );
-      case 2: // Venues
+      case 4: // Venues
         return material.FloatingActionButton(
           onPressed: _navigateToAddVenue,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
           child: const Icon(Icons.add_location),
         );
-      case 3: // Teams
+      case 5: // Teams
         return material.FloatingActionButton(
           onPressed: _navigateToCreateTeam,
           backgroundColor: ColorsManager.mainBlue,
           foregroundColor: Colors.white,
           child: const Icon(Icons.group_add),
         );
-      case 4: // Tournaments
+      case 6: // Tournaments
         return material.FloatingActionButton(
           onPressed: _navigateToCreateTournament,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
           child: const Icon(Icons.emoji_events),
         );
-      case 5: // Shop
+      case 3: // Community (home)
         return material.FloatingActionButton(
-          onPressed: _navigateToAddProduct,
+          onPressed: _navigateToCreateCommunityPost,
           backgroundColor: ColorsManager.primary,
           foregroundColor: ColorsManager.onPrimary,
-          child: const Icon(Icons.add_shopping_cart),
+          child: const Icon(Icons.post_add),
         );
       default:
         return null;
@@ -254,8 +282,46 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
   }
 
   // Navigation methods for FAB actions
-  void _navigateToCreateListing() {
-    Navigator.pushNamed(context, Routes.shopAddProduct);
+  Future<void> _navigateToCoachAdminPanel() async {
+    if (!mounted) return;
+    setState(() {
+      _isCoachAdminLoading = true;
+    });
+
+    try {
+      final coachProfile = await _coachService.getCurrentUserCoachProfile();
+      if (!mounted) return;
+
+      if (coachProfile == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Only coaches can manage the coaching admin panel. Complete coach onboarding to continue.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      await Navigator.pushNamed(
+        context,
+        Routes.coachProfileEditScreen,
+        arguments: coachProfile,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to open coach admin panel: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isCoachAdminLoading = false;
+      });
+    }
   }
 
   void _navigateToAddVenue() {
@@ -270,7 +336,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen>
     Navigator.pushNamed(context, Routes.createTournamentScreen);
   }
 
-  void _navigateToAddProduct() {
-    Navigator.pushNamed(context, Routes.shopAddProduct);
+  void _navigateToCreateCommunityPost() {
+    Navigator.pushNamed(context, Routes.communityCreatePost);
   }
 }

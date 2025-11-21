@@ -283,23 +283,25 @@ class _TournamentSharingState extends State<TournamentSharing> {
 
   Future<void> _shareToWhatsApp() async {
     await _performShare('WhatsApp', () {
-      final text = Uri.encodeComponent('${_getShareText()}\n\n${_getShareUrl()}');
+      final text =
+          Uri.encodeComponent('${_getShareText()}\n\n${_getShareUrl()}');
       return 'https://wa.me/?text=$text';
     });
   }
 
-  Future<void> _performShare(String platform, String Function() getShareUrl) async {
+  Future<void> _performShare(
+      String platform, String Function() getShareUrl) async {
     setState(() {
       _isSharing = true;
     });
 
     try {
       final shareUrl = getShareUrl();
-      
+
       // In a real app, you would use a package like url_launcher to open the URL
       // For now, we'll just copy the text to clipboard
       await Clipboard.setData(ClipboardData(text: shareUrl));
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -378,7 +380,8 @@ class _TournamentFollowButtonState extends State<TournamentFollowButton> {
         style: TextStyles.font14WhiteSemiBold,
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _isFollowing ? ColorsManager.success : ColorsManager.primary,
+        backgroundColor:
+            _isFollowing ? ColorsManager.success : ColorsManager.primary,
         foregroundColor: Colors.white,
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
         shape: RoundedRectangleBorder(
@@ -407,11 +410,13 @@ class _TournamentFollowButtonState extends State<TournamentFollowButton> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isFollowing 
+              _isFollowing
                   ? 'You are now following this tournament!'
                   : 'You have unfollowed this tournament.',
             ),
-            backgroundColor: _isFollowing ? ColorsManager.success : ColorsManager.textSecondary,
+            backgroundColor: _isFollowing
+                ? ColorsManager.success
+                : ColorsManager.textSecondary,
           ),
         );
       }

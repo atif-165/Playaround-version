@@ -22,12 +22,12 @@ class PeopleSearchScreen extends StatefulWidget {
 class _PeopleSearchScreenState extends State<PeopleSearchScreen>
     with TickerProviderStateMixin {
   final PeopleMatchingService _matchingService = PeopleMatchingService();
-  
+
   List<MatchmakingSuggestion> _suggestions = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
   int _currentIndex = 0;
-  
+
   late AnimationController _cardAnimationController;
   late AnimationController _buttonAnimationController;
   late Animation<double> _cardAnimation;
@@ -52,7 +52,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _buttonAnimationController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -82,14 +82,14 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
       });
 
       final suggestions = await _matchingService.getPotentialMatches(limit: 20);
-      
+
       if (mounted) {
         setState(() {
           _suggestions = suggestions;
           _currentIndex = 0;
           _isLoading = false;
         });
-        
+
         _cardAnimationController.forward();
       }
     } catch (e) {
@@ -97,7 +97,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading suggestions: $e')),
         );
@@ -107,7 +107,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
 
   Future<void> _loadMoreSuggestions() async {
     if (_isLoadingMore) return;
-    
+
     try {
       setState(() {
         _isLoadingMore = true;
@@ -118,7 +118,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
         limit: 10,
         excludeUserIds: excludeIds,
       );
-      
+
       if (mounted) {
         setState(() {
           _suggestions.addAll(newSuggestions);
@@ -247,7 +247,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
                       ),
                     ),
                   ),
-                
+
                 // Current card
                 if (_currentIndex < _suggestions.length)
                   Positioned.fill(
@@ -405,7 +405,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
 
   void _handleComment() {
     if (_currentIndex >= _suggestions.length) return;
-    
+
     final suggestion = _suggestions[_currentIndex];
     _showCommentDialog(suggestion);
   }
@@ -478,7 +478,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
 
   void _showCommentDialog(MatchmakingSuggestion suggestion) {
     final commentController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -510,7 +510,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
                     toUserId: suggestion.id,
                     comment: commentController.text.trim(),
                   );
-                  
+
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -549,7 +549,7 @@ class _PeopleSearchScreenState extends State<PeopleSearchScreen>
               mood: mood,
               description: description,
             );
-            
+
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Mood updated!')),

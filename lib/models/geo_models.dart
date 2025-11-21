@@ -105,10 +105,11 @@ class GeoVenue {
   /// Create from Firestore document
   factory GeoVenue.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     GeoData? geoLocation;
     if (data['geoLocation'] != null) {
-      geoLocation = GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
+      geoLocation =
+          GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
     }
 
     return GeoVenue(
@@ -203,10 +204,11 @@ class GeoTeam {
   /// Create from Firestore document
   factory GeoTeam.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     GeoData? geoLocation;
     if (data['geoLocation'] != null) {
-      geoLocation = GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
+      geoLocation =
+          GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
     }
 
     return GeoTeam(
@@ -290,7 +292,8 @@ class GeoPlayer {
 
     GeoData? geoLocation;
     if (data['geoLocation'] != null) {
-      geoLocation = GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
+      geoLocation =
+          GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
     }
 
     return GeoPlayer(
@@ -400,7 +403,8 @@ class GeoTournament {
 
     GeoData? geoLocation;
     if (data['geoLocation'] != null) {
-      geoLocation = GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
+      geoLocation =
+          GeoData.fromMap(data['geoLocation'] as Map<String, dynamic>);
     }
 
     return GeoTournament(
@@ -410,10 +414,13 @@ class GeoTournament {
       sportType: data['sportType'] ?? '',
       organizerId: data['organizerId'] ?? '',
       organizerName: data['organizerName'] ?? '',
-      registrationStartDate: (data['registrationStartDate'] as Timestamp).toDate(),
+      registrationStartDate:
+          (data['registrationStartDate'] as Timestamp).toDate(),
       registrationEndDate: (data['registrationEndDate'] as Timestamp).toDate(),
       startDate: (data['startDate'] as Timestamp).toDate(),
-      endDate: data['endDate'] != null ? (data['endDate'] as Timestamp).toDate() : null,
+      endDate: data['endDate'] != null
+          ? (data['endDate'] as Timestamp).toDate()
+          : null,
       maxTeams: data['maxTeams'] ?? 0,
       currentTeamsCount: data['currentTeamsCount'] ?? 0,
       location: data['location'] ?? '',
@@ -462,7 +469,8 @@ class GeoTournament {
   /// Check if registration is open
   bool get isRegistrationOpen {
     final now = DateTime.now();
-    return now.isAfter(registrationStartDate) && now.isBefore(registrationEndDate);
+    return now.isAfter(registrationStartDate) &&
+        now.isBefore(registrationEndDate);
   }
 
   /// Check if tournament has started

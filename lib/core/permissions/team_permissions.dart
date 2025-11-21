@@ -6,32 +6,32 @@ enum TeamPermission {
   editTeamProfile,
   deleteTeam,
   manageTeamSettings,
-  
+
   // Roster management
   addPlayer,
   removePlayer,
   managePlayerRoles,
   viewPlayerDetails,
-  
+
   // Schedule management
   createEvent,
   editEvent,
   deleteEvent,
   manageSchedule,
-  
+
   // Communication
   sendAnnouncements,
   manageTeamChat,
   viewTeamChat,
-  
+
   // Performance
   viewPerformance,
   managePerformance,
-  
+
   // Tournaments
   registerTournament,
   manageTournamentRegistration,
-  
+
   // Admin
   managePermissions,
   viewAdminPanel,
@@ -79,7 +79,9 @@ class TeamPermissions {
 
   /// Check if user can manage schedule
   static bool canManageSchedule(TeamRole role) {
-    return role == TeamRole.owner || role == TeamRole.captain || role == TeamRole.viceCaptain;
+    return role == TeamRole.owner ||
+        role == TeamRole.captain ||
+        role == TeamRole.viceCaptain;
   }
 
   /// Check if user can send announcements
@@ -103,32 +105,32 @@ class TeamPermissions {
     TeamPermission.editTeamProfile,
     TeamPermission.deleteTeam,
     TeamPermission.manageTeamSettings,
-    
+
     // Roster management
     TeamPermission.addPlayer,
     TeamPermission.removePlayer,
     TeamPermission.managePlayerRoles,
     TeamPermission.viewPlayerDetails,
-    
+
     // Schedule management
     TeamPermission.createEvent,
     TeamPermission.editEvent,
     TeamPermission.deleteEvent,
     TeamPermission.manageSchedule,
-    
+
     // Communication
     TeamPermission.sendAnnouncements,
     TeamPermission.manageTeamChat,
     TeamPermission.viewTeamChat,
-    
+
     // Performance
     TeamPermission.viewPerformance,
     TeamPermission.managePerformance,
-    
+
     // Tournaments
     TeamPermission.registerTournament,
     TeamPermission.manageTournamentRegistration,
-    
+
     // Admin
     TeamPermission.managePermissions,
     TeamPermission.viewAdminPanel,
@@ -139,32 +141,32 @@ class TeamPermissions {
     // Team management
     TeamPermission.editTeamProfile,
     TeamPermission.manageTeamSettings,
-    
+
     // Roster management
     TeamPermission.addPlayer,
     TeamPermission.removePlayer,
     TeamPermission.managePlayerRoles,
     TeamPermission.viewPlayerDetails,
-    
+
     // Schedule management
     TeamPermission.createEvent,
     TeamPermission.editEvent,
     TeamPermission.deleteEvent,
     TeamPermission.manageSchedule,
-    
+
     // Communication
     TeamPermission.sendAnnouncements,
     TeamPermission.manageTeamChat,
     TeamPermission.viewTeamChat,
-    
+
     // Performance
     TeamPermission.viewPerformance,
     TeamPermission.managePerformance,
-    
+
     // Tournaments
     TeamPermission.registerTournament,
     TeamPermission.manageTournamentRegistration,
-    
+
     // Admin
     TeamPermission.viewAdminPanel,
   };
@@ -173,18 +175,18 @@ class TeamPermissions {
   static const Set<TeamPermission> _viceCaptainPermissions = {
     // Roster management
     TeamPermission.viewPlayerDetails,
-    
+
     // Schedule management
     TeamPermission.createEvent,
     TeamPermission.editEvent,
     TeamPermission.manageSchedule,
-    
+
     // Communication
     TeamPermission.viewTeamChat,
-    
+
     // Performance
     TeamPermission.viewPerformance,
-    
+
     // Tournaments
     TeamPermission.registerTournament,
   };
@@ -193,13 +195,13 @@ class TeamPermissions {
   static const Set<TeamPermission> _memberPermissions = {
     // Roster management
     TeamPermission.viewPlayerDetails,
-    
+
     // Communication
     TeamPermission.viewTeamChat,
-    
+
     // Performance
     TeamPermission.viewPerformance,
-    
+
     // Tournaments
     TeamPermission.registerTournament,
   };

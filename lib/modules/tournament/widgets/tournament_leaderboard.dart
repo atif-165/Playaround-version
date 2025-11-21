@@ -6,12 +6,14 @@ import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/tournament_model.dart';
 import '../models/tournament_team_registration.dart';
+import '../models/tournament_match_model.dart';
 
 /// Tournament leaderboard widget showing team standings
 class TournamentLeaderboard extends StatefulWidget {
   final Tournament tournament;
   final List<TournamentTeamRegistration> teams;
   final Map<String, int> teamPoints;
+  final List<TournamentMatch> matches;
   final Function(String)? onTeamTap;
 
   const TournamentLeaderboard({
@@ -19,6 +21,7 @@ class TournamentLeaderboard extends StatefulWidget {
     required this.tournament,
     required this.teams,
     required this.teamPoints,
+    this.matches = const [],
     this.onTeamTap,
   });
 
@@ -91,7 +94,8 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
                 _sortOption = option;
               });
             },
-            itemBuilder: (context) => LeaderboardSortOption.values.map((option) {
+            itemBuilder: (context) =>
+                LeaderboardSortOption.values.map((option) {
               return PopupMenuItem(
                 value: option,
                 child: Row(
@@ -150,16 +154,17 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
     );
   }
 
-  Widget _buildTeamCard(TournamentTeamRegistration team, int position, int points) {
+  Widget _buildTeamCard(
+      TournamentTeamRegistration team, int position, int points) {
     final isTopThree = position <= 3;
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       child: Card(
         elevation: isTopThree ? 4 : 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12.r),
-          side: isTopThree 
+          side: isTopThree
               ? BorderSide(color: _getPositionColor(position), width: 2)
               : BorderSide.none,
         ),
@@ -185,12 +190,12 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
 
   Widget _buildPosition(int position) {
     final isTopThree = position <= 3;
-    
+
     return Container(
       width: 32.w,
       height: 32.h,
       decoration: BoxDecoration(
-        color: isTopThree 
+        color: isTopThree
             ? _getPositionColor(position)
             : ColorsManager.textSecondary,
         shape: BoxShape.circle,
@@ -262,9 +267,11 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
       child: Column(
         children: [
           _buildStatsCard('Total Teams', '${teams.length}'),
-          _buildStatsCard('Active Teams', '${teams.where((t) => widget.teamPoints[t.teamId] != null).length}'),
-          _buildStatsCard('Total Matches', '${widget.tournament.matches.length}'),
-          _buildStatsCard('Completed Matches', '${widget.tournament.matches.where((m) => m.status == MatchStatus.completed).length}'),
+          _buildStatsCard('Active Teams',
+              '${teams.where((t) => widget.teamPoints[t.teamId] != null).length}'),
+          _buildStatsCard('Total Matches', '${widget.matches.length}'),
+          _buildStatsCard('Completed Matches',
+              '${widget.matches.where((m) => m.status == TournamentMatchStatus.completed).length}'),
           Gap(24.h),
           _buildTopPerformers(teams),
         ],
@@ -301,7 +308,7 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
 
   Widget _buildTopPerformers(List<TournamentTeamRegistration> teams) {
     final topTeams = teams.take(3).toList();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -314,7 +321,7 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
           final index = entry.key;
           final team = entry.value;
           final points = widget.teamPoints[team.teamId] ?? 0;
-          
+
           return Container(
             margin: EdgeInsets.only(bottom: 8.h),
             padding: EdgeInsets.all(12.w),
@@ -364,8 +371,8 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
   }
 
   Widget _buildRecentMatches() {
-    final recentMatches = widget.tournament.matches
-        .where((m) => m.status == MatchStatus.completed)
+    final recentMatches = widget.matches
+        .where((m) => m.status == TournamentMatchStatus.completed)
         .take(5)
         .toList();
 
@@ -396,7 +403,7 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            match.round,
+            match.round ?? 'N/A',
             style: TextStyles.font12Grey400Weight.copyWith(
               color: ColorsManager.textSecondary,
             ),
@@ -512,7 +519,7 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
 
   List<TournamentTeamRegistration> _getSortedTeams() {
     final teams = List<TournamentTeamRegistration>.from(widget.teams);
-    
+
     switch (_sortOption) {
       case LeaderboardSortOption.points:
         teams.sort((a, b) {
@@ -528,7 +535,7 @@ class _TournamentLeaderboardState extends State<TournamentLeaderboard>
         teams.sort((a, b) => b.memberCount.compareTo(a.memberCount));
         break;
     }
-    
+
     return teams;
   }
 

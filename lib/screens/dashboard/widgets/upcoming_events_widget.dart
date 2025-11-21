@@ -41,12 +41,12 @@ class UpcomingEventsWidget extends StatelessWidget {
           ],
         ),
         Gap(16.h),
-        
         if (events.isEmpty)
           _buildEmptyState()
         else
           Column(
-            children: events.take(3).map((event) => _buildEventCard(event)).toList(),
+            children:
+                events.take(3).map((event) => _buildEventCard(event)).toList(),
           ),
       ],
     );
@@ -93,10 +93,10 @@ class UpcomingEventsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: ColorsManager.surface,
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: ColorsManager.primary.withOpacity(0.3)),
+        border: Border.all(color: ColorsManager.primary.withValues(alpha: 0.3)),
         boxShadow: [
           BoxShadow(
-            color: ColorsManager.primary.withOpacity(0.1),
+            color: ColorsManager.primary.withValues(alpha: 0.1),
             blurRadius: 6.r,
             offset: Offset(0, 2.h),
           ),
@@ -108,7 +108,7 @@ class UpcomingEventsWidget extends StatelessWidget {
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: _getEventTypeColor(event.type).withOpacity(0.1),
+              color: _getEventTypeColor(event.type).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12.r),
             ),
             child: Icon(
@@ -118,7 +118,7 @@ class UpcomingEventsWidget extends StatelessWidget {
             ),
           ),
           Gap(16.w),
-          
+
           // Event Details
           Expanded(
             child: Column(
@@ -167,7 +167,7 @@ class UpcomingEventsWidget extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Time Until Event
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -232,7 +232,7 @@ class UpcomingEventsWidget extends StatelessWidget {
   String _getTimeUntilEvent(DateTime eventTime) {
     final now = DateTime.now();
     final difference = eventTime.difference(now);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d';
     } else if (difference.inHours > 0) {

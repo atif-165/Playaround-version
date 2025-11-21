@@ -7,6 +7,7 @@ import '../../../theming/typography.dart';
 /// Standardized button system with consistent styling and accessibility
 
 enum ButtonSize { small, medium, large }
+
 enum ButtonVariant { primary, secondary, tertiary, success, warning, error }
 
 /// Primary Filled Button - Main action button
@@ -55,7 +56,15 @@ class AppFilledButton extends StatelessWidget {
                 icon!,
                 SizedBox(width: 8.w),
               ],
-              Text(text, style: textStyle),
+              Flexible(
+                child: Text(
+                  text,
+                  style: textStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              ),
             ],
           );
 
@@ -197,7 +206,15 @@ class AppOutlinedButton extends StatelessWidget {
                 icon!,
                 SizedBox(width: 8.w),
               ],
-              Text(text, style: textStyle),
+              Flexible(
+                child: Text(
+                  text,
+                  style: textStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              ),
             ],
           );
 
@@ -325,7 +342,15 @@ class AppTextButton extends StatelessWidget {
                 icon!,
                 SizedBox(width: 8.w),
               ],
-              Text(text, style: textStyle),
+              Flexible(
+                child: Text(
+                  text,
+                  style: textStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              ),
             ],
           );
 

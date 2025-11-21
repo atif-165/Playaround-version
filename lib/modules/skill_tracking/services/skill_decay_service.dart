@@ -29,14 +29,16 @@ class SkillDecayService {
       // Check if we should run decay (don't run more than once per day)
       if (!await _shouldRunDecayCheck()) {
         if (kDebugMode) {
-          debugPrint('⏭️ SkillDecayService: Decay check already run today, skipping');
+          debugPrint(
+              '⏭️ SkillDecayService: Decay check already run today, skipping');
         }
         return;
       }
 
       // Get inactive users
-      final inactiveUsers = await _activityService.getInactiveUsers(defaultInactivityThreshold);
-      
+      final inactiveUsers =
+          await _activityService.getInactiveUsers(defaultInactivityThreshold);
+
       if (inactiveUsers.isEmpty) {
         if (kDebugMode) {
           debugPrint('✅ SkillDecayService: No inactive users found');
@@ -46,7 +48,8 @@ class SkillDecayService {
       }
 
       if (kDebugMode) {
-        debugPrint('🎯 SkillDecayService: Found ${inactiveUsers.length} inactive users');
+        debugPrint(
+            '🎯 SkillDecayService: Found ${inactiveUsers.length} inactive users');
       }
 
       // Process users in batches
@@ -55,7 +58,7 @@ class SkillDecayService {
 
       for (int i = 0; i < inactiveUsers.length; i += batchSize) {
         final batch = inactiveUsers.skip(i).take(batchSize).toList();
-        
+
         for (final userId in batch) {
           try {
             final wasDecayed = await _processUserDecay(userId);
@@ -63,7 +66,8 @@ class SkillDecayService {
             processedCount++;
           } catch (e) {
             if (kDebugMode) {
-              debugPrint('❌ SkillDecayService: Error processing decay for user $userId: $e');
+              debugPrint(
+                  '❌ SkillDecayService: Error processing decay for user $userId: $e');
             }
           }
         }
@@ -75,7 +79,8 @@ class SkillDecayService {
       await _updateLastDecayCheck();
 
       if (kDebugMode) {
-        debugPrint('✅ SkillDecayService: Processed $processedCount users, applied decay to $decayedCount users');
+        debugPrint(
+            '✅ SkillDecayService: Processed $processedCount users, applied decay to $decayedCount users');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -87,23 +92,26 @@ class SkillDecayService {
   /// Process skill decay for a specific user
   Future<bool> _processUserDecay(String userId) async {
     try {
-      final daysSinceActive = await _activityService.getDaysSinceLastActive(userId);
-      
+      final daysSinceActive =
+          await _activityService.getDaysSinceLastActive(userId);
+
       if (daysSinceActive < defaultInactivityThreshold) {
         return false; // User is not inactive enough for decay
       }
 
       // Apply decay
       await _automatedSkillService.applyInactivityDecay(userId);
-      
+
       if (kDebugMode) {
-        debugPrint('🔄 SkillDecayService: Applied decay to user $userId ($daysSinceActive days inactive)');
+        debugPrint(
+            '🔄 SkillDecayService: Applied decay to user $userId ($daysSinceActive days inactive)');
       }
-      
+
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillDecayService: Error processing decay for user $userId: $e');
+        debugPrint(
+            '❌ SkillDecayService: Error processing decay for user $userId: $e');
       }
       return false;
     }
@@ -112,10 +120,8 @@ class SkillDecayService {
   /// Check if we should run decay check (once per day)
   Future<bool> _shouldRunDecayCheck() async {
     try {
-      final doc = await _firestore
-          .collection('system_config')
-          .doc('skill_decay')
-          .get();
+      final doc =
+          await _firestore.collection('system_config').doc('skill_decay').get();
 
       if (!doc.exists) {
         return true; // First time running
@@ -123,7 +129,7 @@ class SkillDecayService {
 
       final data = doc.data() as Map<String, dynamic>;
       final lastCheck = (data[lastDecayCheckKey] as Timestamp?)?.toDate();
-      
+
       if (lastCheck == null) {
         return true;
       }
@@ -133,7 +139,8 @@ class SkillDecayService {
       return hoursSinceLastCheck >= 24;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillDecayService: Error checking if should run decay: $e');
+        debugPrint(
+            '❌ SkillDecayService: Error checking if should run decay: $e');
       }
       return true; // Default to running if error
     }
@@ -142,10 +149,7 @@ class SkillDecayService {
   /// Update the last decay check timestamp
   Future<void> _updateLastDecayCheck() async {
     try {
-      await _firestore
-          .collection('system_config')
-          .doc('skill_decay')
-          .set({
+      await _firestore.collection('system_config').doc('skill_decay').set({
         lastDecayCheckKey: Timestamp.fromDate(DateTime.now()),
         'lastRunBy': 'system',
         'version': '1.0',
@@ -161,17 +165,20 @@ class SkillDecayService {
   Future<void> forceDecayForUser(String userId) async {
     try {
       if (kDebugMode) {
-        debugPrint('🔄 SkillDecayService: Force running decay for user $userId');
+        debugPrint(
+            '🔄 SkillDecayService: Force running decay for user $userId');
       }
 
       await _automatedSkillService.applyInactivityDecay(userId);
-      
+
       if (kDebugMode) {
-        debugPrint('✅ SkillDecayService: Force decay completed for user $userId');
+        debugPrint(
+            '✅ SkillDecayService: Force decay completed for user $userId');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ SkillDecayService: Error force running decay for user $userId: $e');
+        debugPrint(
+            '❌ SkillDecayService: Error force running decay for user $userId: $e');
       }
       throw Exception('Failed to apply skill decay: $e');
     }
@@ -180,13 +187,12 @@ class SkillDecayService {
   /// Get decay statistics
   Future<Map<String, dynamic>> getDecayStatistics() async {
     try {
-      final inactiveUsers = await _activityService.getInactiveUsers(defaultInactivityThreshold);
-      
+      final inactiveUsers =
+          await _activityService.getInactiveUsers(defaultInactivityThreshold);
+
       // Get last decay check info
-      final configDoc = await _firestore
-          .collection('system_config')
-          .doc('skill_decay')
-          .get();
+      final configDoc =
+          await _firestore.collection('system_config').doc('skill_decay').get();
 
       DateTime? lastDecayCheck;
       if (configDoc.exists) {
@@ -198,7 +204,7 @@ class SkillDecayService {
         'inactiveUsersCount': inactiveUsers.length,
         'inactivityThresholdDays': defaultInactivityThreshold,
         'lastDecayCheck': lastDecayCheck?.toIso8601String(),
-        'nextDecayCheckDue': lastDecayCheck != null 
+        'nextDecayCheckDue': lastDecayCheck != null
             ? lastDecayCheck.add(const Duration(hours: 24)).toIso8601String()
             : 'Now',
         'shouldRunDecayCheck': await _shouldRunDecayCheck(),

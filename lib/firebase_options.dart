@@ -43,11 +43,15 @@ class DefaultFirebaseOptions {
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY', defaultValue: ''),
     appId: String.fromEnvironment('FIREBASE_WEB_APP_ID', defaultValue: ''),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: ''),
     projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
-    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN', defaultValue: ''),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
-    measurementId: String.fromEnvironment('FIREBASE_MEASUREMENT_ID', defaultValue: ''),
+    authDomain:
+        String.fromEnvironment('FIREBASE_AUTH_DOMAIN', defaultValue: ''),
+    storageBucket:
+        String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
+    measurementId:
+        String.fromEnvironment('FIREBASE_MEASUREMENT_ID', defaultValue: ''),
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -61,28 +65,38 @@ class DefaultFirebaseOptions {
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: ''),
     appId: String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: ''),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: ''),
     projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
-    iosBundleId: String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID', defaultValue: 'com.example.authBloc'),
+    storageBucket:
+        String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
+    iosBundleId: String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID',
+        defaultValue: 'com.example.authBloc'),
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: ''),
     appId: String.fromEnvironment('FIREBASE_IOS_APP_ID', defaultValue: ''),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: ''),
     projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
-    iosBundleId: String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID', defaultValue: 'com.example.authBloc'),
+    storageBucket:
+        String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
+    iosBundleId: String.fromEnvironment('FIREBASE_IOS_BUNDLE_ID',
+        defaultValue: 'com.example.authBloc'),
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY', defaultValue: ''),
     appId: String.fromEnvironment('FIREBASE_WINDOWS_APP_ID', defaultValue: ''),
-    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID', defaultValue: ''),
+    messagingSenderId: String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: ''),
     projectId: String.fromEnvironment('FIREBASE_PROJECT_ID', defaultValue: ''),
-    authDomain: String.fromEnvironment('FIREBASE_AUTH_DOMAIN', defaultValue: ''),
-    storageBucket: String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
-    measurementId: String.fromEnvironment('FIREBASE_WINDOWS_MEASUREMENT_ID', defaultValue: ''),
+    authDomain:
+        String.fromEnvironment('FIREBASE_AUTH_DOMAIN', defaultValue: ''),
+    storageBucket:
+        String.fromEnvironment('FIREBASE_STORAGE_BUCKET', defaultValue: ''),
+    measurementId: String.fromEnvironment('FIREBASE_WINDOWS_MEASUREMENT_ID',
+        defaultValue: ''),
   );
 }

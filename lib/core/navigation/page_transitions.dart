@@ -175,7 +175,8 @@ class AppPageTransitions {
   /// Shared axis transition (Material 3 style)
   static Route<T> sharedAxisTransition<T>({
     required Widget page,
-    SharedAxisTransitionType transitionType = SharedAxisTransitionType.horizontal,
+    SharedAxisTransitionType transitionType =
+        SharedAxisTransitionType.horizontal,
     RouteSettings? settings,
   }) {
     return PageRouteBuilder<T>(
@@ -280,7 +281,8 @@ extension NavigatorTransitions on NavigatorState {
     );
   }
 
-  Future<T?> pushReplacementWithTransition<T extends Object?, TO extends Object?>(
+  Future<T?>
+      pushReplacementWithTransition<T extends Object?, TO extends Object?>(
     Widget page, {
     TransitionType transition = TransitionType.slide,
     Duration? duration,

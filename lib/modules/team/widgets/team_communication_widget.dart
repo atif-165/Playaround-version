@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../theming/public_profile_theme.dart';
+import '../../chat/models/chat_room.dart';
+import '../../chat/screens/chat_screen.dart';
+import '../../chat/services/chat_service.dart';
 import '../services/team_service.dart';
+import '../screens/team_video_call_screen.dart';
 
 /// Widget for team communication features
 class TeamCommunicationWidget extends StatefulWidget {
@@ -18,36 +24,49 @@ class TeamCommunicationWidget extends StatefulWidget {
   });
 
   @override
-  State<TeamCommunicationWidget> createState() => _TeamCommunicationWidgetState();
+  State<TeamCommunicationWidget> createState() =>
+      _TeamCommunicationWidgetState();
 }
 
 class _TeamCommunicationWidgetState extends State<TeamCommunicationWidget> {
   final TeamService _teamService = TeamService();
+  final ChatService _chatService = ChatService();
+
+  bool _isOpeningChat = false;
+  bool _isStartingVideoCall = false;
+  bool _isStartingVoiceCall = false;
 
   @override
   Widget build(BuildContext context) {
+    final radius = 22.r;
+
     return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+      decoration: PublicProfileTheme.glassPanelDecoration(
+        borderRadius: radius,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Team Communication',
-            style: TextStyles.font18DarkBlue600Weight,
+          Padding(
+            padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 12.h),
+            child: Text(
+              'Team Communication',
+              style: TextStyles.font18White600Weight,
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Text(
+              'Keep everyone synced with group chat and instant video huddles.',
+              style: TextStyles.font12White500Weight
+                  .copyWith(color: Colors.white70),
+            ),
           ),
           Gap(16.h),
-          _buildCommunicationOptions(),
+          Padding(
+            padding: EdgeInsets.all(20.w),
+            child: _buildCommunicationOptions(),
+          ),
         ],
       ),
     );
@@ -59,33 +78,28 @@ class _TeamCommunicationWidgetState extends State<TeamCommunicationWidget> {
         _buildCommunicationCard(
           icon: Icons.chat,
           title: 'Team Chat',
-          subtitle: 'Group chat for team members',
+          subtitle: 'Launch the group chat shared with all team members.',
           color: ColorsManager.mainBlue,
           onTap: _openTeamChat,
-        ),
-        Gap(12.h),
-        _buildCommunicationCard(
-          icon: Icons.file_upload,
-          title: 'File Sharing',
-          subtitle: 'Share documents, images, and videos',
-          color: ColorsManager.success,
-          onTap: _openFileSharing,
+          isLoading: _isOpeningChat,
         ),
         Gap(12.h),
         _buildCommunicationCard(
           icon: Icons.video_call,
-          title: 'Video Meetings',
-          subtitle: 'Schedule and join team video calls',
+          title: 'Video Call',
+          subtitle: 'Start a live video call and notify every teammate.',
           color: ColorsManager.warning,
-          onTap: _openVideoMeetings,
+          onTap: () => _startRealtimeCall(isVideoCall: true),
+          isLoading: _isStartingVideoCall,
         ),
         Gap(12.h),
         _buildCommunicationCard(
-          icon: Icons.notifications,
-          title: 'Team Notifications',
-          subtitle: 'Manage team notification settings',
-          color: ColorsManager.darkBlue,
-          onTap: _openNotificationSettings,
+          icon: Icons.call,
+          title: 'Voice Call',
+          subtitle: 'Audio-only huddles that reuse the same call controls.',
+          color: ColorsManager.mainBlue,
+          onTap: () => _startRealtimeCall(isVideoCall: false),
+          isLoading: _isStartingVoiceCall,
         ),
       ],
     );
@@ -97,124 +111,250 @@ class _TeamCommunicationWidgetState extends State<TeamCommunicationWidget> {
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    bool isLoading = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12.r),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isLoading ? null : onTap,
+        borderRadius: BorderRadius.circular(18.r),
+        child: Container(
+          padding: EdgeInsets.all(18.w),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.16),
+            borderRadius: BorderRadius.circular(18.r),
+            border: Border.all(color: color.withOpacity(0.32)),
           ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40.w,
-              height: 40.w,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(20.r),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44.w,
+                height: 44.w,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(14.r),
+                ),
+                child: Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 22.sp,
+                ),
               ),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 20.sp,
+              Gap(12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyles.font16White600Weight,
+                    ),
+                    Gap(4.h),
+                    Text(
+                      subtitle,
+                      style: TextStyles.font12White500Weight
+                          .copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Gap(12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyles.font16DarkBlue600Weight,
-                  ),
-                  Gap(2.h),
-                  Text(
-                    subtitle,
-                    style: TextStyles.font13Grey400Weight,
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: ColorsManager.gray,
-              size: 16.sp,
-            ),
-          ],
+              if (isLoading)
+                SizedBox(
+                  width: 18.w,
+                  height: 18.w,
+                  child: const CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white54,
+                  size: 16.sp,
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Future<void> _openTeamChat() async {
+    if (_isOpeningChat) return;
+
+    setState(() {
+      _isOpeningChat = true;
+    });
+
     try {
-      final hasChat = await _teamService.hasTeamGroupChat(widget.teamId);
-      
-      if (!hasChat) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Team chat not available yet'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
+      final chatId =
+          await _teamService.ensureTeamGroupChat(widget.teamId);
+      ChatRoom? chatRoom = await _chatService.getChatRoom(chatId);
+      chatRoom ??= await _chatService.getGroupChatByEntity(
+        entityType: 'team',
+        entityId: widget.teamId,
+      );
+
+      if (!mounted) return;
+
+      if (chatRoom == null) {
+        _showSnackBar(
+          'Unable to open team chat. Please try again later.',
+          Colors.red,
+        );
         return;
       }
 
-      // TODO: Navigate to team chat screen
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Opening team chat...'),
-            backgroundColor: Colors.blue,
-          ),
-        );
-      }
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(chatRoom: chatRoom!),
+        ),
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open chat: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+        _showSnackBar(
+          'Failed to open chat: $e',
+          Colors.red,
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isOpeningChat = false;
+        });
       }
     }
   }
 
-  void _openFileSharing() {
-    // TODO: Implement file sharing functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('File sharing coming soon!'),
-        backgroundColor: Colors.blue,
-      ),
-    );
+  Future<void> _startRealtimeCall({required bool isVideoCall}) async {
+    final isBusy =
+        isVideoCall ? _isStartingVideoCall : _isStartingVoiceCall;
+    if (isBusy) return;
+
+    final permissionsGranted = await _ensureMediaPermissions();
+    if (!permissionsGranted) return;
+
+    setState(() {
+      if (isVideoCall) {
+        _isStartingVideoCall = true;
+      } else {
+        _isStartingVoiceCall = true;
+      }
+    });
+
+    try {
+      await _teamService.startTeamVideoMeeting(
+        widget.teamId,
+        callType: isVideoCall ? 'video' : 'audio',
+      );
+      if (!mounted) return;
+
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => TeamVideoCallScreen(
+            teamId: widget.teamId,
+            teamName: widget.teamName,
+            callId: 'team_${widget.teamId}',
+            isVideoCall: isVideoCall,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        _showSnackBar(
+          'Failed to start call: $error',
+          Colors.red,
+        );
+      }
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        if (isVideoCall) {
+          _isStartingVideoCall = false;
+        } else {
+          _isStartingVoiceCall = false;
+        }
+      });
+    }
   }
 
-  void _openVideoMeetings() {
-    // TODO: Implement video meetings functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Video meetings coming soon!'),
-        backgroundColor: Colors.blue,
-      ),
-    );
+  Future<bool> _ensureMediaPermissions() async {
+    while (true) {
+      // Check current statuses
+      var cameraStatus = await Permission.camera.status;
+      var micStatus = await Permission.microphone.status;
+
+      // If already granted, we are done
+      final hasCamera = cameraStatus.isGranted || cameraStatus.isLimited;
+      final hasMic = micStatus.isGranted || micStatus.isLimited;
+      if (hasCamera && hasMic) {
+        return true;
+      }
+
+      // Request permissions when they are not yet granted
+      if (!hasCamera) {
+        cameraStatus = await Permission.camera.request();
+      }
+      if (!hasMic) {
+        micStatus = await Permission.microphone.request();
+      }
+
+      final cameraGranted =
+          cameraStatus.isGranted || cameraStatus.isLimited;
+      final micGranted = micStatus.isGranted || micStatus.isLimited;
+      if (cameraGranted && micGranted) {
+        return true;
+      }
+
+      final permanentlyDenied = cameraStatus.isPermanentlyDenied ||
+          micStatus.isPermanentlyDenied;
+
+      // Show dialog to explain next steps
+      final shouldRetry = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Permissions required'),
+              content: const Text(
+                'Camera and microphone permissions are required to start a call.\n\n'
+                'Please grant access to continue.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                if (permanentlyDenied)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                      openAppSettings();
+                    },
+                    child: const Text('Open Settings'),
+                  ),
+                if (!permanentlyDenied)
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Retry'),
+                  ),
+              ],
+            ),
+          ) ??
+          false;
+
+      if (!shouldRetry) {
+        _showSnackBar(
+          'Camera and microphone permissions are required to start the call.',
+          Colors.red,
+        );
+        return false;
+      }
+    }
   }
 
-  void _openNotificationSettings() {
-    // TODO: Implement notification settings
+  void _showSnackBar(String message, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notification settings coming soon!'),
-        backgroundColor: Colors.blue,
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
       ),
     );
   }

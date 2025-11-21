@@ -1,0 +1,133 @@
+{
+  "auth": {
+    "login_title": "Sign in to continue",
+    "login_message": "Access personalized dashboards, schedules, and analytics tailored to your role."
+  },
+  "nav": {
+    "home": "Home",
+    "explore": "Explore",
+    "schedule": "Schedule",
+    "community": "Community",
+    "admin": "Admin",
+    "coach": "Coach Hub",
+    "profile": "Profile"
+  },
+  "dashboard": {
+    "loading_title": "Preparing your dashboard",
+    "error_title": "We couldn't load your dashboard right now.",
+    "player": {
+      "headline": "Your player dashboard",
+      "upcoming_events": "Upcoming events",
+      "quick_actions": "Quick actions",
+      "highlights": "Highlights"
+    },
+    "team": {
+      "headline_coach": "Coach performance overview",
+      "headline_owner": "Team operations overview",
+      "headline_admin": "Organization snapshot",
+      "headline_generic": "Team insights",
+      "events_title": "Team schedule",
+      "actions_title": "Team actions",
+      "highlights_title": "Impact highlights"
+    },
+    "mvp": {
+      "headline": "MVP spotlight dashboard",
+      "events_title": "Elite schedule",
+      "actions_title": "Keep your momentum",
+      "highlights_title": "Recent highlights"
+    }
+  },
+  "explore": {
+    "title": "Discover what's trending",
+    "subtitle": "Fresh matchups, venues, and communities aligned to your play style.",
+    "metrics": {
+      "sessions": "Sessions joined this month",
+      "new_connections": "New connections",
+      "trending_events": "Trending events nearby"
+    },
+    "insights_title": "Insights for you",
+    "insights": {
+      "network": "Your network is growing 12% faster than similar players.",
+      "events": "Friday evenings are the busiest time for pickup games.",
+      "content": "Highlight reels with captions get 34% more reactions."
+    }
+  },
+  "analytics": {
+    "title": "Performance analytics",
+    "subtitle": "Monitor engagement, progress, and trends across your teams.",
+    "performance_trend": "Performance trend",
+    "engagement_breakdown": "Engagement breakdown",
+    "month_0": "May",
+    "month_1": "Jun",
+    "month_2": "Jul",
+    "month_3": "Aug",
+    "month_4": "Sep",
+    "month_5": "Oct",
+    "channel_0": "App",
+    "channel_1": "Community",
+    "channel_2": "Events",
+    "channel_3": "Coach Hub",
+    "channel_4": "Shop"
+  },
+  "schedule": {
+    "title": "Your schedule",
+    "subtitle": "Stay on top of sessions, coaching, and community events.",
+    "items": {
+      "session": "Sunrise team session",
+      "session_subtitle": "High-intensity scrimmage and conditioning",
+      "coaching": "Player development workshop",
+      "coaching_subtitle": "Focus on agility drills and footwork",
+      "community": "Community strategy huddle",
+      "community_subtitle": "Plan content and fan engagement"
+    },
+    "status": {
+      "confirmed": "Confirmed",
+      "in_review": "In review",
+      "planning": "Planning"
+    }
+  },
+  "community": {
+    "title": "Community stories",
+    "subtitle": "Showcase your journey and collaborate with the PlayAround network.",
+    "highlights": {
+      "announcements": "Announcements hub",
+      "announcements_desc": "Share roster changes, sponsorship updates, and big wins.",
+      "moments": "Top moments",
+      "moments_desc": "Curate highlight reels and celebrate fan shoutouts.",
+      "collabs": "Collaboration requests",
+      "collabs_desc": "Find coaches, teams, and venues available for joint events."
+    }
+  },
+  "admin": {
+    "title": "Administrative control center",
+    "subtitle": "Monitor platform health, compliance, and operational focus areas.",
+    "metrics": {
+      "system_health": "System health",
+      "active_flags": "Active feature flags",
+      "support_sla": "Support SLA adherence"
+    },
+    "actions_title": "Administrative actions",
+    "actions": {
+      "audit": "Run security & compliance audit",
+      "manage_roles": "Manage roles and permissions",
+      "review_reports": "Review incident reports"
+    }
+  },
+  "profile": {
+    "welcome": "Signed in as",
+    "actions": "Profile settings",
+    "manage_account": "Manage account",
+    "notifications": "Notifications",
+    "appearance": "Appearance & theme",
+    "sign_out": "Sign out",
+    "roles": {
+      "player": "Player",
+      "coach": "Coach",
+      "team_owner": "Team Owner",
+      "admin": "Admin",
+      "mvp": "MVP",
+      "guest": "Guest"
+    }
+  }
+}
+

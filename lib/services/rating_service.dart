@@ -91,7 +91,8 @@ class RatingService {
       await _sendRatingNotification(rating);
 
       if (kDebugMode) {
-        debugPrint('✅ RatingService: Created rating for $ratingType $ratedEntityId with $stars stars');
+        debugPrint(
+            '✅ RatingService: Created rating for $ratingType $ratedEntityId with $stars stars');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -129,7 +130,8 @@ class RatingService {
   }
 
   /// Get rating statistics for an entity
-  Future<RatingStats> getRatingStats(String entityId, RatingType ratingType) async {
+  Future<RatingStats> getRatingStats(
+      String entityId, RatingType ratingType) async {
     try {
       final doc = await _firestore
           .collection(_ratingStatsCollection)
@@ -151,7 +153,8 @@ class RatingService {
   }
 
   /// Get rating statistics stream for real-time updates
-  Stream<RatingStats> getRatingStatsStream(String entityId, RatingType ratingType) {
+  Stream<RatingStats> getRatingStatsStream(
+      String entityId, RatingType ratingType) {
     try {
       return _firestore
           .collection(_ratingStatsCollection)
@@ -201,7 +204,8 @@ class RatingService {
 
       // Create pending rating for user to rate the coach/venue
       if (booking.listingType == ListingType.coach) {
-        final pendingRatingId = '${booking.userId}_${booking.ownerId}_${booking.id}';
+        final pendingRatingId =
+            '${booking.userId}_${booking.ownerId}_${booking.id}';
         final pendingRating = PendingRatingModel(
           id: pendingRatingId,
           bookingId: booking.id,
@@ -219,7 +223,8 @@ class RatingService {
           pendingRating.toFirestore(),
         );
       } else if (booking.listingType == ListingType.venue) {
-        final pendingRatingId = '${booking.userId}_venue_${booking.listingId}_${booking.id}';
+        final pendingRatingId =
+            '${booking.userId}_venue_${booking.listingId}_${booking.id}';
         final pendingRating = PendingRatingModel(
           id: pendingRatingId,
           bookingId: booking.id,
@@ -239,7 +244,8 @@ class RatingService {
       }
 
       // Create pending rating for coach/venue owner to rate the player
-      final ownerPendingRatingId = '${booking.ownerId}_${booking.userId}_${booking.id}';
+      final ownerPendingRatingId =
+          '${booking.ownerId}_${booking.userId}_${booking.id}';
       final ownerPendingRating = PendingRatingModel(
         id: ownerPendingRatingId,
         bookingId: booking.id,
@@ -253,14 +259,17 @@ class RatingService {
       );
 
       batch.set(
-        _firestore.collection(_pendingRatingsCollection).doc(ownerPendingRatingId),
+        _firestore
+            .collection(_pendingRatingsCollection)
+            .doc(ownerPendingRatingId),
         ownerPendingRating.toFirestore(),
       );
 
       await batch.commit();
 
       if (kDebugMode) {
-        debugPrint('✅ RatingService: Created pending ratings for booking ${booking.id}');
+        debugPrint(
+            '✅ RatingService: Created pending ratings for booking ${booking.id}');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -271,9 +280,11 @@ class RatingService {
   }
 
   /// Check if user has rated a specific booking
-  Future<bool> hasUserRatedBooking(String bookingId, String userId, String entityId) async {
+  Future<bool> hasUserRatedBooking(
+      String bookingId, String userId, String entityId) async {
     try {
-      final rating = await _getRatingByBookingAndEntity(bookingId, entityId, userId);
+      final rating =
+          await _getRatingByBookingAndEntity(bookingId, entityId, userId);
       return rating != null;
     } catch (e) {
       if (kDebugMode) {
@@ -305,7 +316,8 @@ class RatingService {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ RatingService: Error getting rating by booking and entity: $e');
+        debugPrint(
+            '❌ RatingService: Error getting rating by booking and entity: $e');
       }
       return null;
     }
@@ -318,7 +330,8 @@ class RatingService {
     WriteBatch batch,
   ) async {
     try {
-      final statsDoc = _firestore.collection(_ratingStatsCollection).doc(entityId);
+      final statsDoc =
+          _firestore.collection(_ratingStatsCollection).doc(entityId);
       final statsSnapshot = await statsDoc.get();
 
       RatingStats stats;
@@ -346,8 +359,9 @@ class RatingService {
   ) async {
     try {
       final pendingRatingId = '${userId}_${entityId}_$bookingId';
-      final pendingDoc = _firestore.collection(_pendingRatingsCollection).doc(pendingRatingId);
-      
+      final pendingDoc =
+          _firestore.collection(_pendingRatingsCollection).doc(pendingRatingId);
+
       batch.update(pendingDoc, {'isCompleted': true});
     } catch (e) {
       if (kDebugMode) {
@@ -366,7 +380,8 @@ class RatingService {
       switch (rating.ratingType) {
         case RatingType.coach:
           title = 'New Rating Received!';
-          message = '${rating.ratedByName} rated your coaching ${rating.stars} stars';
+          message =
+              '${rating.ratedByName} rated your coaching ${rating.stars} stars';
           break;
         case RatingType.player:
           title = 'New Rating Received!';
@@ -374,7 +389,8 @@ class RatingService {
           break;
         case RatingType.venue:
           title = 'New Venue Rating!';
-          message = '${rating.ratedByName} rated your venue ${rating.stars} stars';
+          message =
+              '${rating.ratedByName} rated your venue ${rating.stars} stars';
           break;
       }
 
@@ -401,7 +417,8 @@ class RatingService {
       await _notificationService.sendNotification(notification);
 
       if (kDebugMode) {
-        debugPrint('✅ RatingService: Sent rating notification to ${rating.ratedEntityId}');
+        debugPrint(
+            '✅ RatingService: Sent rating notification to ${rating.ratedEntityId}');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -412,7 +429,8 @@ class RatingService {
   }
 
   /// Send notification for pending rating requests
-  Future<void> sendPendingRatingNotifications(List<PendingRatingModel> pendingRatings) async {
+  Future<void> sendPendingRatingNotifications(
+      List<PendingRatingModel> pendingRatings) async {
     try {
       for (final pendingRating in pendingRatings) {
         final notification = NotificationModel(
@@ -420,7 +438,8 @@ class RatingService {
           userId: pendingRating.userId,
           type: NotificationType.ratingRequest,
           title: 'Rate Your Experience',
-          message: 'Please rate your experience with ${pendingRating.entityName}',
+          message:
+              'Please rate your experience with ${pendingRating.entityName}',
           data: {
             'pendingRatingId': pendingRating.id,
             'entityId': pendingRating.ratedEntityId,
@@ -435,11 +454,13 @@ class RatingService {
       }
 
       if (kDebugMode) {
-        debugPrint('✅ RatingService: Sent ${pendingRatings.length} pending rating notifications');
+        debugPrint(
+            '✅ RatingService: Sent ${pendingRatings.length} pending rating notifications');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('⚠️ RatingService: Failed to send pending rating notifications: $e');
+        debugPrint(
+            '⚠️ RatingService: Failed to send pending rating notifications: $e');
       }
       // Don't rethrow as notifications are not critical
     }

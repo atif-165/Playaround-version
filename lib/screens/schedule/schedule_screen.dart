@@ -13,7 +13,8 @@ class ScheduleScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Schedule', style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
+        title: Text('Schedule',
+            style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
         backgroundColor: Colors.grey[900],
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -21,11 +22,14 @@ class ScheduleScreen extends StatelessWidget {
         padding: EdgeInsets.all(16.w),
         child: Column(
           children: [
-            _buildScheduleItem('Basketball Training', 'Today 3:00 PM', 'John Doe'),
+            _buildScheduleItem(
+                'Basketball Training', 'Today 3:00 PM', 'John Doe'),
             Gap(12.h),
-            _buildScheduleItem('Tennis Lesson', 'Tomorrow 10:00 AM', 'Sarah Smith'),
+            _buildScheduleItem(
+                'Tennis Lesson', 'Tomorrow 10:00 AM', 'Sarah Smith'),
             Gap(12.h),
-            _buildScheduleItem('Football Practice', 'Friday 5:00 PM', 'Mike Johnson'),
+            _buildScheduleItem(
+                'Football Practice', 'Friday 5:00 PM', 'Mike Johnson'),
           ],
         ),
       ),
@@ -59,9 +63,15 @@ class ScheduleScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.white)),
-                Text(time, style: TextStyles.font14Grey400Weight.copyWith(color: Colors.grey[400])),
-                Text('with $student', style: TextStyles.font12Grey400Weight.copyWith(color: Colors.grey[500])),
+                Text(title,
+                    style: TextStyles.font16DarkBlueBold
+                        .copyWith(color: Colors.white)),
+                Text(time,
+                    style: TextStyles.font14Grey400Weight
+                        .copyWith(color: Colors.grey[400])),
+                Text('with $student',
+                    style: TextStyles.font12Grey400Weight
+                        .copyWith(color: Colors.grey[500])),
               ],
             ),
           ),

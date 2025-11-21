@@ -25,10 +25,12 @@ class TournamentTeamRegistrationScreen extends StatefulWidget {
   });
 
   @override
-  State<TournamentTeamRegistrationScreen> createState() => _TournamentTeamRegistrationScreenState();
+  State<TournamentTeamRegistrationScreen> createState() =>
+      _TournamentTeamRegistrationScreenState();
 }
 
-class _TournamentTeamRegistrationScreenState extends State<TournamentTeamRegistrationScreen> {
+class _TournamentTeamRegistrationScreenState
+    extends State<TournamentTeamRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _tournamentService = TournamentService();
   final _teamService = TeamService();
@@ -80,10 +82,16 @@ class _TournamentTeamRegistrationScreenState extends State<TournamentTeamRegistr
     try {
       final teams = await _teamService.getUserTeams().first;
       setState(() {
-        _userTeams = teams.where((team) =>
-          team.ownerId == _currentUserProfile!.uid && // Only teams where user is captain
-          team.sportType == widget.tournament.sportType // Only teams of matching sport type
-        ).toList();
+        _userTeams = teams
+            .where((team) =>
+                    team.ownerId ==
+                        _currentUserProfile!
+                            .uid && // Only teams where user is captain
+                    team.sportType ==
+                        widget.tournament
+                            .sportType // Only teams of matching sport type
+                )
+            .toList();
         _isLoadingTeams = false;
       });
     } catch (e) {
@@ -223,7 +231,8 @@ class _TournamentTeamRegistrationScreenState extends State<TournamentTeamRegistr
               color: ColorsManager.textSecondary,
             ),
           ),
-          if (widget.tournament.entryFee != null && widget.tournament.entryFee! > 0) ...[
+          if (widget.tournament.entryFee != null &&
+              widget.tournament.entryFee! > 0) ...[
             Gap(4.h),
             Text(
               'Entry Fee: \$${widget.tournament.entryFee!.toStringAsFixed(2)}',
@@ -232,7 +241,8 @@ class _TournamentTeamRegistrationScreenState extends State<TournamentTeamRegistr
               ),
             ),
           ],
-          if (widget.tournament.winningPrize != null && widget.tournament.winningPrize! > 0) ...[
+          if (widget.tournament.winningPrize != null &&
+              widget.tournament.winningPrize! > 0) ...[
             Gap(4.h),
             Text(
               'Winning Prize: \$${widget.tournament.winningPrize!.toStringAsFixed(2)}',
@@ -495,7 +505,9 @@ class _TournamentTeamRegistrationScreenState extends State<TournamentTeamRegistr
         tournamentId: widget.tournament.id,
         teamId: _selectedTeam!.id,
         qualifyingAnswers: qualifyingAnswers,
-        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
       );
 
       if (mounted) {

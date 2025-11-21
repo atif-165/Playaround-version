@@ -121,7 +121,14 @@ class _TeamFinderScreenState extends State<TeamFinderScreen> {
               child: _buildDropdownFilter(
                 'Sport',
                 _selectedSport,
-                ['All Sports', 'Football', 'Basketball', 'Tennis', 'Swimming', 'Volleyball'],
+                [
+                  'All Sports',
+                  'Football',
+                  'Basketball',
+                  'Tennis',
+                  'Swimming',
+                  'Volleyball'
+                ],
                 (value) => setState(() => _selectedSport = value!),
               ),
             ),
@@ -130,7 +137,13 @@ class _TeamFinderScreenState extends State<TeamFinderScreen> {
               child: _buildDropdownFilter(
                 'Level',
                 _selectedLevel,
-                ['All Levels', 'Beginner', 'Intermediate', 'Advanced', 'Professional'],
+                [
+                  'All Levels',
+                  'Beginner',
+                  'Intermediate',
+                  'Advanced',
+                  'Professional'
+                ],
                 (value) => setState(() => _selectedLevel = value!),
               ),
             ),

@@ -284,7 +284,7 @@ class _TimeslotSelectorState extends State<TimeslotSelector> {
 
     final updatedSlots = List<TimeSlot>.from(widget.selectedTimeSlots);
     updatedSlots.add(timeSlot);
-    
+
     // Sort time slots by start time
     updatedSlots.sort((a, b) {
       final aMinutes = _timeToMinutes(a.start);

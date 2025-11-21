@@ -1,27 +1,4 @@
 {
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "playaround-6556e",
-          "appId": "1:1019361375836:android:91966b3319644b7dd31899",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "playaround-6556e",
-          "configurations": {
-            "android": "1:1019361375836:android:91966b3319644b7dd31899",
-            "ios": "1:1019361375836:ios:4e717a2ac628392fd31899",
-            "macos": "1:1019361375836:ios:4e717a2ac628392fd31899",
-            "web": "1:1019361375836:web:c6299db5fe2a7bacd31899",
-            "windows": "1:1019361375836:web:27639e73c5856447d31899"
-          }
-        }
-      }
-    }
-  },
   "firestore": {
     "database": "(default)",
     "location": "asia-south1",

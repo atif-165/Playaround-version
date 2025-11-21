@@ -107,7 +107,8 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
       child: AppBar(
         title: Text(
           'Start New Chat',
-          style: TextStyles.font16DarkBlue600Weight.copyWith( // Reduced font size
+          style: TextStyles.font16DarkBlue600Weight.copyWith(
+            // Reduced font size
             color: Colors.white,
           ),
         ),
@@ -310,7 +311,8 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                             vertical: 2.h,
                           ),
                           decoration: BoxDecoration(
-                            color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+                            color:
+                                ColorsManager.mainBlue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4.r),
                           ),
                           child: Text(
@@ -352,31 +354,33 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
         shape: BoxShape.circle,
         color: ColorsManager.gray93Color,
       ),
-      child: user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
-          ? ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: user.profilePictureUrl!,
-                width: 50.w,
-                height: 50.h,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  width: 50.w,
-                  height: 50.h,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: ColorsManager.gray93Color,
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: ColorsManager.mainBlue,
-                      strokeWidth: 2,
+      child:
+          user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
+              ? ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: user.profilePictureUrl!,
+                    width: 50.w,
+                    height: 50.h,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      width: 50.w,
+                      height: 50.h,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ColorsManager.gray93Color,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: ColorsManager.mainBlue,
+                          strokeWidth: 2,
+                        ),
+                      ),
                     ),
+                    errorWidget: (context, url, error) =>
+                        _buildInitialsAvatar(user.fullName),
                   ),
-                ),
-                errorWidget: (context, url, error) => _buildInitialsAvatar(user.fullName),
-              ),
-            )
-          : _buildInitialsAvatar(user.fullName),
+                )
+              : _buildInitialsAvatar(user.fullName),
     );
   }
 

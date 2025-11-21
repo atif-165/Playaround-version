@@ -59,7 +59,8 @@ class SkillGoal {
       skillType: SkillType.fromString(data['skillType'] as String? ?? 'speed'),
       currentScore: (data['currentScore'] as num?)?.toInt().clamp(0, 100) ?? 0,
       targetScore: (data['targetScore'] as num?)?.toInt().clamp(0, 100) ?? 100,
-      targetDate: (data['targetDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      targetDate:
+          (data['targetDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       status: GoalStatus.fromString(data['status'] as String? ?? 'active'),
       description: data['description'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),

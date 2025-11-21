@@ -32,9 +32,8 @@ class ReviewService {
         helpfulUsers: const [],
       );
 
-      final docRef = await _firestore
-          .collection(_reviewsCollection)
-          .add(review.toMap());
+      final docRef =
+          await _firestore.collection(_reviewsCollection).add(review.toMap());
 
       // Update product rating
       await _updateProductRating(productId);
@@ -71,9 +70,8 @@ class ReviewService {
         helpfulUsers: const [],
       );
 
-      final docRef = await _firestore
-          .collection(_reviewsCollection)
-          .add(review.toMap());
+      final docRef =
+          await _firestore.collection(_reviewsCollection).add(review.toMap());
 
       // Update shop rating
       await _updateShopRating(shopId);
@@ -93,9 +91,7 @@ class ReviewService {
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Review.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch product reviews: $e');
     }
@@ -110,9 +106,7 @@ class ReviewService {
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Review.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch shop reviews: $e');
     }
@@ -127,9 +121,7 @@ class ReviewService {
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Review.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch user reviews: $e');
     }
@@ -158,10 +150,8 @@ class ReviewService {
   /// Mark review as helpful
   static Future<void> markReviewHelpful(String reviewId, String userId) async {
     try {
-      final reviewDoc = await _firestore
-          .collection(_reviewsCollection)
-          .doc(reviewId)
-          .get();
+      final reviewDoc =
+          await _firestore.collection(_reviewsCollection).doc(reviewId).get();
 
       if (!reviewDoc.exists) throw Exception('Review not found');
 
@@ -176,10 +166,7 @@ class ReviewService {
         helpfulUsers.add(userId);
       }
 
-      await _firestore
-          .collection(_reviewsCollection)
-          .doc(reviewId)
-          .update({
+      await _firestore.collection(_reviewsCollection).doc(reviewId).update({
         'helpfulCount': helpfulUsers.length,
         'helpfulUsers': helpfulUsers,
       });
@@ -191,20 +178,15 @@ class ReviewService {
   /// Delete review
   static Future<void> deleteReview(String reviewId) async {
     try {
-      final reviewDoc = await _firestore
-          .collection(_reviewsCollection)
-          .doc(reviewId)
-          .get();
+      final reviewDoc =
+          await _firestore.collection(_reviewsCollection).doc(reviewId).get();
 
       if (!reviewDoc.exists) throw Exception('Review not found');
 
       final review = Review.fromDoc(reviewDoc);
 
       // Delete the review
-      await _firestore
-          .collection(_reviewsCollection)
-          .doc(reviewId)
-          .delete();
+      await _firestore.collection(_reviewsCollection).doc(reviewId).delete();
 
       // Update ratings for product or shop
       if (review.productId != null) {
@@ -222,7 +204,7 @@ class ReviewService {
   static Future<void> _updateProductRating(String productId) async {
     try {
       final reviews = await getProductReviews(productId);
-      
+
       if (reviews.isEmpty) return;
 
       double totalRating = 0.0;
@@ -232,10 +214,7 @@ class ReviewService {
 
       final averageRating = totalRating / reviews.length;
 
-      await _firestore
-          .collection('products')
-          .doc(productId)
-          .update({
+      await _firestore.collection('products').doc(productId).update({
         'rating': averageRating,
         'reviewCount': reviews.length,
       });
@@ -248,7 +227,7 @@ class ReviewService {
   static Future<void> _updateShopRating(String shopId) async {
     try {
       final reviews = await getShopReviews(shopId);
-      
+
       if (reviews.isEmpty) return;
 
       double totalRating = 0.0;
@@ -258,10 +237,7 @@ class ReviewService {
 
       final averageRating = totalRating / reviews.length;
 
-      await _firestore
-          .collection('shops')
-          .doc(shopId)
-          .update({
+      await _firestore.collection('shops').doc(shopId).update({
         'rating': averageRating,
         'reviewCount': reviews.length,
       });
@@ -279,9 +255,7 @@ class ReviewService {
           .limit(limit)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Review.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch recent reviews: $e');
     }
@@ -298,23 +272,21 @@ class ReviewService {
           .limit(limit)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Review.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Review.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch top-rated reviews: $e');
     }
   }
 
   /// Check if user can review product
-  static Future<bool> canUserReviewProduct(String userId, String productId) async {
+  static Future<bool> canUserReviewProduct(
+      String userId, String productId) async {
     try {
       // Check if user has purchased this product
       final ordersSnapshot = await _firestore
           .collection('orders')
           .where('userId', isEqualTo: userId)
-          .where('items', arrayContains: {'productId': productId})
-          .get();
+          .where('items', arrayContains: {'productId': productId}).get();
 
       if (ordersSnapshot.docs.isEmpty) return false;
 

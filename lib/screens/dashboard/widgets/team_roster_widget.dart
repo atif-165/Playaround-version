@@ -39,14 +39,15 @@ class TeamRosterWidget extends StatelessWidget {
           ],
         ),
         Gap(16.h),
-        
+
         // Team Header
         Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
             color: ColorsManager.surface,
             borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: ColorsManager.primary.withOpacity(0.3)),
+            border:
+                Border.all(color: ColorsManager.primary.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -55,7 +56,7 @@ class TeamRosterWidget extends StatelessWidget {
                 width: 50.w,
                 height: 50.w,
                 decoration: BoxDecoration(
-                  color: ColorsManager.primary.withOpacity(0.1),
+                  color: ColorsManager.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: ColorsManager.primary),
                 ),
@@ -65,13 +66,14 @@ class TeamRosterWidget extends StatelessWidget {
                         child: Image.network(
                           teamInfo.logoUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildDefaultLogo(),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildDefaultLogo(),
                         ),
                       )
                     : _buildDefaultLogo(),
               ),
               Gap(16.w),
-              
+
               // Team Info
               Expanded(
                 child: Column(
@@ -118,7 +120,7 @@ class TeamRosterWidget extends StatelessWidget {
           ),
         ),
         Gap(16.h),
-        
+
         // Members List
         SizedBox(
           height: 100.h,
@@ -158,7 +160,9 @@ class TeamRosterWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: member.isOnline ? ColorsManager.success : ColorsManager.outline,
+                    color: member.isOnline
+                        ? ColorsManager.success
+                        : ColorsManager.outline,
                     width: 2.w,
                   ),
                   color: ColorsManager.surfaceVariant,
@@ -168,12 +172,13 @@ class TeamRosterWidget extends StatelessWidget {
                         child: Image.network(
                           member.photoUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildDefaultMemberAvatar(),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildDefaultMemberAvatar(),
                         ),
                       )
                     : _buildDefaultMemberAvatar(),
               ),
-              
+
               // Online Status Indicator
               if (member.isOnline)
                 Positioned(
@@ -185,14 +190,15 @@ class TeamRosterWidget extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: ColorsManager.success,
                       shape: BoxShape.circle,
-                      border: Border.all(color: ColorsManager.surface, width: 2.w),
+                      border:
+                          Border.all(color: ColorsManager.surface, width: 2.w),
                     ),
                   ),
                 ),
             ],
           ),
           Gap(8.h),
-          
+
           // Member Name
           Text(
             member.name,
@@ -203,12 +209,12 @@ class TeamRosterWidget extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          
+
           // Member Role
           Container(
             padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
             decoration: BoxDecoration(
-              color: _getRoleColor(member.role).withOpacity(0.1),
+              color: _getRoleColor(member.role).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Text(
@@ -230,7 +236,7 @@ class TeamRosterWidget extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [
-            ColorsManager.primary.withOpacity(0.7),
+            ColorsManager.primary.withValues(alpha: 0.7),
             ColorsManager.primary,
           ],
           begin: Alignment.topLeft,

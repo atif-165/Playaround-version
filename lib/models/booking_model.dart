@@ -122,9 +122,12 @@ class BookingModel {
       'location': location,
       'notes': notes,
       'cancellationReason': cancellationReason,
-      'confirmedAt': confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
-      'cancelledAt': cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
-      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+      'confirmedAt':
+          confirmedAt != null ? Timestamp.fromDate(confirmedAt!) : null,
+      'cancelledAt':
+          cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
+      'completedAt':
+          completedAt != null ? Timestamp.fromDate(completedAt!) : null,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'metadata': metadata,
@@ -158,14 +161,14 @@ class BookingModel {
       location: map['location'] as String,
       notes: map['notes'] as String?,
       cancellationReason: map['cancellationReason'] as String?,
-      confirmedAt: map['confirmedAt'] != null 
-          ? (map['confirmedAt'] as Timestamp).toDate() 
+      confirmedAt: map['confirmedAt'] != null
+          ? (map['confirmedAt'] as Timestamp).toDate()
           : null,
-      cancelledAt: map['cancelledAt'] != null 
-          ? (map['cancelledAt'] as Timestamp).toDate() 
+      cancelledAt: map['cancelledAt'] != null
+          ? (map['cancelledAt'] as Timestamp).toDate()
           : null,
-      completedAt: map['completedAt'] != null 
-          ? (map['completedAt'] as Timestamp).toDate() 
+      completedAt: map['completedAt'] != null
+          ? (map['completedAt'] as Timestamp).toDate()
           : null,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
@@ -242,10 +245,11 @@ class BookingModel {
 
   /// Check if booking can be cancelled
   bool get canBeCancelled {
-    if (status == BookingStatus.cancelled || status == BookingStatus.completed) {
+    if (status == BookingStatus.cancelled ||
+        status == BookingStatus.completed) {
       return false;
     }
-    
+
     // Allow cancellation up to 2 hours before the booking
     final bookingDateTime = DateTime(
       selectedDate.year,
@@ -254,7 +258,7 @@ class BookingModel {
       int.parse(timeSlot.start.split(':')[0]),
       int.parse(timeSlot.start.split(':')[1]),
     );
-    
+
     final twoHoursBefore = bookingDateTime.subtract(const Duration(hours: 2));
     return DateTime.now().isBefore(twoHoursBefore);
   }
@@ -263,10 +267,11 @@ class BookingModel {
   double get durationInHours {
     final startParts = timeSlot.start.split(':');
     final endParts = timeSlot.end.split(':');
-    
-    final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+
+    final startMinutes =
+        int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
     final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
-    
+
     return (endMinutes - startMinutes) / 60.0;
   }
 
@@ -281,7 +286,8 @@ class BookingModel {
 
   /// Check if booking is upcoming (future and confirmed/pending)
   bool get isUpcoming {
-    if (status == BookingStatus.cancelled || status == BookingStatus.completed) {
+    if (status == BookingStatus.cancelled ||
+        status == BookingStatus.completed) {
       return false;
     }
     return !isPastBooking;

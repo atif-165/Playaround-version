@@ -36,6 +36,9 @@ class TeamJoinRequest {
   final DateTime? respondedAt;
   final String? respondedBy;
   final String? responseMessage;
+  final String? requestedRole; // Requested role (e.g., 'player', 'coach')
+  final String?
+      proposedPosition; // Proposed playing position (e.g., 'Forward', 'Defender')
 
   const TeamJoinRequest({
     required this.id,
@@ -51,7 +54,13 @@ class TeamJoinRequest {
     this.respondedAt,
     this.respondedBy,
     this.responseMessage,
+    this.requestedRole,
+    this.proposedPosition,
   });
+
+  // Backward compatibility getters
+  String? get userProfileImageUrl => requesterProfileImageUrl;
+  String get userName => requesterName;
 
   Map<String, dynamic> toMap() {
     return {
@@ -65,9 +74,12 @@ class TeamJoinRequest {
       'message': message,
       'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
-      'respondedAt': respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
+      'respondedAt':
+          respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
       'respondedBy': respondedBy,
       'responseMessage': responseMessage,
+      'requestedRole': requestedRole,
+      'proposedPosition': proposedPosition,
     };
   }
 
@@ -86,11 +98,13 @@ class TeamJoinRequest {
         orElse: () => JoinRequestStatus.pending,
       ),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
-      respondedAt: map['respondedAt'] != null 
-          ? (map['respondedAt'] as Timestamp).toDate() 
+      respondedAt: map['respondedAt'] != null
+          ? (map['respondedAt'] as Timestamp).toDate()
           : null,
       respondedBy: map['respondedBy'],
       responseMessage: map['responseMessage'],
+      requestedRole: map['requestedRole'],
+      proposedPosition: map['proposedPosition'],
     );
   }
 
@@ -108,6 +122,8 @@ class TeamJoinRequest {
     DateTime? respondedAt,
     String? respondedBy,
     String? responseMessage,
+    String? requestedRole,
+    String? proposedPosition,
   }) {
     return TeamJoinRequest(
       id: id ?? this.id,
@@ -116,13 +132,16 @@ class TeamJoinRequest {
       requesterId: requesterId ?? this.requesterId,
       requesterName: requesterName ?? this.requesterName,
       requesterEmail: requesterEmail ?? this.requesterEmail,
-      requesterProfileImageUrl: requesterProfileImageUrl ?? this.requesterProfileImageUrl,
+      requesterProfileImageUrl:
+          requesterProfileImageUrl ?? this.requesterProfileImageUrl,
       message: message ?? this.message,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       respondedAt: respondedAt ?? this.respondedAt,
       respondedBy: respondedBy ?? this.respondedBy,
       responseMessage: responseMessage ?? this.responseMessage,
+      requestedRole: requestedRole ?? this.requestedRole,
+      proposedPosition: proposedPosition ?? this.proposedPosition,
     );
   }
 

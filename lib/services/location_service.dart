@@ -47,9 +47,10 @@ class LocationService {
       );
 
       _currentLocation = GeoPoint(position.latitude, position.longitude);
-      
+
       if (kDebugMode) {
-        debugPrint('📍 LocationService: Current location - ${position.latitude}, ${position.longitude}');
+        debugPrint(
+            '📍 LocationService: Current location - ${position.latitude}, ${position.longitude}');
       }
 
       return _currentLocation;
@@ -64,11 +65,12 @@ class LocationService {
   /// Calculate distance between two GeoPoints in kilometers
   double calculateDistance(GeoPoint point1, GeoPoint point2) {
     return Geolocator.distanceBetween(
-      point1.latitude,
-      point1.longitude,
-      point2.latitude,
-      point2.longitude,
-    ) / 1000; // Convert to kilometers
+          point1.latitude,
+          point1.longitude,
+          point2.latitude,
+          point2.longitude,
+        ) /
+        1000; // Convert to kilometers
   }
 
   /// Format distance for display

@@ -67,7 +67,7 @@ class AppNumberField extends StatelessWidget {
           controller: controller,
           onChanged: onChanged,
           validator: validator,
-          keyboardType: allowDecimals 
+          keyboardType: allowDecimals
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.number,
           inputFormatters: _buildInputFormatters(),
@@ -79,7 +79,8 @@ class AppNumberField extends StatelessWidget {
             isDense: true,
             filled: true,
             fillColor: ColorsManager.lightShadeOfGray,
-            contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 17.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 20.w, vertical: 17.h),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
                 color: ColorsManager.gray93Color,
@@ -184,7 +185,7 @@ class _RangeTextInputFormatter extends TextInputFormatter {
       return newValue;
     }
 
-    final numericValue = allowDecimals 
+    final numericValue = allowDecimals
         ? double.tryParse(newValue.text)
         : int.tryParse(newValue.text);
 
@@ -266,7 +267,8 @@ class NumberFieldValidators {
     return null;
   }
 
-  static String? validateRange(String? value, String fieldName, int min, int max) {
+  static String? validateRange(
+      String? value, String fieldName, int min, int max) {
     if (value == null || value.isEmpty) {
       return 'Please enter $fieldName';
     }

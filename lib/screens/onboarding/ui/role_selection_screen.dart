@@ -9,6 +9,7 @@ import '../../../logic/cubit/onboarding_cubit.dart';
 import '../../../models/models.dart';
 import '../../../routing/routes.dart';
 import '../../../theming/colors.dart';
+import '../../../theming/public_profile_theme.dart';
 import '../../../theming/styles.dart';
 
 /// Screen for selecting user role (Player or Coach)
@@ -25,57 +26,63 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.of(context).size.height -
-                         MediaQuery.of(context).padding.top -
-                         MediaQuery.of(context).padding.bottom,
-            ),
-            child: IntrinsicHeight(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30.w, vertical: 20.h),
-                child: Column(
-                  children: [
-                    // Header
-                    _buildHeader(),
+      backgroundColor: PublicProfileTheme.backgroundColor,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: PublicProfileTheme.backgroundGradient,
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height -
+                    MediaQuery.of(context).padding.top -
+                    MediaQuery.of(context).padding.bottom,
+              ),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 30.w, vertical: 20.h),
+                  child: Column(
+                    children: [
+                      // Header
+                      _buildHeader(),
 
-                    Gap(30.h),
+                      Gap(30.h),
 
-                    // Role options
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _buildRoleOption(
-                            role: UserRole.player,
-                            title: 'I\'m a Player',
-                            subtitle: 'Looking for coaches and training opportunities',
-                            icon: Icons.sports_basketball,
-                            isSelected: _selectedRole == UserRole.player,
-                          ),
-
-                          Gap(20.h),
-
-                          _buildRoleOption(
-                            role: UserRole.coach,
-                            title: 'I\'m a Coach',
-                            subtitle: 'Ready to train and mentor players',
-                            icon: Icons.sports,
-                            isSelected: _selectedRole == UserRole.coach,
-                          ),
-                        ],
+                      // Role options
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildRoleOption(
+                              role: UserRole.player,
+                              title: 'I\'m a Player',
+                              subtitle:
+                                  'Looking for coaches and training opportunities',
+                              icon: Icons.sports_basketball,
+                              isSelected: _selectedRole == UserRole.player,
+                            ),
+                            Gap(20.h),
+                            _buildRoleOption(
+                              role: UserRole.coach,
+                              title: 'I\'m a Coach',
+                              subtitle: 'Ready to train and mentor players',
+                              icon: Icons.sports,
+                              isSelected: _selectedRole == UserRole.coach,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    Gap(30.h),
+                      Gap(30.h),
 
-                    // Continue button
-                    _buildContinueButton(),
+                      // Continue button
+                      _buildContinueButton(),
 
-                    Gap(20.h),
-                  ],
+                      Gap(20.h),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -126,9 +133,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               : ColorsManager.lightShadeOfGray,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected 
-                ? ColorsManager.mainBlue
-                : ColorsManager.gray93Color,
+            color:
+                isSelected ? ColorsManager.mainBlue : ColorsManager.gray93Color,
             width: isSelected ? 2.w : 1.3.w,
           ),
           boxShadow: isSelected
@@ -161,27 +167,27 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             ),
 
             Gap(12.h),
-            
+
             // Title
             Text(
               title,
               style: TextStyles.font18DarkBlue600Weight.copyWith(
-                color: isSelected 
+                color: isSelected
                     ? ColorsManager.mainBlue
                     : ColorsManager.darkBlue,
               ),
               textAlign: TextAlign.center,
             ),
-            
+
             Gap(8.h),
-            
+
             // Subtitle
             Text(
               subtitle,
               style: TextStyles.font14Grey400Weight,
               textAlign: TextAlign.center,
             ),
-            
+
             // Selection indicator
             if (isSelected) ...[
               Gap(8.h),
@@ -219,13 +225,20 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   Widget _buildContinueButton() {
     return BlocListener<OnboardingCubit, OnboardingState>(
       listener: (context, state) {
-        if (state is OnboardingRoleSelected) {
-          // Navigate to appropriate onboarding form
-          final route = state.selectedRole == UserRole.player
-              ? Routes.playerOnboardingScreen
-              : Routes.coachOnboardingScreen;
-          
-          context.pushNamed(route);
+        if (state is OnboardingComplete) {
+          // Navigate directly to main app after saving role
+          context.pushNamedAndRemoveUntil(
+            Routes.mainNavigation,
+            predicate: (route) => false,
+          );
+        } else if (state is OnboardingError) {
+          // Show error if profile save fails
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       },
       child: AppTextButton(
@@ -233,7 +246,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         textStyle: TextStyles.font16White600Weight,
         onPressed: _selectedRole != null
             ? () {
-                context.read<OnboardingCubit>().selectRole(_selectedRole!);
+                // Save minimal profile with role and navigate to app
+                context.read<OnboardingCubit>().saveMinimalProfileWithRole(_selectedRole!);
               }
             : () {}, // Provide empty function instead of null
         backgroundColor: _selectedRole != null

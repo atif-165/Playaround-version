@@ -8,6 +8,7 @@ import '../../../core/responsive/responsive_layout.dart';
 import '../../../core/accessibility/accessibility_helpers.dart';
 import '../models/sports_categories.dart';
 import '../models/product.dart';
+import '../widgets/product_card.dart';
 import '../../../routing/routes.dart';
 
 class ShopHomeScreen extends StatefulWidget {
@@ -65,11 +66,13 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
   void _filterProducts() {
     setState(() {
       _filteredProducts = _products.where((product) {
-        final matchesCategory = _selectedCategory == 'All' ||
-                               product.category == _selectedCategory;
+        final matchesCategory =
+            _selectedCategory == 'All' || product.category == _selectedCategory;
         final matchesSearch = _searchQuery.isEmpty ||
-                             product.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                             product.description.toLowerCase().contains(_searchQuery.toLowerCase());
+            product.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            product.description
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase());
         return matchesCategory && matchesSearch;
       }).toList();
     });
@@ -234,11 +237,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
             totalItems: _filteredProducts.length,
             onTap: () => _navigateToProductDetail(product),
             child: ProductCard(
-              name: product.title,
-              price: '₹${product.price.toStringAsFixed(0)}',
-              imageUrl: product.images.isNotEmpty ? product.images.first : null,
-              category: product.category,
-              rating: 4.5,
+              product: product,
               onTap: () => _navigateToProductDetail(product),
               onAddToCart: () => _addToCart(product),
             ),
@@ -268,11 +267,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
             totalItems: _filteredProducts.length,
             onTap: () => _navigateToProductDetail(product),
             child: ProductCard(
-              name: product.title,
-              price: '₹${product.price.toStringAsFixed(0)}',
-              imageUrl: product.images.isNotEmpty ? product.images.first : null,
-              category: product.category,
-              rating: 4.5,
+              product: product,
               onTap: () => _navigateToProductDetail(product),
               onAddToCart: () => _addToCart(product),
             ),
@@ -302,11 +297,7 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
             totalItems: _filteredProducts.length,
             onTap: () => _navigateToProductDetail(product),
             child: ProductCard(
-              name: product.title,
-              price: '₹${product.price.toStringAsFixed(0)}',
-              imageUrl: product.images.isNotEmpty ? product.images.first : null,
-              category: product.category,
-              rating: 4.5,
+              product: product,
               onTap: () => _navigateToProductDetail(product),
               onAddToCart: () => _addToCart(product),
             ),
@@ -449,7 +440,8 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
       Product(
         id: '3',
         title: 'Tennis Racket',
-        description: 'Lightweight tennis racket for beginners and professionals',
+        description:
+            'Lightweight tennis racket for beginners and professionals',
         price: 3200.0,
         category: 'Tennis',
         ownerId: 'sample-owner',
@@ -541,4 +533,3 @@ class _ShopHomeScreenState extends State<ShopHomeScreen> {
     ];
   }
 }
-

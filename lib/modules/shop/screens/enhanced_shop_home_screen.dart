@@ -45,7 +45,7 @@ class _EnhancedShopHomeScreenState extends State<EnhancedShopHomeScreen>
 
   bool _isLoading = true;
   int _cartItemCount = 0;
-  
+
   final ProductService _productService = ProductService();
 
   late TabController _tabController;
@@ -342,8 +342,10 @@ class _EnhancedShopHomeScreenState extends State<EnhancedShopHomeScreen>
           onSelected: _onSortChanged,
           itemBuilder: (context) => [
             const PopupMenuItem(value: 'newest', child: Text('Newest First')),
-            const PopupMenuItem(value: 'price_asc', child: Text('Price: Low to High')),
-            const PopupMenuItem(value: 'price_desc', child: Text('Price: High to Low')),
+            const PopupMenuItem(
+                value: 'price_asc', child: Text('Price: Low to High')),
+            const PopupMenuItem(
+                value: 'price_desc', child: Text('Price: High to Low')),
             const PopupMenuItem(value: 'rating', child: Text('Highest Rated')),
           ],
           icon: const Icon(Icons.sort),
@@ -920,8 +922,6 @@ class _EnhancedShopHomeScreenState extends State<EnhancedShopHomeScreen>
     );
   }
 
-
-
   // Navigation methods
   void _navigateToCart() {
     Navigator.pushNamed(context, Routes.shopCart);
@@ -930,8 +930,6 @@ class _EnhancedShopHomeScreenState extends State<EnhancedShopHomeScreen>
   void _navigateToOrders() {
     Navigator.pushNamed(context, Routes.shopOrders);
   }
-
-
 
   void _navigateToProductDetail(Product product) {
     Navigator.pushNamed(
@@ -956,9 +954,9 @@ class _EnhancedShopHomeScreenState extends State<EnhancedShopHomeScreen>
         product: product,
         quantity: 1,
       );
-      
+
       _loadCartCount();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

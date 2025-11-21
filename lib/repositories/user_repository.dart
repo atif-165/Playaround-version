@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,25 +6,44 @@ import 'package:flutter/foundation.dart';
 
 import '../models/models.dart';
 import '../services/cloudinary_service.dart';
+import '../services/firestore_cache_service.dart';
 
 /// Repository class for managing user profile data in Firestore
 class UserRepository {
   final FirebaseFirestore _firestore;
   final CloudinaryService _cloudinaryService;
+  final FirestoreCacheService _cacheService;
 
   static const String _usersCollection = 'users';
 
   UserRepository({
     FirebaseFirestore? firestore,
     CloudinaryService? cloudinaryService,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _cloudinaryService = cloudinaryService ?? CloudinaryService();
+    FirestoreCacheService? cacheService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _cloudinaryService = cloudinaryService ?? CloudinaryService(),
+        _cacheService = cacheService ?? FirestoreCacheService.instance;
 
   /// Get user profile by UID
   Future<UserProfile?> getUserProfile(String uid) async {
     try {
       if (kDebugMode) {
         debugPrint('🔍 UserRepository: Getting profile for UID: $uid');
+      }
+
+      final cached = await _cacheService.getDocument(
+        collection: FirestoreCacheCollection.users,
+        docId: uid,
+        maxAge: const Duration(minutes: 20),
+      );
+      if (cached != null) {
+        final cachedProfile = _createProfileFromData(cached);
+        if (cachedProfile != null) {
+          if (kDebugMode) {
+            debugPrint('📦 UserRepository: Returning cached profile for $uid');
+          }
+          return cachedProfile;
+        }
       }
 
       final doc = await _firestore.collection(_usersCollection).doc(uid).get();
@@ -41,6 +61,16 @@ class UserRepository {
 
       final profile = _createProfileFromDocument(doc);
 
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data != null) {
+        data['uid'] ??= doc.id;
+        unawaited(_cacheService.cacheDocument(
+          collection: FirestoreCacheCollection.users,
+          docId: uid,
+          data: data,
+        ));
+      }
+
       if (kDebugMode) {
         debugPrint('✅ UserRepository: Profile parsed successfully');
         debugPrint('   - Name: ${profile?.fullName}');
@@ -51,7 +81,8 @@ class UserRepository {
       return profile;
     } on FirebaseException catch (e) {
       if (kDebugMode) {
-        debugPrint('💥 UserRepository: Firebase error getting user profile: ${e.message}');
+        debugPrint(
+            '💥 UserRepository: Firebase error getting user profile: ${e.message}');
       }
       throw _handleFirebaseException(e);
     } catch (e) {
@@ -69,7 +100,13 @@ class UserRepository {
           .collection(_usersCollection)
           .doc(profile.uid)
           .set(profile.toFirestore(), SetOptions(merge: true));
-      
+
+      unawaited(_cacheService.cacheDocument(
+        collection: FirestoreCacheCollection.users,
+        docId: profile.uid,
+        data: profile.toFirestore(),
+      ));
+
       if (kDebugMode) {
         debugPrint('User profile saved successfully for UID: ${profile.uid}');
       }
@@ -87,16 +124,23 @@ class UserRepository {
   }
 
   /// Update specific fields of user profile
-  Future<void> updateUserProfile(String uid, Map<String, dynamic> updates) async {
+  Future<void> updateUserProfile(
+      String uid, Map<String, dynamic> updates) async {
     try {
       // Add updated timestamp
       updates['updatedAt'] = Timestamp.now();
-      
-      await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .update(updates);
-      
+
+      await _firestore.collection(_usersCollection).doc(uid).update(updates);
+
+      unawaited(_cacheService.mergeDocument(
+        collection: FirestoreCacheCollection.users,
+        docId: uid,
+        updates: {
+          ...updates,
+          'uid': uid,
+        },
+      ));
+
       if (kDebugMode) {
         debugPrint('User profile updated successfully for UID: $uid');
       }
@@ -120,17 +164,20 @@ class UserRepository {
         debugPrint('🚀 UserRepository: Starting image upload for user: $uid');
       }
 
-      final imageUrl = await _cloudinaryService.uploadProfileImage(imageFile, uid);
+      final imageUrl =
+          await _cloudinaryService.uploadProfileImage(imageFile, uid);
 
       if (kDebugMode) {
-        debugPrint('✅ UserRepository: Profile image uploaded successfully to Cloudinary');
+        debugPrint(
+            '✅ UserRepository: Profile image uploaded successfully to Cloudinary');
         debugPrint('🔗 UserRepository: Image URL: $imageUrl');
       }
 
       return imageUrl;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ UserRepository: Error uploading profile image to Cloudinary: $e');
+        debugPrint(
+            '❌ UserRepository: Error uploading profile image to Cloudinary: $e');
       }
       throw Exception('Failed to upload profile image: ${e.toString()}');
     }
@@ -142,7 +189,8 @@ class UserRepository {
       await _cloudinaryService.deleteProfileImage(imageUrl);
 
       if (kDebugMode) {
-        debugPrint('Profile image deleted successfully from Cloudinary: $imageUrl');
+        debugPrint(
+            'Profile image deleted successfully from Cloudinary: $imageUrl');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -167,14 +215,24 @@ class UserRepository {
   }
 
   /// Get users by role (for future features like finding coaches/players)
-  Future<List<UserProfile>> getUsersByRole(UserRole role, {int limit = 20}) async {
+  Future<List<UserProfile>> getUsersByRole(UserRole role,
+      {int limit = 20}) async {
     try {
       final query = await _firestore
           .collection(_usersCollection)
           .where('role', isEqualTo: role.value)
-          .where('isProfileComplete', isEqualTo: true)
           .limit(limit)
           .get();
+
+      for (final doc in query.docs) {
+        final data = doc.data();
+        data['uid'] ??= doc.id;
+        unawaited(_cacheService.cacheDocument(
+          collection: FirestoreCacheCollection.users,
+          docId: doc.id,
+          data: data,
+        ));
+      }
 
       return query.docs
           .map((doc) => _createProfileFromDocument(doc))
@@ -198,7 +256,11 @@ class UserRepository {
   UserProfile? _createProfileFromDocument(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>?;
     if (data == null) return null;
+    data['uid'] ??= doc.id;
+    return _createProfileFromData(data);
+  }
 
+  UserProfile? _createProfileFromData(Map<String, dynamic> data) {
     final roleString = data['role'] as String?;
     if (roleString == null) return null;
 
@@ -206,12 +268,14 @@ class UserRepository {
 
     switch (role) {
       case UserRole.player:
-        return PlayerProfile.fromFirestore(doc);
+        return PlayerProfile.fromMap(data);
       case UserRole.coach:
-        return CoachProfile.fromFirestore(doc);
+        return CoachProfile.fromMap(data);
       case UserRole.admin:
-        return CoachProfile.fromFirestore(doc); // Admin uses coach profile structure
+        return CoachProfile.fromMap(data); // Admin uses coach profile structure
     }
+
+    return null;
   }
 
   /// Handle Firebase exceptions and provide user-friendly error messages
@@ -220,9 +284,11 @@ class UserRepository {
       case 'permission-denied':
         return Exception('You do not have permission to perform this action');
       case 'unavailable':
-        return Exception('Service is currently unavailable. Please try again later');
+        return Exception(
+            'Service is currently unavailable. Please try again later');
       case 'deadline-exceeded':
-        return Exception('Request timed out. Please check your connection and try again');
+        return Exception(
+            'Request timed out. Please check your connection and try again');
       case 'not-found':
         return Exception('Requested data not found');
       case 'already-exists':
@@ -253,13 +319,24 @@ class UserRepository {
   /// Update user's last active timestamp
   Future<void> updateUserLastActive(String uid) async {
     try {
+      final lastActiveUpdate = {
+        'lastActive': Timestamp.fromDate(DateTime.now()),
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      };
+
       await _firestore
           .collection(_usersCollection)
           .doc(uid)
-          .update({
-        'lastActive': Timestamp.fromDate(DateTime.now()),
-        'updatedAt': Timestamp.fromDate(DateTime.now()),
-      });
+          .update(lastActiveUpdate);
+
+      unawaited(_cacheService.mergeDocument(
+        collection: FirestoreCacheCollection.users,
+        docId: uid,
+        updates: {
+          'uid': uid,
+          ...lastActiveUpdate,
+        },
+      ));
 
       if (kDebugMode) {
         debugPrint('User last active updated for UID: $uid');
@@ -280,14 +357,41 @@ class UserRepository {
   /// Get user's last active timestamp
   Future<DateTime?> getUserLastActive(String uid) async {
     try {
-      final doc = await _firestore
-          .collection(_usersCollection)
-          .doc(uid)
-          .get();
+      final cached = await _cacheService.getDocument(
+        collection: FirestoreCacheCollection.users,
+        docId: uid,
+        maxAge: const Duration(hours: 1),
+      );
+      if (cached != null) {
+        final cachedValue = cached['lastActive'];
+        DateTime? cachedDate;
+        if (cachedValue is Timestamp) {
+          cachedDate = cachedValue.toDate();
+        } else if (cachedValue is DateTime) {
+          cachedDate = cachedValue;
+        } else if (cachedValue is String) {
+          cachedDate = DateTime.tryParse(cachedValue);
+        }
+        if (cachedDate != null) {
+          return cachedDate;
+        }
+      }
+
+      final doc = await _firestore.collection(_usersCollection).doc(uid).get();
 
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         final lastActiveTimestamp = data['lastActive'] as Timestamp?;
+
+        unawaited(_cacheService.mergeDocument(
+          collection: FirestoreCacheCollection.users,
+          docId: uid,
+          updates: {
+            'uid': uid,
+            ...data,
+          },
+        ));
+
         return lastActiveTimestamp?.toDate();
       }
 
@@ -308,7 +412,8 @@ class UserRepository {
   /// Get users who haven't been active for specified days
   Future<List<String>> getInactiveUsers(int daysSinceLastActivity) async {
     try {
-      final cutoffDate = DateTime.now().subtract(Duration(days: daysSinceLastActivity));
+      final cutoffDate =
+          DateTime.now().subtract(Duration(days: daysSinceLastActivity));
 
       final query = await _firestore
           .collection(_usersCollection)

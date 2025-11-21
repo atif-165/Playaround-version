@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../models/venue_model.dart';
 import '../../../theming/colors.dart';
@@ -10,258 +11,487 @@ import '../../../theming/styles.dart';
 class VenueCard extends StatelessWidget {
   final VenueModel venue;
   final VoidCallback? onTap;
+  final double? distance;
 
   const VenueCard({
     super.key,
     required this.venue,
     this.onTap,
+    this.distance,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.1),
-              spreadRadius: 1,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildImageSection(),
-            _buildContentSection(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageSection() {
-    return Container(
-      height: 180.h,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16.r),
-          topRight: Radius.circular(16.r),
-        ),
-        color: Colors.grey[200],
-      ),
-      child: venue.images.isNotEmpty
-          ? ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16.r),
-                topRight: Radius.circular(16.r),
-              ),
-              child: Image.network(
-                venue.images.first,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _buildPlaceholderImage();
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return _buildPlaceholderImage();
-                },
-              ),
-            )
-          : _buildPlaceholderImage(),
-    );
-  }
-
-  Widget _buildPlaceholderImage() {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16.r),
-          topRight: Radius.circular(16.r),
-        ),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            ColorsManager.mainBlue.withValues(alpha: 0.1),
-            ColorsManager.mainBlue.withValues(alpha: 0.05),
+            ColorsManager.surfaceVariant,
+            ColorsManager.background,
           ],
         ),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: ColorsManager.primary.withValues(alpha: 0.3),
+          width: 1.w,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: ColorsManager.primary.withValues(alpha: 0.1),
+            blurRadius: 20.r,
+            offset: Offset(0, 8.h),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8.r,
+            offset: Offset(0, 4.h),
+          ),
+        ],
       ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.location_city,
-              size: 48.sp,
-              color: ColorsManager.mainBlue.withValues(alpha: 0.5),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20.r),
+          child: Padding(
+            padding: EdgeInsets.all(20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                Gap(16.h),
+                _buildDescription(),
+                Gap(16.h),
+                _buildAmenities(),
+                Gap(16.h),
+                _buildFooter(),
+              ],
             ),
-            Gap(8.h),
-            Text(
-              'No Image',
-              style: TextStyles.font12Grey400Weight,
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildContentSection() {
-    return Padding(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        // Venue image
+        Container(
+          width: 70.w,
+          height: 70.w,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16.r),
+            gradient: ColorsManager.primaryGradient,
+            boxShadow: [
+              BoxShadow(
+                color: ColorsManager.primary.withValues(alpha: 0.3),
+                blurRadius: 12.r,
+                offset: Offset(0, 4.h),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(2.w),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14.r),
+                color: ColorsManager.background,
+              ),
+              child: venue.images.isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(14.r),
+                      child: CachedNetworkImage(
+                        imageUrl: venue.images.first,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Center(
+                          child: CircularProgressIndicator(
+                            color: ColorsManager.primary,
+                            strokeWidth: 2.w,
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Icon(
+                          Icons.location_city,
+                          color: ColorsManager.primary,
+                          size: 32.sp,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      Icons.location_city,
+                      color: ColorsManager.primary,
+                      size: 32.sp,
+                    ),
+            ),
+          ),
+        ),
+        Gap(16.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  venue.title,
-                  style: TextStyles.font16DarkBlueBold,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      venue.title,
+                      style: TextStyles.font18DarkBlueBold.copyWith(
+                        color: ColorsManager.onBackground,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  _buildVenueBadge(),
+                ],
+              ),
+              Gap(6.h),
+              _buildRatingBadge(),
+              Gap(6.h),
+              Row(
+                children: [
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: ColorsManager.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: ColorsManager.primary.withValues(alpha: 0.3),
+                        width: 1.w,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.sports,
+                          size: 14.sp,
+                          color: ColorsManager.primary,
+                        ),
+                        Gap(4.w),
+                        Text(
+                          venue.sportType.displayName,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: ColorsManager.onBackground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Gap(8.w),
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: ColorsManager.playerAccent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color:
+                            ColorsManager.playerAccent.withValues(alpha: 0.3),
+                        width: 1.w,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.attach_money,
+                          size: 14.sp,
+                          color: ColorsManager.playerAccent,
+                        ),
+                        Gap(2.w),
+                        Text(
+                          '₹${venue.hourlyRate.toStringAsFixed(0)}/hr',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: ColorsManager.onBackground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDescription() {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: ColorsManager.background.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(
+          color: ColorsManager.outline,
+          width: 1.w,
+        ),
+      ),
+      child: Text(
+        venue.description,
+        style: TextStyle(
+          fontSize: 14.sp,
+          fontWeight: FontWeight.w400,
+          color: ColorsManager.onBackground,
+          height: 1.4,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildAmenities() {
+    if (venue.amenities.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: ColorsManager.primary,
+              size: 16.sp,
+            ),
+            Gap(6.w),
+            Text(
+              'Amenities',
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: ColorsManager.onBackground,
+              ),
+            ),
+          ],
+        ),
+        Gap(8.h),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: venue.amenities.take(4).map((amenity) {
+            return Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    ColorsManager.primary.withValues(alpha: 0.1),
+                    ColorsManager.primary.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(
+                  color: ColorsManager.primary.withValues(alpha: 0.3),
+                  width: 1.w,
                 ),
               ),
-              Gap(8.w),
-              _buildRatingSection(),
-            ],
+              child: Text(
+                amenity,
+                style: TextStyle(
+                  color: ColorsManager.onBackground,
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        if (venue.amenities.length > 4)
+          Padding(
+            padding: EdgeInsets.only(top: 8.h),
+            child: Text(
+              '+${venue.amenities.length - 4} more',
+              style: TextStyle(
+                color: ColorsManager.textSecondary,
+                fontSize: 12.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-          Gap(8.h),
-          Row(
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
             children: [
               Icon(
-                Icons.sports_soccer,
+                Icons.location_on,
+                color: ColorsManager.textSecondary,
                 size: 16.sp,
-                color: ColorsManager.mainBlue,
-              ),
-              Gap(4.w),
-              Text(
-                venue.sportType.displayName,
-                style: TextStyles.font12MainBlue500Weight,
-              ),
-            ],
-          ),
-          Gap(6.h),
-          Row(
-            children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: 16.sp,
-                color: Colors.grey[600],
               ),
               Gap(4.w),
               Expanded(
                 child: Text(
                   venue.location,
-                  style: TextStyles.font12Grey400Weight,
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w500,
+                    color: ColorsManager.textSecondary,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          Gap(12.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPriceSection(),
-              _buildBookingsCount(),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRatingSection() {
-    if (venue.totalReviews == 0) {
-      return Container(
-        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12.r),
         ),
-        child: Text(
-          'New',
-          style: TextStyles.font10Grey400Weight,
-        ),
-      );
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-      decoration: BoxDecoration(
-        color: ColorsManager.mainBlue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.star,
-            size: 12.sp,
-            color: Colors.amber,
+        Gap(8.w),
+        Flexible(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: ColorsManager.primaryGradient,
+              borderRadius: BorderRadius.circular(20.r),
+              boxShadow: [
+                BoxShadow(
+                  color: ColorsManager.primary.withValues(alpha: 0.4),
+                  blurRadius: 8.r,
+                  offset: Offset(0, 4.h),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20.r),
+                onTap: onTap,
+                child: Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View',
+                        style: TextStyle(
+                          color: ColorsManager.onPrimary,
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Gap(4.w),
+                      Icon(
+                        Icons.arrow_forward,
+                        color: ColorsManager.onPrimary,
+                        size: 16.sp,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          Gap(2.w),
-          Text(
-            venue.averageRating.toStringAsFixed(1),
-            style: TextStyles.font10DarkBlue600Weight,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPriceSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '₹${venue.hourlyRate.toStringAsFixed(0)}/hour',
-          style: TextStyles.font14DarkBlueBold,
-        ),
-        Text(
-          'Starting price',
-          style: TextStyles.font10Grey400Weight,
         ),
       ],
     );
   }
 
-  Widget _buildBookingsCount() {
+  Widget _buildVenueBadge() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20.r),
+        gradient: ColorsManager.primaryGradient,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: ColorsManager.primary.withValues(alpha: 0.3),
+            blurRadius: 4.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            Icons.event_available,
+            Icons.verified,
+            color: ColorsManager.onPrimary,
             size: 12.sp,
-            color: Colors.green[700],
           ),
           Gap(4.w),
           Text(
-            '${venue.totalBookings} bookings',
+            'VENUE',
             style: TextStyle(
+              color: ColorsManager.onPrimary,
               fontSize: 10.sp,
-              fontWeight: FontWeight.w500,
-              color: Colors.green[700],
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRatingBadge() {
+    if (venue.totalReviews == 0) {
+      return Text(
+        'No reviews yet',
+        style: TextStyle(
+          fontSize: 12.sp,
+          fontWeight: FontWeight.w400,
+          color: ColorsManager.textSecondary,
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(12.r),
+            border: Border.all(
+              color: Colors.amber.withValues(alpha: 0.3),
+              width: 1.w,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.star,
+                color: Colors.amber,
+                size: 14.sp,
+              ),
+              Gap(4.w),
+              Text(
+                venue.averageRating.toStringAsFixed(1),
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: ColorsManager.onBackground,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Gap(8.w),
+        Text(
+          '(${venue.totalReviews} review${venue.totalReviews == 1 ? '' : 's'})',
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w400,
+            color: ColorsManager.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }

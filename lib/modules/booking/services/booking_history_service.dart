@@ -16,8 +16,8 @@ class BookingHistoryService {
   BookingHistoryService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance;
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _auth = auth ?? FirebaseAuth.instance;
 
   /// Get booking history for current user with filtering
   Stream<List<BookingModel>> getUserBookingHistory({
@@ -41,10 +41,12 @@ class BookingHistoryService {
 
       // Apply date range filter
       if (startDate != null) {
-        query = query.where('selectedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+        query = query.where('selectedDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
       }
       if (endDate != null) {
-        query = query.where('selectedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+        query = query.where('selectedDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endDate));
       }
 
       query = query.orderBy('selectedDate', descending: true).limit(limit);
@@ -56,7 +58,8 @@ class BookingHistoryService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingHistoryService: Error getting user booking history: $e');
+        debugPrint(
+            '❌ BookingHistoryService: Error getting user booking history: $e');
       }
       throw Exception('Failed to get booking history: $e');
     }
@@ -84,10 +87,12 @@ class BookingHistoryService {
 
       // Apply date range filter
       if (startDate != null) {
-        query = query.where('selectedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+        query = query.where('selectedDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
       }
       if (endDate != null) {
-        query = query.where('selectedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+        query = query.where('selectedDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endDate));
       }
 
       query = query.orderBy('selectedDate', descending: true).limit(limit);
@@ -99,7 +104,8 @@ class BookingHistoryService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingHistoryService: Error getting coach booking history: $e');
+        debugPrint(
+            '❌ BookingHistoryService: Error getting coach booking history: $e');
       }
       throw Exception('Failed to get coach booking history: $e');
     }
@@ -126,7 +132,8 @@ class BookingHistoryService {
       ));
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingHistoryService: Error getting combined booking history: $e');
+        debugPrint(
+            '❌ BookingHistoryService: Error getting combined booking history: $e');
       }
       throw Exception('Failed to get combined booking history: $e');
     }
@@ -153,18 +160,23 @@ class BookingHistoryService {
 
       // Apply filters to both queries
       if (statusFilter != null) {
-        playerQuery = playerQuery.where('status', isEqualTo: statusFilter.value);
+        playerQuery =
+            playerQuery.where('status', isEqualTo: statusFilter.value);
         coachQuery = coachQuery.where('status', isEqualTo: statusFilter.value);
       }
 
       if (startDate != null) {
-        playerQuery = playerQuery.where('selectedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
-        coachQuery = coachQuery.where('selectedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+        playerQuery = playerQuery.where('selectedDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
+        coachQuery = coachQuery.where('selectedDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startDate));
       }
 
       if (endDate != null) {
-        playerQuery = playerQuery.where('selectedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
-        coachQuery = coachQuery.where('selectedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+        playerQuery = playerQuery.where('selectedDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+        coachQuery = coachQuery.where('selectedDate',
+            isLessThanOrEqualTo: Timestamp.fromDate(endDate));
       }
 
       // Execute both queries
@@ -173,11 +185,11 @@ class BookingHistoryService {
 
       // Combine results
       final allBookings = <BookingModel>[];
-      
+
       for (final doc in playerSnapshot.docs) {
         allBookings.add(BookingModel.fromFirestore(doc));
       }
-      
+
       for (final doc in coachSnapshot.docs) {
         final booking = BookingModel.fromFirestore(doc);
         // Avoid duplicates (shouldn't happen but just in case)
@@ -193,7 +205,8 @@ class BookingHistoryService {
       return allBookings.take(limit).toList();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingHistoryService: Error in combined bookings snapshot: $e');
+        debugPrint(
+            '❌ BookingHistoryService: Error in combined bookings snapshot: $e');
       }
       throw Exception('Failed to get combined bookings: $e');
     }
@@ -279,7 +292,8 @@ class BookingHistoryService {
       );
 
       // Filter only bookings where user is the coach
-      final coachBookings = bookings.where((b) => b.ownerId == user.uid).toList();
+      final coachBookings =
+          bookings.where((b) => b.ownerId == user.uid).toList();
 
       return EarningsSummary.fromBookings(
         user.uid,
@@ -289,7 +303,8 @@ class BookingHistoryService {
       );
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingHistoryService: Error calculating earnings summary: $e');
+        debugPrint(
+            '❌ BookingHistoryService: Error calculating earnings summary: $e');
       }
       throw Exception('Failed to calculate earnings summary: $e');
     }

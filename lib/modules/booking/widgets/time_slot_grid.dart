@@ -61,9 +61,8 @@ class TimeSlotGrid extends StatelessWidget {
                 onTap: () => onTimeSlotSelected(timeSlot),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? ColorsManager.mainBlue
-                        : Colors.grey[100],
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[100],
                     borderRadius: BorderRadius.circular(8.r),
                     border: Border.all(
                       color: isSelected
@@ -78,7 +77,8 @@ class TimeSlotGrid extends StatelessWidget {
                       Icon(
                         Icons.access_time,
                         size: 16.sp,
-                        color: isSelected ? Colors.white : ColorsManager.mainBlue,
+                        color:
+                            isSelected ? Colors.white : ColorsManager.mainBlue,
                       ),
                       Gap(4.h),
                       Text(
@@ -153,10 +153,11 @@ class TimeSlotGrid extends StatelessWidget {
   double _calculateDuration(TimeSlot timeSlot) {
     final startParts = timeSlot.start.split(':');
     final endParts = timeSlot.end.split(':');
-    
-    final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
+
+    final startMinutes =
+        int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
     final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
-    
+
     return (endMinutes - startMinutes) / 60.0;
   }
 }

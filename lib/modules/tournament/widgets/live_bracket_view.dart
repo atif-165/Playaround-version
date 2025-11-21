@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/tournament_model.dart';
+import '../models/tournament_match_model.dart';
 
 /// Live bracket view widget for tournament matches
 class LiveBracketView extends StatefulWidget {
@@ -107,7 +108,7 @@ class _LiveBracketViewState extends State<LiveBracketView>
 
   Widget _buildBracket() {
     final rounds = _organizeMatchesByRound();
-    
+
     if (rounds.isEmpty) {
       return _buildEmptyBracket();
     }
@@ -267,7 +268,8 @@ class _LiveBracketViewState extends State<LiveBracketView>
           child: Text(
             teamName,
             style: TextStyles.font14DarkBlueMedium.copyWith(
-              color: isWinner ? ColorsManager.success : ColorsManager.textPrimary,
+              color:
+                  isWinner ? ColorsManager.success : ColorsManager.textPrimary,
               fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
             ),
             maxLines: 1,
@@ -279,7 +281,7 @@ class _LiveBracketViewState extends State<LiveBracketView>
           Container(
             padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
             decoration: BoxDecoration(
-              color: isWinner 
+              color: isWinner
                   ? ColorsManager.success.withValues(alpha: 0.1)
                   : ColorsManager.cardBackground,
               borderRadius: BorderRadius.circular(6.r),
@@ -287,7 +289,9 @@ class _LiveBracketViewState extends State<LiveBracketView>
             child: Text(
               '$score',
               style: TextStyles.font14DarkBlueMedium.copyWith(
-                color: isWinner ? ColorsManager.success : ColorsManager.textPrimary,
+                color: isWinner
+                    ? ColorsManager.success
+                    : ColorsManager.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -353,19 +357,20 @@ class _LiveBracketViewState extends State<LiveBracketView>
 
   Map<String, List<TournamentMatch>> _organizeMatchesByRound() {
     final Map<String, List<TournamentMatch>> rounds = {};
-    
+
     for (final match in widget.matches) {
-      if (!rounds.containsKey(match.round)) {
-        rounds[match.round] = [];
+      final roundKey = match.round ?? 'Unassigned';
+      if (!rounds.containsKey(roundKey)) {
+        rounds[roundKey] = [];
       }
-      rounds[match.round]!.add(match);
+      rounds[roundKey]!.add(match);
     }
-    
+
     // Sort matches within each round by match number
     for (final round in rounds.values) {
       round.sort((a, b) => a.matchNumber.compareTo(b.matchNumber));
     }
-    
+
     return rounds;
   }
 
@@ -378,6 +383,7 @@ class _LiveBracketViewState extends State<LiveBracketView>
       case TournamentStatus.registrationClosed:
         return ColorsManager.textSecondary;
       case TournamentStatus.ongoing:
+      case TournamentStatus.running:
       case TournamentStatus.inProgress:
         return ColorsManager.success;
       case TournamentStatus.completed:
@@ -387,15 +393,15 @@ class _LiveBracketViewState extends State<LiveBracketView>
     }
   }
 
-  Color _getMatchStatusColor(MatchStatus status) {
+  Color _getMatchStatusColor(TournamentMatchStatus status) {
     switch (status) {
-      case MatchStatus.scheduled:
+      case TournamentMatchStatus.scheduled:
         return ColorsManager.primary;
-      case MatchStatus.inProgress:
+      case TournamentMatchStatus.live:
         return ColorsManager.warning;
-      case MatchStatus.completed:
+      case TournamentMatchStatus.completed:
         return ColorsManager.success;
-      case MatchStatus.cancelled:
+      case TournamentMatchStatus.cancelled:
         return ColorsManager.error;
     }
   }
@@ -403,7 +409,7 @@ class _LiveBracketViewState extends State<LiveBracketView>
   String _formatMatchTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = dateTime.difference(now);
-    
+
     if (difference.isNegative) {
       return 'Completed';
     } else if (difference.inDays > 0) {

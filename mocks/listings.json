@@ -1,0 +1,101 @@
+{
+  "listings": [
+    {
+      "id": "listing_1",
+      "category": "venue",
+      "sport": "Tennis",
+      "title": "Coach Mason - Singles Tune Up",
+      "description": "90-minute strategy session focused on serve patterns and baseline consistency. Includes video analysis.",
+      "providerId": "coach_42",
+      "providerName": "Coach Mason Alvarez",
+      "providerAvatarUrl": "https://images.playaround.app/coaches/mason.jpg",
+      "venueId": "venue_1",
+      "basePrice": 95.0,
+      "priceComponents": [
+        {"label": "Session rate", "amount": 85.0, "taxable": true},
+        {"label": "Video analysis add-on", "amount": 10.0, "taxable": false}
+      ],
+      "photos": [
+        "https://images.playaround.app/listings/tennis-coach-session.jpg"
+      ],
+      "tags": ["video-analysis", "singles"],
+      "extras": {
+        "ballMachine": 12.0,
+        "stringingDiscount": true
+      },
+      "availability": {
+        "2025-11-08": [
+          "2025-11-08T08:00:00.000Z-2025-11-08T09:30:00.000Z",
+          "2025-11-08T11:00:00.000Z-2025-11-08T12:30:00.000Z"
+        ],
+        "2025-11-09": [
+          "2025-11-09T14:00:00.000Z-2025-11-09T15:30:00.000Z"
+        ]
+      },
+      "capacity": 1,
+      "rating": 4.9,
+      "reviewCount": 86,
+      "createdAt": "2024-07-10T09:00:00.000Z",
+      "updatedAt": "2025-11-05T09:00:00.000Z"
+    },
+    {
+      "id": "listing_2",
+      "category": "venue",
+      "sport": "Soccer",
+      "title": "Pier 70 Turf Field A",
+      "description": "Full-sized outdoor turf with premium lighting and FIFA-certified infill. Includes two portable goals.",
+      "providerId": "venue_1",
+      "providerName": "Pier 70 Sports Hub",
+      "providerAvatarUrl": "https://images.playaround.app/venues/pier70-icon.png",
+      "venueId": "venue_1",
+      "basePrice": 160.0,
+      "priceComponents": [
+        {"label": "Field rental (1.5h)", "amount": 160.0, "taxable": true}
+      ],
+      "photos": [
+        "https://images.playaround.app/listings/pier70-field.jpg"
+      ],
+      "tags": ["futsal", "evening-lighting", "locker-room"],
+      "extras": {
+        "equipmentRental": {"balls": 15.0, "cones": 8.0}
+      },
+      "availability": {
+        "2025-11-08": [
+          "2025-11-08T17:00:00.000Z-2025-11-08T18:30:00.000Z",
+          "2025-11-08T19:00:00.000Z-2025-11-08T20:30:00.000Z"
+        ],
+        "2025-11-09": [
+          "2025-11-09T18:00:00.000Z-2025-11-09T19:30:00.000Z"
+        ]
+      },
+      "capacity": 22,
+      "rating": 4.7,
+      "reviewCount": 210,
+      "createdAt": "2023-02-14T09:00:00.000Z",
+      "updatedAt": "2025-11-04T09:00:00.000Z"
+    }
+  ],
+  "bookings": [
+    {
+      "id": "booking_1",
+      "userId": "player_1",
+      "providerId": "coach_42",
+      "listingId": "listing_1",
+      "sport": "Tennis",
+      "startTime": "2025-11-08T08:00:00.000Z",
+      "endTime": "2025-11-08T09:30:00.000Z",
+      "status": "confirmed",
+      "priceComponents": [
+        {"label": "Session rate", "amount": 85.0, "taxable": true},
+        {"label": "Video analysis add-on", "amount": 10.0, "taxable": false}
+      ],
+      "extras": {"ballMachine": 12.0},
+      "subtotal": 95.0,
+      "total": 95.0,
+      "notes": "Focus on second serve reliability",
+      "createdAt": "2025-11-05T15:00:00.000Z",
+      "updatedAt": "2025-11-05T15:00:00.000Z"
+    }
+  ]
+}
+

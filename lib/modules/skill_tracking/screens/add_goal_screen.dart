@@ -56,7 +56,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
       elevation: 0,
       title: Text(
         'Set New Goal',
-        style: TextStyles.font18DarkBlue600Weight.copyWith(fontSize: 20.sp, color: Colors.white),
+        style: TextStyles.font18DarkBlue600Weight
+            .copyWith(fontSize: 20.sp, color: Colors.white),
       ),
       leading: IconButton(
         onPressed: () => Navigator.pop(context),
@@ -120,13 +121,14 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
               onTap: () => setState(() => _selectedSkillType = skillType),
               child: Container(
                 padding: EdgeInsets.all(16.w),
-                decoration: BoxDecoration( 
-                  color: isSelected ? ColorsManager.mainBlue.withValues(alpha: 0.3) : Colors.black,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? ColorsManager.mainBlue.withValues(alpha: 0.3)
+                      : Colors.black,
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: isSelected 
-                        ? ColorsManager.mainBlue 
-                        : Colors.grey[300]!,
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
                     width: isSelected ? 2.w : 1.w,
                   ),
                 ),
@@ -134,9 +136,10 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                   children: [
                     Icon(
                       _getSkillIcon(skillType),
-                      color: isSelected 
-                          ? ColorsManager.mainBlue 
-                          : Color(int.parse('0xFF${skillType.colorHex.substring(1)}')),
+                      color: isSelected
+                          ? ColorsManager.mainBlue
+                          : Color(int.parse(
+                              '0xFF${skillType.colorHex.substring(1)}')),
                       size: 24.sp,
                     ),
                     Gap(8.h),
@@ -145,7 +148,9 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                       style: TextStyle(
                         fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? ColorsManager.mainBlue : Colors.grey[800],
+                        color: isSelected
+                            ? ColorsManager.mainBlue
+                            : Colors.grey[800],
                       ),
                     ),
                     Gap(4.h),
@@ -167,8 +172,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
   }
 
   Widget _buildTargetScoreSection() {
-    final currentScore = _selectedSkillType != null 
-        ? widget.currentSkillScores[_selectedSkillType!] ?? 0 
+    final currentScore = _selectedSkillType != null
+        ? widget.currentSkillScores[_selectedSkillType!] ?? 0
         : 0;
 
     return Column(
@@ -223,7 +228,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
                 max: 100,
                 divisions: 100 - currentScore - 1,
                 activeColor: ColorsManager.mainBlue,
-                onChanged: (value) => setState(() => _targetScore = value.round()),
+                onChanged: (value) =>
+                    setState(() => _targetScore = value.round()),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -335,7 +341,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
         TextFormField(
           controller: _descriptionController,
           decoration: InputDecoration(
-            hintText: 'e.g., "Improve my sprint speed for the upcoming tournament"',
+            hintText:
+                'e.g., "Improve my sprint speed for the upcoming tournament"',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
             ),
@@ -355,10 +362,11 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration( 
+      decoration: BoxDecoration(
         color: ColorsManager.mainBlue.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+        border:
+            Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,9 +417,9 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.black, 
+        color: Colors.black,
         boxShadow: [
-          BoxShadow( 
+          BoxShadow(
             color: Colors.white.withValues(alpha: 0.1),
             blurRadius: 10.r,
             offset: Offset(0, -2.h),
@@ -422,7 +430,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
         child: AppTextButton(
           buttonText: _isLoading ? 'Creating Goal...' : 'Create Goal',
           textStyle: TextStyles.font16White600Weight,
-          onPressed: _selectedSkillType != null && !_isLoading ? _createGoal : null,
+          onPressed:
+              _selectedSkillType != null && !_isLoading ? _createGoal : null,
           buttonHeight: 48.h,
         ),
       ),
@@ -439,8 +448,8 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: ColorsManager.mainBlue,
-            ),
+                  primary: ColorsManager.mainBlue,
+                ),
           ),
           child: child!,
         );
@@ -453,21 +462,22 @@ class _AddGoalScreenState extends State<AddGoalScreen> {
   }
 
   Future<void> _createGoal() async {
-    if (!_formKey.currentState!.validate() || _selectedSkillType == null) return;
+    if (!_formKey.currentState!.validate() || _selectedSkillType == null)
+      return;
 
     setState(() => _isLoading = true);
 
     try {
       final currentScore = widget.currentSkillScores[_selectedSkillType!] ?? 0;
-      
+
       final goal = _skillService.createSkillGoal(
         playerId: widget.playerId,
         skillType: _selectedSkillType!,
         currentScore: currentScore,
         targetScore: _targetScore,
         targetDate: _targetDate,
-        description: _descriptionController.text.trim().isEmpty 
-            ? null 
+        description: _descriptionController.text.trim().isEmpty
+            ? null
             : _descriptionController.text.trim(),
       );
 

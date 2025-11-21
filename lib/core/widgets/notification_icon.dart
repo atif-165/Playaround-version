@@ -17,7 +17,7 @@ class NotificationIcon extends StatelessWidget {
       stream: _notificationService.getUnreadNotificationsCount(),
       builder: (context, snapshot) {
         final unreadCount = snapshot.data ?? 0;
-        
+
         return Stack(
           children: [
             IconButton(

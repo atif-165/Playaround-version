@@ -128,7 +128,7 @@ class ReviewSummary {
     for (var review in reviews) {
       totalRating += review.rating;
       if (review.isVerified) verifiedCount++;
-      
+
       int rating = review.rating.round();
       distribution[rating] = (distribution[rating] ?? 0) + 1;
     }

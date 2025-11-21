@@ -68,15 +68,18 @@ class BookingAnalyticsService {
 
         if (booking.isCompleted) {
           if (userRole == UserRole.coach && booking.ownerId == userId) {
-            earningsBySport[sport] = (earningsBySport[sport] ?? 0.0) + booking.totalAmount;
+            earningsBySport[sport] =
+                (earningsBySport[sport] ?? 0.0) + booking.totalAmount;
           } else if (booking.userId == userId) {
-            spentBySport[sport] = (spentBySport[sport] ?? 0.0) + booking.totalAmount;
+            spentBySport[sport] =
+                (spentBySport[sport] ?? 0.0) + booking.totalAmount;
           }
         }
       }
 
       // Generate daily statistics
-      final dailyStats = _generateDailyStats(bookings, userId, userRole, defaultStartDate, defaultEndDate);
+      final dailyStats = _generateDailyStats(
+          bookings, userId, userRole, defaultStartDate, defaultEndDate);
 
       return BookingAnalytics(
         userId: userId,
@@ -118,8 +121,10 @@ class BookingAnalyticsService {
       final playerQuery = await _firestore
           .collection(_bookingsCollection)
           .where('userId', isEqualTo: userId)
-          .where('selectedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('selectedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .where('selectedDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('selectedDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(endDate))
           .get();
 
       for (final doc in playerQuery.docs) {
@@ -131,8 +136,10 @@ class BookingAnalyticsService {
         final coachQuery = await _firestore
             .collection(_bookingsCollection)
             .where('ownerId', isEqualTo: userId)
-            .where('selectedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-            .where('selectedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+            .where('selectedDate',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+            .where('selectedDate',
+                isLessThanOrEqualTo: Timestamp.fromDate(endDate))
             .get();
 
         for (final doc in coachQuery.docs) {
@@ -147,7 +154,8 @@ class BookingAnalyticsService {
       return allBookings;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingAnalyticsService: Error getting user bookings: $e');
+        debugPrint(
+            '❌ BookingAnalyticsService: Error getting user bookings: $e');
       }
       throw Exception('Failed to get user bookings: $e');
     }
@@ -164,7 +172,9 @@ class BookingAnalyticsService {
     final dailyStats = <DateTime, DailyBookingStats>{};
 
     // Initialize all days in the period with zero stats
-    for (var date = startDate; date.isBefore(endDate) || date.isAtSameMomentAs(endDate); date = date.add(const Duration(days: 1))) {
+    for (var date = startDate;
+        date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
+        date = date.add(const Duration(days: 1))) {
       final dayKey = DateTime(date.year, date.month, date.day);
       dailyStats[dayKey] = DailyBookingStats(
         date: dayKey,
@@ -186,7 +196,7 @@ class BookingAnalyticsService {
 
       if (dailyStats.containsKey(dayKey)) {
         final currentStats = dailyStats[dayKey]!;
-        
+
         int bookingsCount = currentStats.bookingsCount + 1;
         int completedCount = currentStats.completedCount;
         int cancelledCount = currentStats.cancelledCount;
@@ -221,15 +231,17 @@ class BookingAnalyticsService {
   /// Save analytics to Firestore for caching
   Future<void> saveAnalytics(BookingAnalytics analytics) async {
     try {
-      final docId = '${analytics.userId}_${analytics.periodStart.millisecondsSinceEpoch}_${analytics.periodEnd.millisecondsSinceEpoch}';
-      
+      final docId =
+          '${analytics.userId}_${analytics.periodStart.millisecondsSinceEpoch}_${analytics.periodEnd.millisecondsSinceEpoch}';
+
       await _firestore
           .collection(_analyticsCollection)
           .doc(docId)
           .set(analytics.toFirestore());
 
       if (kDebugMode) {
-        debugPrint('✅ BookingAnalyticsService: Saved analytics for user: ${analytics.userId}');
+        debugPrint(
+            '✅ BookingAnalyticsService: Saved analytics for user: ${analytics.userId}');
       }
     } catch (e) {
       if (kDebugMode) {
@@ -246,12 +258,11 @@ class BookingAnalyticsService {
     required DateTime endDate,
   }) async {
     try {
-      final docId = '${userId}_${startDate.millisecondsSinceEpoch}_${endDate.millisecondsSinceEpoch}';
-      
-      final doc = await _firestore
-          .collection(_analyticsCollection)
-          .doc(docId)
-          .get();
+      final docId =
+          '${userId}_${startDate.millisecondsSinceEpoch}_${endDate.millisecondsSinceEpoch}';
+
+      final doc =
+          await _firestore.collection(_analyticsCollection).doc(docId).get();
 
       if (doc.exists) {
         return BookingAnalytics.fromFirestore(doc);
@@ -259,7 +270,8 @@ class BookingAnalyticsService {
       return null;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingAnalyticsService: Error getting cached analytics: $e');
+        debugPrint(
+            '❌ BookingAnalyticsService: Error getting cached analytics: $e');
       }
       return null;
     }
@@ -280,9 +292,8 @@ class BookingAnalyticsService {
         endDate,
       );
 
-      final completedBookings = bookings
-          .where((b) => b.isCompleted && b.ownerId == coachId)
-          .toList();
+      final completedBookings =
+          bookings.where((b) => b.isCompleted && b.ownerId == coachId).toList();
 
       final trends = <String, double>{};
 
@@ -290,15 +301,19 @@ class BookingAnalyticsService {
         String key;
         switch (period) {
           case 'daily':
-            key = '${booking.selectedDate.year}-${booking.selectedDate.month.toString().padLeft(2, '0')}-${booking.selectedDate.day.toString().padLeft(2, '0')}';
+            key =
+                '${booking.selectedDate.year}-${booking.selectedDate.month.toString().padLeft(2, '0')}-${booking.selectedDate.day.toString().padLeft(2, '0')}';
             break;
           case 'weekly':
-            final weekStart = booking.selectedDate.subtract(Duration(days: booking.selectedDate.weekday - 1));
-            key = '${weekStart.year}-W${((weekStart.difference(DateTime(weekStart.year, 1, 1)).inDays) / 7).ceil()}';
+            final weekStart = booking.selectedDate
+                .subtract(Duration(days: booking.selectedDate.weekday - 1));
+            key =
+                '${weekStart.year}-W${((weekStart.difference(DateTime(weekStart.year, 1, 1)).inDays) / 7).ceil()}';
             break;
           case 'monthly':
           default:
-            key = '${booking.selectedDate.year}-${booking.selectedDate.month.toString().padLeft(2, '0')}';
+            key =
+                '${booking.selectedDate.year}-${booking.selectedDate.month.toString().padLeft(2, '0')}';
             break;
         }
 
@@ -308,7 +323,8 @@ class BookingAnalyticsService {
       return trends;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingAnalyticsService: Error calculating revenue trends: $e');
+        debugPrint(
+            '❌ BookingAnalyticsService: Error calculating revenue trends: $e');
       }
       throw Exception('Failed to calculate revenue trends: $e');
     }
@@ -333,15 +349,15 @@ class BookingAnalyticsService {
         defaultEndDate,
       );
 
-      final completedBookings = bookings
-          .where((b) => b.isCompleted && b.ownerId == coachId)
-          .toList();
+      final completedBookings =
+          bookings.where((b) => b.isCompleted && b.ownerId == coachId).toList();
 
       final sportEarnings = <String, double>{};
 
       for (final booking in completedBookings) {
         final sport = booking.sportType.displayName;
-        sportEarnings[sport] = (sportEarnings[sport] ?? 0.0) + booking.totalAmount;
+        sportEarnings[sport] =
+            (sportEarnings[sport] ?? 0.0) + booking.totalAmount;
       }
 
       // Sort by earnings and take top performers
@@ -351,7 +367,8 @@ class BookingAnalyticsService {
       return Map.fromEntries(sortedSports.take(limit));
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ BookingAnalyticsService: Error getting top performing sports: $e');
+        debugPrint(
+            '❌ BookingAnalyticsService: Error getting top performing sports: $e');
       }
       throw Exception('Failed to get top performing sports: $e');
     }

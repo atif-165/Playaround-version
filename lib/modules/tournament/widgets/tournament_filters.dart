@@ -482,7 +482,7 @@ class _TournamentFiltersState extends State<TournamentFilters> {
       showFreeOnly: _showFreeOnly,
       showPaidOnly: _showPaidOnly,
     );
-    
+
     widget.onApply(filters);
     Navigator.of(context).pop();
   }

@@ -53,11 +53,13 @@ class TournamentCard extends StatelessWidget {
                   width: double.infinity,
                   height: 140.h,
                   fit: BoxFit.cover,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(12.r)),
                   fallbackIcon: Icons.emoji_events,
                   fallbackIconColor: Colors.white,
                   fallbackIconSize: 40.sp,
-                  backgroundColor: ColorsManager.mainBlue.withValues(alpha: 0.7),
+                  backgroundColor:
+                      ColorsManager.mainBlue.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -197,7 +199,8 @@ class TournamentCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            DateFormat('MMM dd, yyyy').format(tournament.startDate),
+                            DateFormat('MMM dd, yyyy')
+                                .format(tournament.startDate),
                             style: TextStyle(
                               fontSize: 12.sp,
                               fontWeight: FontWeight.w600,

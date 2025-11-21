@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
+import '../../routing/app_router.dart';
 import '../../theming/colors.dart';
 import '../../theming/styles.dart';
 import '../../core/widgets/app_text_button.dart';
@@ -228,7 +229,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -313,7 +315,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           buttonText: 'View Existing Analytics',
           textStyle: TextStyles.font16White600Weight,
           onPressed: () {
-            Navigator.pushReplacementNamed(context, '/coachAnalyticsDashboardScreen');
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutePath.coachAnalyticsDashboardScreen,
+            );
           },
           backgroundColor: ColorsManager.tertiary,
         ),
@@ -321,7 +326,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
 
-  Widget _buildComingSoonCard(String title, String description, IconData icon, Color color) {
+  Widget _buildComingSoonCard(
+      String title, String description, IconData icon, Color color) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20.w),

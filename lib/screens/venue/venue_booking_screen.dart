@@ -30,8 +30,10 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
   String? _error;
   bool _isBooking = false;
 
-  final TextEditingController _participantsController = TextEditingController(text: '1');
-  final TextEditingController _specialRequestsController = TextEditingController();
+  final TextEditingController _participantsController =
+      TextEditingController(text: '1');
+  final TextEditingController _specialRequestsController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -99,12 +101,84 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
 
   double _calculateTotalPrice() {
     if (_selectedTimeSlot == null) return 0.0;
-    
+
     final slot = _availableSlots.firstWhere(
       (slot) => slot.startTime == _selectedTimeSlot,
     );
-    
+
     return slot.price * _duration;
+  }
+
+  String get _currencySymbol =>
+      _resolveCurrencySymbol(widget.venue.pricing.currency);
+
+  String _resolveCurrencySymbol(String currency) {
+    switch (currency.toUpperCase()) {
+      case 'PKR':
+        return '₨';
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'AED':
+        return 'د.إ ';
+      case 'INR':
+        return '₹';
+      default:
+        return '$currency ';
+    }
+  }
+
+  Widget _buildCounterButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+  }) {
+    final isDisabled = onPressed == null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDisabled
+                ? Colors.black.withOpacity(0.04)
+                : Theme.of(context).primaryColor.withOpacity(0.14),
+            border: Border.all(
+              color: isDisabled
+                  ? Colors.black.withOpacity(0.06)
+                  : Theme.of(context).primaryColor.withOpacity(0.28),
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: isDisabled
+                ? Colors.black.withOpacity(0.25)
+                : Theme.of(context).primaryColor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCounterValue(BuildContext context, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surface,
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+    );
   }
 
   Future<void> _createBooking() async {
@@ -145,7 +219,9 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
         endTime: endTime,
         duration: _duration,
         totalAmount: _calculateTotalPrice(),
-        participants: List.generate(_participants, (index) => 'Participant ${index + 1}'),
+        currency: widget.venue.pricing.currency,
+        participants:
+            List.generate(_participants, (index) => 'Participant ${index + 1}'),
         specialRequests: _specialRequestsController.text.trim(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -213,7 +289,9 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network(
-                    widget.venue.images.isNotEmpty ? widget.venue.images.first : '',
+                    widget.venue.images.isNotEmpty
+                        ? widget.venue.images.first
+                        : '',
                     width: 60,
                     height: 60,
                     fit: BoxFit.cover,
@@ -234,9 +312,10 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                     children: [
                       Text(
                         widget.venue.name,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -262,8 +341,8 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                   Text(
                     'Select Date',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   BookingCalendar(
@@ -275,30 +354,29 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                   Text(
                     'Duration',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      IconButton(
-                        onPressed: _duration > 1 ? () => _onDurationChanged(_duration - 1) : null,
-                        icon: const Icon(Icons.remove),
+                      _buildCounterButton(
+                        icon: Icons.remove,
+                        onPressed: _duration > 1
+                            ? () => _onDurationChanged(_duration - 1)
+                            : null,
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Theme.of(context).dividerColor),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '$_duration hour${_duration > 1 ? 's' : ''}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      _buildCounterValue(
+                        context,
+                        '$_duration hour${_duration > 1 ? 's' : ''}',
                       ),
-                      IconButton(
-                        onPressed: _duration < 8 ? () => _onDurationChanged(_duration + 1) : null,
-                        icon: const Icon(Icons.add),
+                      _buildCounterButton(
+                        icon: Icons.add,
+                        onPressed: _duration < 8
+                            ? () => _onDurationChanged(_duration + 1)
+                            : null,
                       ),
                     ],
                   ),
@@ -307,8 +385,8 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                   Text(
                     'Available Time Slots',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   if (_isLoading)
@@ -324,36 +402,36 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                       selectedSlot: _selectedTimeSlot,
                       duration: _duration,
                       onSlotSelected: _onTimeSlotSelected,
+                      currencySymbol: _currencySymbol,
                     ),
                   const SizedBox(height: 24),
                   // Participants
                   Text(
                     'Number of Participants',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      IconButton(
-                        onPressed: _participants > 1 ? () => _onParticipantsChanged(_participants - 1) : null,
-                        icon: const Icon(Icons.remove),
+                      _buildCounterButton(
+                        icon: Icons.remove,
+                        onPressed: _participants > 1
+                            ? () => _onParticipantsChanged(_participants - 1)
+                            : null,
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Theme.of(context).dividerColor),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '$_participants participant${_participants > 1 ? 's' : ''}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
+                      _buildCounterValue(
+                        context,
+                        '$_participants participant${_participants > 1 ? 's' : ''}',
                       ),
-                      IconButton(
-                        onPressed: _participants < 20 ? () => _onParticipantsChanged(_participants + 1) : null,
-                        icon: const Icon(Icons.add),
+                      _buildCounterButton(
+                        icon: Icons.add,
+                        onPressed: _participants < 20
+                            ? () => _onParticipantsChanged(_participants + 1)
+                            : null,
                       ),
                     ],
                   ),
@@ -362,8 +440,8 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                   Text(
                     'Special Requests (Optional)',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -384,6 +462,7 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                       duration: _duration,
                       participants: _participants,
                       totalPrice: _calculateTotalPrice(),
+                      currencySymbol: _currencySymbol,
                     ),
                 ],
               ),
@@ -411,10 +490,11 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Total: \$${_calculateTotalPrice().toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          'Total: $_currencySymbol${_calculateTotalPrice().toStringAsFixed(0)}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         Text(
                           'for $_duration hour${_duration > 1 ? 's' : ''}',
@@ -427,7 +507,9 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                   Expanded(
                     flex: 2,
                     child: ElevatedButton(
-                      onPressed: _selectedTimeSlot != null && !_isBooking ? _createBooking : null,
+                      onPressed: _selectedTimeSlot != null && !_isBooking
+                          ? _createBooking
+                          : null,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -437,10 +519,23 @@ class _VenueBookingScreenState extends State<VenueBookingScreen> {
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
-                          : const Text('Book Now'),
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.lock_clock_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Confirm Booking',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                 ],

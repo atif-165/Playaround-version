@@ -4,32 +4,59 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/utils/image_utils.dart';
+import '../../../routing/routes.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
+import '../../../features/community_feed/models/feed_post.dart';
+import '../../../features/community_feed/models/feed_media.dart';
+import '../../../features/community_feed/models/user_post_state.dart';
 import '../models/chat_message.dart';
+import '../models/chat_background.dart';
 
+const Color _chatAccentColor = Color(0xFFFFC56F);
 /// Widget for displaying individual chat messages
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
+  final bool isGroupChat;
   final bool showSenderInfo;
   final VoidCallback? onDelete;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final ChatBubbleColors bubbleColors;
 
   const MessageBubble({
     super.key,
     required this.message,
     required this.isMe,
+    this.isGroupChat = false,
     this.showSenderInfo = false,
     this.onDelete,
     this.onTap,
+    this.onLongPress,
+    this.bubbleColors = ChatBubbleColors.defaults,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bubbleColor = _bubbleColor;
+    final borderColor = _bubbleBorderColor;
+    final primaryTextColor = _primaryTextColor;
+    final secondaryTextColor = _secondaryTextColor;
+
     return GestureDetector(
       onTap: onTap,
-      onLongPress: isMe ? _showMessageOptions : null,
+      onLongPress: () {
+        // For post entities, show reaction options
+        if (message.type == MessageType.entity &&
+            message.sharedEntity?.type == EntityType.post) {
+          if (onLongPress != null) {
+            onLongPress!();
+          }
+        } else if (isMe) {
+          _showMessageOptions();
+        }
+      },
       child: Container(
         margin: EdgeInsets.only(
           bottom: 8.h,
@@ -37,7 +64,8 @@ class MessageBubble extends StatelessWidget {
           right: isMe ? 0 : 50.w,
         ),
         child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             if (showSenderInfo) ...[
               Padding(
@@ -51,12 +79,16 @@ class MessageBubble extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
               decoration: BoxDecoration(
-                color: isMe ? ColorsManager.neonBlue : ColorsManager.neonBlue.withValues(alpha: 0.3),
+                color: bubbleColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(18.r),
                   topRight: Radius.circular(18.r),
                   bottomLeft: Radius.circular(isMe ? 18.r : 4.r),
                   bottomRight: Radius.circular(isMe ? 4.r : 18.r),
+                ),
+                border: Border.all(
+                  color: borderColor,
+                  width: 1,
                 ),
               ),
               child: Column(
@@ -90,7 +122,7 @@ class MessageBubble extends StatelessWidget {
       message.text ?? '',
       style: TextStyle(
         fontSize: 16.sp,
-        color: isMe ? Colors.white : ColorsManager.darkBlue,
+        color: _primaryTextColor,
         fontWeight: FontWeight.w400,
       ),
     );
@@ -102,13 +134,13 @@ class MessageBubble extends StatelessWidget {
         width: 200.w,
         height: 150.h,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: _bubbleBorderColor.withOpacity(0.15),
           borderRadius: BorderRadius.circular(8.r),
         ),
         child: const Center(
           child: Icon(
             Icons.broken_image,
-            color: Colors.grey,
+            color: Colors.white38,
           ),
         ),
       );
@@ -124,8 +156,8 @@ class MessageBubble extends StatelessWidget {
         fit: BoxFit.cover,
         borderRadius: BorderRadius.circular(8.r),
         fallbackIcon: Icons.broken_image,
-        fallbackIconColor: Colors.grey,
-        backgroundColor: Colors.grey[300],
+        fallbackIconColor: Colors.white38,
+        backgroundColor: _bubbleBorderColor.withOpacity(0.12),
       ),
     );
   }
@@ -137,26 +169,25 @@ class MessageBubble extends StatelessWidget {
         'Shared content unavailable',
         style: TextStyle(
           fontSize: 14.sp,
-          color: isMe ? Colors.white70 : Colors.grey[600],
+          color: _secondaryTextColor,
           fontStyle: FontStyle.italic,
         ),
       );
     }
 
+    // Special handling for post entities - show full post card
+    if (entity.type == EntityType.post) {
+      return _buildPostCard(entity);
+    }
+
+    // Default entity card for other types
     return Container(
       constraints: BoxConstraints(maxWidth: 250.w),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
-        color: isMe 
-            ? Colors.white.withValues(alpha: 0.1)
-            : ColorsManager.mainBlue.withValues(alpha: 0.1),
+        color: _entityBackgroundColor,
         borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(
-          color: isMe 
-              ? Colors.white.withValues(alpha: 0.3)
-              : ColorsManager.mainBlue.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: _bubbleBorderColor.withOpacity(0.8)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,7 +197,7 @@ class MessageBubble extends StatelessWidget {
               Icon(
                 _getEntityIcon(entity.type),
                 size: 16.sp,
-                color: isMe ? Colors.white : ColorsManager.mainBlue,
+                color: isMe ? _primaryTextColor : _chatAccentColor,
               ),
               SizedBox(width: 6.w),
               Text(
@@ -174,7 +205,7 @@ class MessageBubble extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isMe ? Colors.white70 : ColorsManager.mainBlue,
+                  color: isMe ? _secondaryTextColor : _chatAccentColor,
                 ),
               ),
             ],
@@ -190,19 +221,19 @@ class MessageBubble extends StatelessWidget {
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Container(
                   height: 80.h,
-                  color: Colors.grey[300],
+                color: _bubbleBorderColor.withOpacity(0.12),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: ColorsManager.mainBlue,
+                      color: _chatAccentColor,
                       strokeWidth: 2,
                     ),
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
                   height: 80.h,
-                  color: Colors.grey[300],
+                  color: _bubbleBorderColor.withOpacity(0.12),
                   child: const Center(
-                    child: Icon(Icons.broken_image, color: Colors.grey),
+                    child: Icon(Icons.broken_image, color: Colors.white38),
                   ),
                 ),
               ),
@@ -214,7 +245,7 @@ class MessageBubble extends StatelessWidget {
             style: TextStyle(
               fontSize: 14.sp,
               fontWeight: FontWeight.w600,
-              color: isMe ? Colors.white : ColorsManager.darkBlue,
+              color: _primaryTextColor,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -225,7 +256,7 @@ class MessageBubble extends StatelessWidget {
               entity.subtitle!,
               style: TextStyle(
                 fontSize: 12.sp,
-                color: isMe ? Colors.white70 : Colors.grey[600],
+                color: _secondaryTextColor,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -236,7 +267,7 @@ class MessageBubble extends StatelessWidget {
             'Tap to view',
             style: TextStyle(
               fontSize: 11.sp,
-              color: isMe ? Colors.white60 : ColorsManager.mainBlue,
+              color: isMe ? _secondaryTextColor : _chatAccentColor,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -245,15 +276,214 @@ class MessageBubble extends StatelessWidget {
     );
   }
 
+  Widget _buildPostCard(SharedEntity entity) {
+    final metadata = entity.metadata ?? {};
+    final postId = metadata['postId'] as String? ?? entity.id;
+    final authorName = metadata['authorName'] as String? ?? entity.subtitle ?? 'Unknown';
+    final authorAvatar = metadata['authorAvatar'] as String?;
+    final body = metadata['body'] as String? ?? entity.title;
+    final mediaList = metadata['media'] as List<dynamic>? ?? [];
+    final tags = (metadata['tags'] as List<dynamic>?)?.cast<String>() ?? [];
+
+    return Container(
+      constraints: BoxConstraints(maxWidth: 280.w),
+      decoration: BoxDecoration(
+        color: _entityBackgroundColor,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: _bubbleBorderColor.withOpacity(0.8)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Author header
+          Padding(
+            padding: EdgeInsets.all(12.w),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16.r,
+                  backgroundImage: authorAvatar != null && authorAvatar.isNotEmpty
+                      ? CachedNetworkImageProvider(authorAvatar)
+                      : null,
+                  backgroundColor: _bubbleBorderColor.withOpacity(0.3),
+                  child: authorAvatar == null || authorAvatar.isEmpty
+                      ? Text(
+                          authorName.isNotEmpty ? authorName[0].toUpperCase() : '?',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            color: _primaryTextColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        )
+                      : null,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        authorName,
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: _primaryTextColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Community Post',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: _secondaryTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.article_outlined,
+                  size: 18.sp,
+                  color: _chatAccentColor,
+                ),
+              ],
+            ),
+          ),
+          // Post body
+          if (body.isNotEmpty) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              child: Text(
+                body,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  color: _primaryTextColor,
+                  height: 1.4,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(height: 8.h),
+          ],
+          // Media preview
+          if (mediaList.isNotEmpty) ...[
+            Builder(
+              builder: (context) {
+                final firstMedia = mediaList.first as Map<String, dynamic>?;
+                final mediaUrl = firstMedia?['url'] as String?;
+                if (mediaUrl != null && mediaUrl.isNotEmpty) {
+                  return ClipRRect(
+                    child: CachedNetworkImage(
+                      imageUrl: mediaUrl,
+                      width: double.infinity,
+                      height: 150.h,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 150.h,
+                        color: _bubbleBorderColor.withOpacity(0.12),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: _chatAccentColor,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        height: 150.h,
+                        color: _bubbleBorderColor.withOpacity(0.12),
+                        child: const Center(
+                          child: Icon(Icons.broken_image, color: Colors.white38),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            SizedBox(height: 8.h),
+          ],
+          // Tags
+          if (tags.isNotEmpty) ...[
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              child: Wrap(
+                spacing: 6.w,
+                runSpacing: 4.h,
+                children: tags.take(3).map((tag) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: _bubbleBorderColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    child: Text(
+                      '#$tag',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: _secondaryTextColor,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            SizedBox(height: 8.h),
+          ],
+          // Footer
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              color: _bubbleBorderColor.withOpacity(0.1),
+              border: Border(
+                top: BorderSide(
+                  color: _bubbleBorderColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.touch_app_outlined,
+                  size: 14.sp,
+                  color: _chatAccentColor,
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  'Tap to view • Long press to react',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    color: _chatAccentColor,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMessageInfo() {
+    final readCount = message.readBy.length;
+    final senderIncluded = message.readBy.contains(message.fromId);
+    int othersCount = senderIncluded ? readCount - 1 : readCount;
+    if (othersCount < 0) othersCount = 0;
+    final hasBeenSeen = othersCount > 0;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          _formatTime(message.timestamp),
+          _formatTime(message.createdAt),
           style: TextStyle(
             fontSize: 11.sp,
-            color: isMe ? Colors.white70 : Colors.grey[600],
+            color: _secondaryTextColor,
           ),
         ),
         if (message.isEdited) ...[
@@ -262,7 +492,7 @@ class MessageBubble extends StatelessWidget {
             '• edited',
             style: TextStyle(
               fontSize: 11.sp,
-              color: isMe ? Colors.white60 : Colors.grey[500],
+              color: _secondaryTextColor,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -270,9 +500,20 @@ class MessageBubble extends StatelessWidget {
         if (isMe) ...[
           SizedBox(width: 4.w),
           Icon(
-            message.isRead ? Icons.done_all : Icons.done,
+            hasBeenSeen ? Icons.done_all : Icons.done,
             size: 14.sp,
-            color: message.isRead ? Colors.blue[200] : Colors.white70,
+            color: hasBeenSeen ? _chatAccentColor : _secondaryTextColor,
+          ),
+        ],
+        if (isMe && isGroupChat && othersCount > 0) ...[
+          SizedBox(width: 4.w),
+          Text(
+            '• seen by $othersCount',
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: _secondaryTextColor,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ],
@@ -289,6 +530,8 @@ class MessageBubble extends StatelessWidget {
         return Icons.group;
       case EntityType.tournament:
         return Icons.emoji_events;
+      case EntityType.post:
+        return Icons.article;
     }
   }
 
@@ -318,4 +561,23 @@ class MessageBubble extends StatelessWidget {
       onDelete!();
     }
   }
+
+  Color get _bubbleColor =>
+      isMe ? bubbleColors.outgoing : bubbleColors.incoming;
+
+  Brightness get _bubbleBrightness =>
+      ThemeData.estimateBrightnessForColor(_bubbleColor);
+
+  Color get _primaryTextColor =>
+      _bubbleBrightness == Brightness.dark ? Colors.white : Colors.black87;
+
+  Color get _secondaryTextColor =>
+      _bubbleBrightness == Brightness.dark ? Colors.white70 : Colors.black54;
+
+  Color get _bubbleBorderColor => _bubbleColor.withOpacity(
+      _bubbleBrightness == Brightness.dark ? 0.35 : 0.25);
+
+  Color get _entityBackgroundColor => _bubbleBrightness == Brightness.dark
+      ? Colors.white.withOpacity(0.08)
+      : Colors.black.withOpacity(0.06);
 }

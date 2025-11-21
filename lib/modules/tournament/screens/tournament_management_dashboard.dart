@@ -5,12 +5,14 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/widgets/progress_indicaror.dart';
+import '../../../helpers/admin_override_helper.dart';
 import '../../../helpers/extensions.dart';
 import '../../../logic/cubit/auth_cubit.dart';
 import '../../../models/user_profile.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/models.dart';
+import '../models/tournament_match_model.dart';
 import '../services/tournament_service.dart';
 import '../services/tournament_live_service.dart';
 import '../widgets/live_bracket_view.dart';
@@ -31,10 +33,12 @@ class TournamentManagementDashboard extends StatefulWidget {
   });
 
   @override
-  State<TournamentManagementDashboard> createState() => _TournamentManagementDashboardState();
+  State<TournamentManagementDashboard> createState() =>
+      _TournamentManagementDashboardState();
 }
 
-class _TournamentManagementDashboardState extends State<TournamentManagementDashboard> with TickerProviderStateMixin {
+class _TournamentManagementDashboardState
+    extends State<TournamentManagementDashboard> with TickerProviderStateMixin {
   final _tournamentService = TournamentService();
   final _liveService = TournamentLiveService();
   late TabController _tabController;
@@ -47,6 +51,12 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
   List<TournamentMatch> _matches = [];
   Map<String, int> _teamPoints = {};
   Tournament? _currentTournament;
+
+  bool get _hasAdminOverride =>
+      AdminOverrideHelper.allowTournamentOverride(widget.tournament);
+  bool get _canManageTournament =>
+      (_currentUserProfile?.uid == widget.tournament.organizerId) ||
+      _hasAdminOverride;
 
   @override
   void initState() {
@@ -66,7 +76,9 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
 
   void _setupLiveUpdates() {
     // Listen to tournament updates
-    _liveService.getTournamentUpdates(widget.tournament.id).listen((tournament) {
+    _liveService
+        .getTournamentUpdates(widget.tournament.id)
+        .listen((tournament) {
       if (mounted) {
         setState(() {
           _currentTournament = tournament;
@@ -84,7 +96,9 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
     });
 
     // Listen to leaderboard updates
-    _liveService.getLeaderboardUpdates(widget.tournament.id).listen((teamPoints) {
+    _liveService
+        .getLeaderboardUpdates(widget.tournament.id)
+        .listen((teamPoints) {
       if (mounted) {
         setState(() {
           _teamPoints = teamPoints;
@@ -109,13 +123,15 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
 
     try {
       // Load pending registrations
-      final pendingRegistrations = await _tournamentService.getTournamentTeamRegistrations(
+      final pendingRegistrations =
+          await _tournamentService.getTournamentTeamRegistrations(
         tournamentId: widget.tournament.id,
         status: TeamRegistrationStatus.pending,
       );
 
       // Load approved teams
-      final approvedTeams = await _tournamentService.getTournamentTeamRegistrations(
+      final approvedTeams =
+          await _tournamentService.getTournamentTeamRegistrations(
         tournamentId: widget.tournament.id,
         status: TeamRegistrationStatus.approved,
       );
@@ -123,7 +139,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
       setState(() {
         _pendingRegistrations = pendingRegistrations;
         _approvedTeams = approvedTeams;
-        _matches = widget.tournament.matches;
+        // Note: Matches should be loaded from TournamentMatchService
+        _matches = [];
         _isLoading = false;
       });
     } catch (e) {
@@ -138,8 +155,7 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
 
   @override
   Widget build(BuildContext context) {
-    // Check if user is tournament owner
-    if (_currentUserProfile?.uid != widget.tournament.organizerId) {
+    if (!_canManageTournament) {
       return _buildUnauthorizedScreen();
     }
 
@@ -172,7 +188,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
                   if (_pendingRegistrations.isNotEmpty) ...[
                     Gap(4.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                       decoration: BoxDecoration(
                         color: ColorsManager.warning,
                         borderRadius: BorderRadius.circular(10.r),
@@ -292,9 +309,9 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
               'All team registration requests will appear here',
             )
           else
-            ..._pendingRegistrations.map((registration) => 
-              _buildRegistrationCard(registration)
-            ).toList(),
+            ..._pendingRegistrations
+                .map((registration) => _buildRegistrationCard(registration))
+                .toList(),
         ],
       ),
     );
@@ -330,9 +347,7 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
               'Approved teams will appear here',
             )
           else
-            ..._approvedTeams.map((team) => 
-              _buildTeamCard(team)
-            ).toList(),
+            ..._approvedTeams.map((team) => _buildTeamCard(team)).toList(),
         ],
       ),
     );
@@ -565,30 +580,30 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
               ),
             ),
             Gap(8.h),
-            ...registration.qualifyingAnswers.map((answer) =>
-              Padding(
-                padding: EdgeInsets.only(bottom: 8.h),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Q: ${answer.question}',
-                      style: TextStyles.font12Grey400Weight.copyWith(
-                        color: ColorsManager.textSecondary,
-                        fontStyle: FontStyle.italic,
+            ...registration.qualifyingAnswers
+                .map((answer) => Padding(
+                      padding: EdgeInsets.only(bottom: 8.h),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Q: ${answer.question}',
+                            style: TextStyles.font12Grey400Weight.copyWith(
+                              color: ColorsManager.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                          Gap(2.h),
+                          Text(
+                            'A: ${answer.answer}',
+                            style: TextStyles.font12Grey400Weight.copyWith(
+                              color: ColorsManager.textPrimary,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Gap(2.h),
-                    Text(
-                      'A: ${answer.answer}',
-                      style: TextStyles.font12Grey400Weight.copyWith(
-                        color: ColorsManager.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            ).toList(),
+                    ))
+                .toList(),
           ],
           if (registration.notes != null) ...[
             Gap(8.h),
@@ -693,7 +708,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
                 value: 'remove',
                 child: Row(
                   children: [
-                    Icon(Icons.remove_circle_outline, color: ColorsManager.error, size: 16),
+                    Icon(Icons.remove_circle_outline,
+                        color: ColorsManager.error, size: 16),
                     Gap(8.w),
                     const Text('Remove Team'),
                   ],
@@ -742,7 +758,7 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                match.round,
+                match.round ?? 'N/A',
                 style: TextStyles.font14DarkBlueMedium.copyWith(
                   color: ColorsManager.primary,
                 ),
@@ -771,7 +787,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
           ),
           Gap(4.h),
           Text(
-            DateFormat('EEEE, MMM dd, yyyy at HH:mm').format(match.scheduledDate),
+            DateFormat('EEEE, MMM dd, yyyy at HH:mm')
+                .format(match.scheduledDate),
             style: TextStyles.font14Grey400Weight.copyWith(
               color: ColorsManager.textSecondary,
             ),
@@ -797,7 +814,7 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
           Gap(12.h),
           Row(
             children: [
-              if (match.status != MatchStatus.completed) ...[
+              if (match.status != TournamentMatchStatus.completed) ...[
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => _updateMatchScore(match),
@@ -858,7 +875,9 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
         title: Text(
           title,
           style: TextStyles.font16DarkBlueBold.copyWith(
-            color: enabled ? ColorsManager.textPrimary : ColorsManager.textSecondary,
+            color: enabled
+                ? ColorsManager.textPrimary
+                : ColorsManager.textSecondary,
           ),
         ),
         subtitle: Text(
@@ -886,7 +905,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
 
   // ============ ACTION METHODS ============
 
-  Future<void> _approveRegistration(TournamentTeamRegistration registration) async {
+  Future<void> _approveRegistration(
+      TournamentTeamRegistration registration) async {
     try {
       await _tournamentService.approveTeamRegistration(
         registrationId: registration.id,
@@ -904,7 +924,8 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
     }
   }
 
-  Future<void> _rejectRegistration(TournamentTeamRegistration registration) async {
+  Future<void> _rejectRegistration(
+      TournamentTeamRegistration registration) async {
     // Show reason dialog
     final reason = await _showReasonDialog('Reject Team Registration');
     if (reason == null) return;
@@ -1135,11 +1156,13 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  isFollowing 
+                  isFollowing
                       ? 'You are now following this tournament!'
                       : 'You have unfollowed this tournament.',
                 ),
-                backgroundColor: isFollowing ? ColorsManager.success : ColorsManager.textSecondary,
+                backgroundColor: isFollowing
+                    ? ColorsManager.success
+                    : ColorsManager.textSecondary,
               ),
             );
           },
@@ -1235,15 +1258,15 @@ class _TournamentManagementDashboardState extends State<TournamentManagementDash
     );
   }
 
-  Color _getMatchStatusColor(MatchStatus status) {
+  Color _getMatchStatusColor(TournamentMatchStatus status) {
     switch (status) {
-      case MatchStatus.scheduled:
+      case TournamentMatchStatus.scheduled:
         return ColorsManager.primary;
-      case MatchStatus.inProgress:
+      case TournamentMatchStatus.live:
         return ColorsManager.warning;
-      case MatchStatus.completed:
+      case TournamentMatchStatus.completed:
         return ColorsManager.success;
-      case MatchStatus.cancelled:
+      case TournamentMatchStatus.cancelled:
         return ColorsManager.error;
     }
   }

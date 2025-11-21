@@ -27,7 +27,8 @@ class _TournamentTeamsListState extends State<TournamentTeamsList> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<TournamentRegistration>>(
-      stream: _tournamentService.getTournamentRegistrations(widget.tournamentId),
+      stream:
+          _tournamentService.getTournamentRegistrations(widget.tournamentId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CustomProgressIndicator());
@@ -130,7 +131,7 @@ class _TournamentTeamsListState extends State<TournamentTeamsList> {
             ),
             child: Center(
               child: Text(
-                registration.teamName.isNotEmpty 
+                registration.teamName.isNotEmpty
                     ? registration.teamName[0].toUpperCase()
                     : 'T',
                 style: TextStyle(
@@ -148,14 +149,16 @@ class _TournamentTeamsListState extends State<TournamentTeamsList> {
               children: [
                 Text(
                   registration.teamName,
-                  style: TextStyles.font14DarkBlueBold.copyWith(color: Colors.white),
+                  style: TextStyles.font14DarkBlueBold
+                      .copyWith(color: Colors.white),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Gap(2.h),
                 Text(
                   'Registered by ${registration.registeredByName}',
-                  style: TextStyles.font10Grey400Weight.copyWith(color: Colors.grey[300]),
+                  style: TextStyles.font10Grey400Weight
+                      .copyWith(color: Colors.grey[300]),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

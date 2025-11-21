@@ -6,10 +6,13 @@ import 'package:flutter/foundation.dart';
 import '../../../services/notification_service.dart';
 import '../../../models/notification_model.dart';
 import '../models/tournament_model.dart';
+import '../models/tournament_match_model.dart';
+import '../../team/models/team_model.dart';
 
 /// Service for live tournament updates and real-time notifications
 class TournamentLiveService {
-  static final TournamentLiveService _instance = TournamentLiveService._internal();
+  static final TournamentLiveService _instance =
+      TournamentLiveService._internal();
   factory TournamentLiveService() => _instance;
   TournamentLiveService._internal();
 
@@ -20,17 +23,35 @@ class TournamentLiveService {
   // Stream controllers for real-time updates
   final Map<String, StreamController<Tournament>> _tournamentStreams = {};
   final Map<String, StreamController<List<TournamentMatch>>> _matchStreams = {};
-  final Map<String, StreamController<Map<String, int>>> _leaderboardStreams = {};
+  final Map<String, StreamController<Map<String, int>>> _leaderboardStreams =
+      {};
+
+  // Cached latest snapshots so late subscribers receive data immediately
+  final Map<String, Tournament> _latestTournamentSnapshot = {};
+  final Map<String, List<TournamentMatch>> _latestMatchSnapshot = {};
+  final Map<String, Map<String, int>> _latestLeaderboardSnapshot = {};
 
   // Collection references
-  CollectionReference get _tournamentsCollection => _firestore.collection('tournaments');
-  CollectionReference get _matchesCollection => _firestore.collection('tournament_matches');
-  CollectionReference get _notificationsCollection => _firestore.collection('tournament_notifications');
+  CollectionReference get _tournamentsCollection =>
+      _firestore.collection('tournaments');
+  CollectionReference get _matchesCollection =>
+      _firestore.collection('tournament_matches');
+  CollectionReference get _notificationsCollection =>
+      _firestore.collection('tournament_notifications');
 
   /// Get real-time tournament updates
   Stream<Tournament> getTournamentUpdates(String tournamentId) {
     if (!_tournamentStreams.containsKey(tournamentId)) {
-      _tournamentStreams[tournamentId] = StreamController<Tournament>.broadcast();
+      late final StreamController<Tournament> controller;
+      controller = StreamController<Tournament>.broadcast(
+        onListen: () {
+          final cached = _latestTournamentSnapshot[tournamentId];
+          if (cached != null) {
+            controller.add(cached);
+          }
+        },
+      );
+      _tournamentStreams[tournamentId] = controller;
       _startTournamentListener(tournamentId);
     }
     return _tournamentStreams[tournamentId]!.stream;
@@ -39,7 +60,16 @@ class TournamentLiveService {
   /// Get real-time match updates for a tournament
   Stream<List<TournamentMatch>> getMatchUpdates(String tournamentId) {
     if (!_matchStreams.containsKey(tournamentId)) {
-      _matchStreams[tournamentId] = StreamController<List<TournamentMatch>>.broadcast();
+      late final StreamController<List<TournamentMatch>> controller;
+      controller = StreamController<List<TournamentMatch>>.broadcast(
+        onListen: () {
+          final cached = _latestMatchSnapshot[tournamentId];
+          if (cached != null) {
+            controller.add(List<TournamentMatch>.from(cached));
+          }
+        },
+      );
+      _matchStreams[tournamentId] = controller;
       _startMatchListener(tournamentId);
     }
     return _matchStreams[tournamentId]!.stream;
@@ -48,7 +78,16 @@ class TournamentLiveService {
   /// Get real-time leaderboard updates
   Stream<Map<String, int>> getLeaderboardUpdates(String tournamentId) {
     if (!_leaderboardStreams.containsKey(tournamentId)) {
-      _leaderboardStreams[tournamentId] = StreamController<Map<String, int>>.broadcast();
+      late final StreamController<Map<String, int>> controller;
+      controller = StreamController<Map<String, int>>.broadcast(
+        onListen: () {
+          final cached = _latestLeaderboardSnapshot[tournamentId];
+          if (cached != null) {
+            controller.add(Map<String, int>.from(cached));
+          }
+        },
+      );
+      _leaderboardStreams[tournamentId] = controller;
       _startLeaderboardListener(tournamentId);
     }
     return _leaderboardStreams[tournamentId]!.stream;
@@ -58,7 +97,9 @@ class TournamentLiveService {
   void _startTournamentListener(String tournamentId) {
     _tournamentsCollection.doc(tournamentId).snapshots().listen((snapshot) {
       if (snapshot.exists) {
-        final tournament = Tournament.fromMap(snapshot.data() as Map<String, dynamic>);
+        final tournament =
+            Tournament.fromMap(snapshot.data() as Map<String, dynamic>);
+        _latestTournamentSnapshot[tournamentId] = tournament;
         _tournamentStreams[tournamentId]?.add(tournament);
       }
     });
@@ -68,12 +109,27 @@ class TournamentLiveService {
   void _startMatchListener(String tournamentId) {
     _matchesCollection
         .where('tournamentId', isEqualTo: tournamentId)
-        .orderBy('scheduledDate', descending: false)
+        .orderBy('scheduledTime', descending: false)
         .snapshots()
         .listen((snapshot) {
       final matches = snapshot.docs
-          .map((doc) => TournamentMatch.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) {
+            try {
+              final data = Map<String, dynamic>.from(
+                doc.data() as Map<String, dynamic>,
+              );
+              data['id'] ??= doc.id;
+              return TournamentMatch.fromJson(data);
+            } catch (e) {
+              if (kDebugMode) {
+                debugPrint('Error parsing match: $e');
+              }
+              return null;
+            }
+          })
+          .whereType<TournamentMatch>()
           .toList();
+      _latestMatchSnapshot[tournamentId] = matches;
       _matchStreams[tournamentId]?.add(matches);
     });
   }
@@ -84,6 +140,7 @@ class TournamentLiveService {
       if (snapshot.exists) {
         final data = snapshot.data() as Map<String, dynamic>;
         final teamPoints = Map<String, int>.from(data['teamPoints'] ?? {});
+        _latestLeaderboardSnapshot[tournamentId] = teamPoints;
         _leaderboardStreams[tournamentId]?.add(teamPoints);
       }
     });
@@ -104,62 +161,29 @@ class TournamentLiveService {
 
       // Update match in matches collection
       await _matchesCollection.doc(matchId).update({
-        'team1Score': team1Score,
-        'team2Score': team2Score,
+        'team1.score': team1Score,
+        'team2.score': team2Score,
         'winnerTeamId': winnerTeamId,
-        'winnerTeamName': winnerTeamName,
-        'status': MatchStatus.completed.name,
+        'status': TournamentMatchStatus.completed.name,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
 
-      // Update tournament matches array
-      final tournamentDoc = await _tournamentsCollection.doc(tournamentId).get();
-      if (tournamentDoc.exists) {
-        final tournamentData = tournamentDoc.data() as Map<String, dynamic>;
-        final matches = (tournamentData['matches'] as List<dynamic>?)
-            ?.map((matchMap) => TournamentMatch.fromMap(matchMap as Map<String, dynamic>))
-            .toList() ?? [];
+      // Note: Matches are now managed separately via TournamentMatchService
+      // We only need to update the tournament timestamp
+      await _tournamentsCollection.doc(tournamentId).update({
+        'updatedAt': Timestamp.fromDate(DateTime.now()),
+      });
 
-        final updatedMatches = matches.map((match) {
-          if (match.id == matchId) {
-            return TournamentMatch(
-              id: match.id,
-              tournamentId: match.tournamentId,
-              team1Id: match.team1Id,
-              team1Name: match.team1Name,
-              team2Id: match.team2Id,
-              team2Name: match.team2Name,
-              scheduledDate: match.scheduledDate,
-              status: MatchStatus.completed,
-              team1Score: team1Score,
-              team2Score: team2Score,
-              winnerTeamId: winnerTeamId,
-              winnerTeamName: winnerTeamName,
-              round: match.round,
-              matchNumber: match.matchNumber,
-              venueId: match.venueId,
-              venueName: match.venueName,
-              createdAt: match.createdAt,
-              updatedAt: DateTime.now(),
-              metadata: match.metadata,
-            );
-          }
-          return match;
-        }).toList();
-
-        await _tournamentsCollection.doc(tournamentId).update({
-          'matches': updatedMatches.map((m) => m.toMap()).toList(),
-          'updatedAt': Timestamp.fromDate(DateTime.now()),
-        });
-
-        // Update team points if there's a winner
-        if (winnerTeamId != null) {
-          await _updateTeamPoints(tournamentId, winnerTeamId);
-        }
-
-        // Send live notifications
-        await _sendScoreUpdateNotifications(tournamentId, matchId, team1Score, team2Score, winnerTeamName);
+      // Update team points if there's a winner
+      if (winnerTeamId != null) {
+        await _updateTeamPoints(tournamentId, winnerTeamId);
       }
+
+      // Send live notifications
+      final winnerName =
+          winnerTeamId != null ? (winnerTeamId == '' ? null : 'Winner') : null;
+      await _sendScoreUpdateNotifications(
+          tournamentId, matchId, team1Score, team2Score, winnerName);
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ TournamentLiveService: Error updating match score - $e');
@@ -169,12 +193,15 @@ class TournamentLiveService {
   }
 
   /// Update team points
-  Future<void> _updateTeamPoints(String tournamentId, String winnerTeamId) async {
+  Future<void> _updateTeamPoints(
+      String tournamentId, String winnerTeamId) async {
     final tournamentDoc = await _tournamentsCollection.doc(tournamentId).get();
     if (tournamentDoc.exists) {
       final tournamentData = tournamentDoc.data() as Map<String, dynamic>;
-      final currentPoints = Map<String, int>.from(tournamentData['teamPoints'] ?? {});
-      currentPoints[winnerTeamId] = (currentPoints[winnerTeamId] ?? 0) + 3; // 3 points for a win
+      final currentPoints =
+          Map<String, int>.from(tournamentData['teamPoints'] ?? {});
+      currentPoints[winnerTeamId] =
+          (currentPoints[winnerTeamId] ?? 0) + 3; // 3 points for a win
 
       await _tournamentsCollection.doc(tournamentId).update({
         'teamPoints': currentPoints,
@@ -194,14 +221,14 @@ class TournamentLiveService {
     try {
       // Get tournament participants
       final participantIds = await _getTournamentParticipantIds(tournamentId);
-      
+
       // Send push notifications
       for (final participantId in participantIds) {
         await _notificationService.createNotification(
           userId: participantId,
           type: NotificationType.scoreUpdate,
           title: 'Match Score Updated',
-          message: winnerTeamName != null 
+          message: winnerTeamName != null
               ? '$winnerTeamName won the match!'
               : 'Match score: $team1Score - $team2Score',
           data: {
@@ -220,7 +247,7 @@ class TournamentLiveService {
         'matchId': matchId,
         'type': 'score_update',
         'title': 'Score Updated',
-        'message': winnerTeamName != null 
+        'message': winnerTeamName != null
             ? '$winnerTeamName won the match!'
             : 'Match score: $team1Score - $team2Score',
         'participantIds': participantIds,
@@ -229,7 +256,8 @@ class TournamentLiveService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('⚠️ TournamentLiveService: Failed to send score notifications - $e');
+        debugPrint(
+            '⚠️ TournamentLiveService: Failed to send score notifications - $e');
       }
     }
   }
@@ -241,7 +269,7 @@ class TournamentLiveService {
   }) async {
     try {
       final participantIds = await _getTournamentParticipantIds(tournamentId);
-      
+
       for (final participantId in participantIds) {
         await _notificationService.createNotification(
           userId: participantId,
@@ -272,7 +300,8 @@ class TournamentLiveService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('⚠️ TournamentLiveService: Failed to send schedule notifications - $e');
+        debugPrint(
+            '⚠️ TournamentLiveService: Failed to send schedule notifications - $e');
       }
     }
   }
@@ -285,7 +314,7 @@ class TournamentLiveService {
   }) async {
     try {
       final participantIds = await _getTournamentParticipantIds(tournamentId);
-      
+
       for (final participantId in participantIds) {
         await _notificationService.createNotification(
           userId: participantId,
@@ -312,7 +341,8 @@ class TournamentLiveService {
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('⚠️ TournamentLiveService: Failed to send status notifications - $e');
+        debugPrint(
+            '⚠️ TournamentLiveService: Failed to send status notifications - $e');
       }
     }
   }
@@ -328,7 +358,7 @@ class TournamentLiveService {
           .get();
 
       final participantIds = <String>{};
-      
+
       for (final doc in registrationsQuery.docs) {
         final data = doc.data();
         participantIds.addAll(List<String>.from(data['teamMemberIds'] ?? []));
@@ -337,32 +367,37 @@ class TournamentLiveService {
       return participantIds.toList();
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentLiveService: Error getting participant IDs - $e');
+        debugPrint(
+            '❌ TournamentLiveService: Error getting participant IDs - $e');
       }
       return [];
     }
   }
 
   /// Get live tournament notifications
-  Stream<List<TournamentNotification>> getTournamentNotifications(String tournamentId) {
+  Stream<List<TournamentNotification>> getTournamentNotifications(
+      String tournamentId) {
     return _notificationsCollection
         .where('tournamentId', isEqualTo: tournamentId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => TournamentNotification.fromMap(doc.data() as Map<String, dynamic>))
+            .map((doc) => TournamentNotification.fromMap(
+                doc.data() as Map<String, dynamic>))
             .toList());
   }
 
   /// Mark notification as read
-  Future<void> markNotificationAsRead(String notificationId, String userId) async {
+  Future<void> markNotificationAsRead(
+      String notificationId, String userId) async {
     try {
       await _notificationsCollection.doc(notificationId).update({
         'readBy': FieldValue.arrayUnion([userId]),
       });
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ TournamentLiveService: Error marking notification as read - $e');
+        debugPrint(
+            '❌ TournamentLiveService: Error marking notification as read - $e');
       }
     }
   }
@@ -381,6 +416,9 @@ class TournamentLiveService {
     _tournamentStreams.clear();
     _matchStreams.clear();
     _leaderboardStreams.clear();
+    _latestTournamentSnapshot.clear();
+    _latestMatchSnapshot.clear();
+    _latestLeaderboardSnapshot.clear();
   }
 }
 

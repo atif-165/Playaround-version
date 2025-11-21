@@ -64,7 +64,8 @@ class TournamentRegistration {
       'registeredByName': registeredByName,
       'status': status.name,
       'registeredAt': Timestamp.fromDate(registeredAt),
-      'respondedAt': respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
+      'respondedAt':
+          respondedAt != null ? Timestamp.fromDate(respondedAt!) : null,
       'respondedBy': respondedBy,
       'responseMessage': responseMessage,
       'additionalInfo': additionalInfo,
@@ -85,8 +86,8 @@ class TournamentRegistration {
         orElse: () => RegistrationStatus.pending,
       ),
       registeredAt: (map['registeredAt'] as Timestamp).toDate(),
-      respondedAt: map['respondedAt'] != null 
-          ? (map['respondedAt'] as Timestamp).toDate() 
+      respondedAt: map['respondedAt'] != null
+          ? (map['respondedAt'] as Timestamp).toDate()
           : null,
       respondedBy: map['respondedBy'],
       responseMessage: map['responseMessage'],

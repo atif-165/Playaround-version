@@ -165,7 +165,8 @@ class PlayerCard extends StatelessWidget {
                               vertical: 2.h,
                             ),
                             decoration: BoxDecoration(
-                              color: ColorsManager.mainBlue.withValues(alpha: 0.1),
+                              color:
+                                  ColorsManager.mainBlue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
@@ -204,7 +205,8 @@ class PlayerCard extends StatelessWidget {
                                 Icon(
                                   Icons.trending_up,
                                   size: 12.sp,
-                                  color: _getSkillColor(player.averageSkillScore),
+                                  color:
+                                      _getSkillColor(player.averageSkillScore),
                                 ),
                                 Gap(4.w),
                                 Text(
@@ -212,7 +214,8 @@ class PlayerCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 12.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: _getSkillColor(player.averageSkillScore),
+                                    color: _getSkillColor(
+                                        player.averageSkillScore),
                                   ),
                                 ),
                               ],

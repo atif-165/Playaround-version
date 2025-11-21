@@ -3,13 +3,13 @@ import 'skill_type.dart';
 
 /// Enum for skill log sources to track how skills were updated
 enum SkillLogSource {
-  manual,           // Manually logged by coach
-  booking,          // Auto-updated from booking completion
-  tournament,       // Auto-updated from tournament participation
-  feedback,         // Updated from coach/teammate feedback
-  systemDecay,      // Auto-decay for inactivity
-  teamActivity,     // Updated from team activities
-  achievement;      // Updated from achievements/milestones
+  manual, // Manually logged by coach
+  booking, // Auto-updated from booking completion
+  tournament, // Auto-updated from tournament participation
+  feedback, // Updated from coach/teammate feedback
+  systemDecay, // Auto-decay for inactivity
+  teamActivity, // Updated from team activities
+  achievement; // Updated from achievements/milestones
 
   String get displayName {
     switch (this) {
@@ -43,14 +43,17 @@ enum SkillLogSource {
 class SkillLog {
   final String id;
   final String playerId;
-  final String loggedBy; // Coach UID who logged this entry (or 'system' for automated)
+  final String
+      loggedBy; // Coach UID who logged this entry (or 'system' for automated)
   final DateTime date;
   final Map<SkillType, int> skillScores; // Scores out of 100 for each skill
   final Map<SkillType, int> skillChanges; // Changes applied (+/- values)
   final SkillLogSource source; // How this log was created
-  final String? context; // Additional context (e.g., "45-min football session with Coach John")
+  final String?
+      context; // Additional context (e.g., "45-min football session with Coach John")
   final String? notes;
-  final Map<String, dynamic>? metadata; // Additional data (booking ID, tournament ID, etc.)
+  final Map<String, dynamic>?
+      metadata; // Additional data (booking ID, tournament ID, etc.)
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -90,7 +93,8 @@ class SkillLog {
 
     // Convert skill changes from Map<String, dynamic> to Map<SkillType, int>
     final Map<SkillType, int> changes = {};
-    final skillChangesData = data['skillChanges'] as Map<String, dynamic>? ?? {};
+    final skillChangesData =
+        data['skillChanges'] as Map<String, dynamic>? ?? {};
 
     for (final entry in skillChangesData.entries) {
       try {
@@ -204,12 +208,16 @@ class SkillLog {
 
   /// Get total positive changes
   int get totalPositiveChanges {
-    return skillChanges.values.where((change) => change > 0).fold(0, (total, change) => total + change);
+    return skillChanges.values
+        .where((change) => change > 0)
+        .fold(0, (total, change) => total + change);
   }
 
   /// Get total negative changes
   int get totalNegativeChanges {
-    return skillChanges.values.where((change) => change < 0).fold(0, (total, change) => total + change.abs());
+    return skillChanges.values
+        .where((change) => change < 0)
+        .fold(0, (total, change) => total + change.abs());
   }
 
   /// Get formatted context for display

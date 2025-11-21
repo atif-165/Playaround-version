@@ -103,8 +103,8 @@ class TeamScheduleEvent {
       'createdByName': createdByName,
       'isRecurring': isRecurring,
       'recurrencePattern': recurrencePattern,
-      'recurrenceEndDate': recurrenceEndDate != null 
-          ? Timestamp.fromDate(recurrenceEndDate!) 
+      'recurrenceEndDate': recurrenceEndDate != null
+          ? Timestamp.fromDate(recurrenceEndDate!)
           : null,
       'metadata': metadata,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -133,8 +133,8 @@ class TeamScheduleEvent {
       createdByName: map['createdByName'],
       isRecurring: map['isRecurring'] ?? false,
       recurrencePattern: map['recurrencePattern'],
-      recurrenceEndDate: map['recurrenceEndDate'] != null 
-          ? (map['recurrenceEndDate'] as Timestamp).toDate() 
+      recurrenceEndDate: map['recurrenceEndDate'] != null
+          ? (map['recurrenceEndDate'] as Timestamp).toDate()
           : null,
       metadata: Map<String, dynamic>.from(map['metadata'] ?? {}),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
@@ -215,7 +215,7 @@ class TeamScheduleEvent {
   String get durationString {
     final hours = duration.inHours;
     final minutes = duration.inMinutes % 60;
-    
+
     if (hours > 0) {
       return '${hours}h ${minutes}m';
     } else {
@@ -253,12 +253,10 @@ class MemberAttendance {
       'memberName': memberName,
       'status': status.name,
       'reason': reason,
-      'checkInTime': checkInTime != null 
-          ? Timestamp.fromDate(checkInTime!) 
-          : null,
-      'checkOutTime': checkOutTime != null 
-          ? Timestamp.fromDate(checkOutTime!) 
-          : null,
+      'checkInTime':
+          checkInTime != null ? Timestamp.fromDate(checkInTime!) : null,
+      'checkOutTime':
+          checkOutTime != null ? Timestamp.fromDate(checkOutTime!) : null,
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
@@ -273,11 +271,11 @@ class MemberAttendance {
         orElse: () => AttendanceStatus.pending,
       ),
       reason: map['reason'],
-      checkInTime: map['checkInTime'] != null 
-          ? (map['checkInTime'] as Timestamp).toDate() 
+      checkInTime: map['checkInTime'] != null
+          ? (map['checkInTime'] as Timestamp).toDate()
           : null,
-      checkOutTime: map['checkOutTime'] != null 
-          ? (map['checkOutTime'] as Timestamp).toDate() 
+      checkOutTime: map['checkOutTime'] != null
+          ? (map['checkOutTime'] as Timestamp).toDate()
           : null,
       updatedAt: (map['updatedAt'] as Timestamp).toDate(),
     );

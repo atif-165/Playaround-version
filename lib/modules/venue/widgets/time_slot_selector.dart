@@ -81,7 +81,7 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
       children: _predefinedSlots.map((slot) {
         final isSelected = widget.selectedTimeSlots.any((selected) =>
             selected.start == slot.start && selected.end == slot.end);
-        
+
         return GestureDetector(
           onTap: () => _toggleTimeSlot(slot),
           child: Container(
@@ -122,7 +122,8 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
           decoration: BoxDecoration(
             color: ColorsManager.mainBlue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+            border: Border.all(
+                color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
           ),
           child: Wrap(
             spacing: 8.w,
@@ -169,22 +170,22 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
 
   void _toggleTimeSlot(TimeSlot slot) {
     final currentSlots = List<TimeSlot>.from(widget.selectedTimeSlots);
-    final existingIndex = currentSlots.indexWhere((selected) =>
-        selected.start == slot.start && selected.end == slot.end);
-    
+    final existingIndex = currentSlots.indexWhere(
+        (selected) => selected.start == slot.start && selected.end == slot.end);
+
     if (existingIndex >= 0) {
       currentSlots.removeAt(existingIndex);
     } else {
       currentSlots.add(slot);
     }
-    
+
     widget.onTimeSlotsChanged(currentSlots);
   }
 
   void _removeTimeSlot(TimeSlot slot) {
     final currentSlots = List<TimeSlot>.from(widget.selectedTimeSlots);
-    currentSlots.removeWhere((selected) =>
-        selected.start == slot.start && selected.end == slot.end);
+    currentSlots.removeWhere(
+        (selected) => selected.start == slot.start && selected.end == slot.end);
     widget.onTimeSlotsChanged(currentSlots);
   }
 
@@ -219,7 +220,7 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
                         }
                       },
                       child: Text(
-                        startTime != null 
+                        startTime != null
                             ? startTime!.format(context)
                             : 'Start Time',
                       ),
@@ -242,9 +243,7 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
                         }
                       },
                       child: Text(
-                        endTime != null 
-                            ? endTime!.format(context)
-                            : 'End Time',
+                        endTime != null ? endTime!.format(context) : 'End Time',
                       ),
                     ),
                   ),
@@ -267,9 +266,10 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
                         start: _formatTimeOfDay(startTime!),
                         end: _formatTimeOfDay(endTime!),
                       );
-                      
+
                       // Validate that end time is after start time
-                      if (_timeOfDayToMinutes(endTime!) <= _timeOfDayToMinutes(startTime!)) {
+                      if (_timeOfDayToMinutes(endTime!) <=
+                          _timeOfDayToMinutes(startTime!)) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('End time must be after start time'),
@@ -278,7 +278,7 @@ class _TimeSlotSelectorState extends State<TimeSlotSelector> {
                         );
                         return;
                       }
-                      
+
                       _toggleTimeSlot(customSlot);
                       Navigator.pop(context);
                     }

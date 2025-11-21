@@ -65,7 +65,8 @@ class VenueModel {
       'gpsCoordinates': gpsCoordinates,
       'hourlyRate': hourlyRate,
       'images': images,
-      'availableTimeSlots': availableTimeSlots.map((slot) => slot.toMap()).toList(),
+      'availableTimeSlots':
+          availableTimeSlots.map((slot) => slot.toMap()).toList(),
       'availableDays': availableDays,
       'amenities': amenities,
       'contactInfo': contactInfo,

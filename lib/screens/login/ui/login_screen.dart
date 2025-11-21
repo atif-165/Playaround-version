@@ -16,6 +16,7 @@ import '../../../helpers/rive_controller.dart';
 import '../../../logic/cubit/auth_cubit.dart';
 import '../../../routing/routes.dart';
 import '../../../theming/colors.dart';
+import '../../../theming/public_profile_theme.dart';
 import '../../../theming/styles.dart';
 import 'widgets/do_not_have_account.dart';
 
@@ -32,18 +33,25 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: OfflineBuilder(
-        connectivityBuilder: (
-          BuildContext context,
-          List<ConnectivityResult> connectivity,
-          Widget child,
-        ) {
-          final bool connected = !connectivity.contains(ConnectivityResult.none);
-          return connected ? _loginPage(context) : const BuildNoInternet();
-        },
-        child: const Center(
-          child: CircularProgressIndicator(
-            color: ColorsManager.mainBlue,
+      backgroundColor: PublicProfileTheme.backgroundColor,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: PublicProfileTheme.backgroundGradient,
+        ),
+        child: OfflineBuilder(
+          connectivityBuilder: (
+            BuildContext context,
+            List<ConnectivityResult> connectivity,
+            Widget child,
+          ) {
+            final bool connected =
+                !connectivity.contains(ConnectivityResult.none);
+            return connected ? _loginPage(context) : const BuildNoInternet();
+          },
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: ColorsManager.mainBlue,
+            ),
           ),
         ),
       ),
@@ -112,7 +120,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   dialogType: DialogType.info,
                   animType: AnimType.rightSlide,
                   title: 'Email Not Verified',
-                  desc: 'Please verify your email to continue. We\'ll redirect you to the verification screen.',
+                  desc:
+                      'Please verify your email to continue. We\'ll redirect you to the verification screen.',
                 ).show();
                 if (!context.mounted) return;
                 context.pushNamedAndRemoveUntil(

@@ -31,8 +31,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
               final o = items[i];
               return ListTile(
                 title: Text('Order ${o.id.substring(0, 6)}'),
-                subtitle: Text('${o.items.length} items • ${o.totalAmount.toStringAsFixed(2)}'),
-                trailing: Text(o.orderDate.toLocal().toString().split('.').first),
+                subtitle: Text(
+                    '${o.items.length} items • ${o.totalAmount.toStringAsFixed(2)}'),
+                trailing:
+                    Text(o.orderDate.toLocal().toString().split('.').first),
               );
             },
           );
@@ -41,4 +43,3 @@ class _OrdersScreenState extends State<OrdersScreen> {
     );
   }
 }
-

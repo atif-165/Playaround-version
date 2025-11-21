@@ -25,7 +25,7 @@ class DashboardHeader extends StatelessWidget {
         border: Border.all(color: ColorsManager.primary, width: 2.w),
         boxShadow: [
           BoxShadow(
-            color: ColorsManager.primary.withOpacity(0.1),
+            color: ColorsManager.primary.withValues(alpha: 0.1),
             blurRadius: 10.r,
             offset: Offset(0, 4.h),
           ),
@@ -47,13 +47,14 @@ class DashboardHeader extends StatelessWidget {
                     child: Image.network(
                       userProfile!.photoUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildDefaultAvatar(),
                     ),
                   )
                 : _buildDefaultAvatar(),
           ),
           Gap(16.w),
-          
+
           // User Info & Stats
           Expanded(
             child: Column(
@@ -68,7 +69,8 @@ class DashboardHeader extends StatelessWidget {
                 ),
                 Gap(4.h),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                   decoration: BoxDecoration(
                     color: ColorsManager.primary,
                     borderRadius: BorderRadius.circular(12.r),
@@ -79,7 +81,7 @@ class DashboardHeader extends StatelessWidget {
                   ),
                 ),
                 Gap(12.h),
-                
+
                 // Quick Stats Row
                 Row(
                   children: [
@@ -102,16 +104,17 @@ class DashboardHeader extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Next Event
                 if (userProfile?.quickStats.nextEvent != null) ...[
                   Gap(8.h),
                   Container(
                     padding: EdgeInsets.all(8.w),
                     decoration: BoxDecoration(
-                      color: ColorsManager.primary.withOpacity(0.1),
+                      color: ColorsManager.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: ColorsManager.primary.withOpacity(0.3)),
+                      border: Border.all(
+                          color: ColorsManager.primary.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
@@ -138,7 +141,7 @@ class DashboardHeader extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Edit Profile Button
           GestureDetector(
             onTap: () => Navigator.pushNamed(context, '/profile'),
@@ -167,7 +170,7 @@ class DashboardHeader extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             ColorsManager.primary,
-            ColorsManager.primary.withOpacity(0.7),
+            ColorsManager.primary.withValues(alpha: 0.7),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

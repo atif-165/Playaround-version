@@ -162,8 +162,10 @@ class _SkillDashboardWidgetState extends State<SkillDashboardWidget> {
     }
 
     final analytics = dashboardData!['analytics'] as Map<String, dynamic>;
-    final currentSkills = analytics['currentSkillScores'] as Map<String, dynamic>;
-    final activityStatus = dashboardData!['activityStatus'] as Map<String, dynamic>;
+    final currentSkills =
+        analytics['currentSkillScores'] as Map<String, dynamic>;
+    final activityStatus =
+        dashboardData!['activityStatus'] as Map<String, dynamic>;
     final mostImproved = dashboardData!['mostImproved'] as Map<String, dynamic>;
 
     return Column(
@@ -182,15 +184,15 @@ class _SkillDashboardWidgetState extends State<SkillDashboardWidget> {
                 ),
                 const SizedBox(height: 12),
                 ...currentSkills.entries.map((entry) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(entry.key),
-                      Text('${entry.value}/100'),
-                    ],
-                  ),
-                )),
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(entry.key),
+                          Text('${entry.value}/100'),
+                        ],
+                      ),
+                    )),
               ],
             ),
           ),
@@ -237,12 +239,16 @@ class _SkillDashboardWidgetState extends State<SkillDashboardWidget> {
                 Row(
                   children: [
                     Icon(
-                      activityStatus['isInactive'] ? Icons.warning : Icons.check_circle,
-                      color: activityStatus['isInactive'] ? Colors.orange : Colors.green,
+                      activityStatus['isInactive']
+                          ? Icons.warning
+                          : Icons.check_circle,
+                      color: activityStatus['isInactive']
+                          ? Colors.orange
+                          : Colors.green,
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      activityStatus['isInactive'] 
+                      activityStatus['isInactive']
                           ? 'Inactive (${activityStatus['daysSinceActive']} days)'
                           : 'Active',
                     ),
@@ -275,34 +281,34 @@ mixin SkillTrackingScreenMixin<T extends StatefulWidget> on State<T> {
 }
 
 /// Key Integration Points Summary:
-/// 
+///
 /// 1. App Initialization:
 ///    - Call SkillIntegrationService().initialize() in main()
-/// 
+///
 /// 2. Booking Completion:
 ///    - Call handleBookingCompletion() in BookingService.completeBooking()
-/// 
+///
 /// 3. Tournament Completion:
 ///    - Call handleTournamentCompletion() in TournamentService
-/// 
+///
 /// 4. Feedback Submission:
 ///    - Call handleFeedbackSubmission() when ratings are given
-/// 
+///
 /// 5. Manual Skill Logging:
 ///    - Call handleManualSkillLog() in coach logging screens
-/// 
+///
 /// 6. Dashboard Display:
 ///    - Use getSkillDashboard() to get comprehensive data
-/// 
+///
 /// 7. Activity Tracking:
 ///    - Use ActivityTrackingMixin or call trackUserActivity() on significant actions
-/// 
+///
 /// 8. Maintenance:
 ///    - Schedule runMaintenance() to run periodically (daily/weekly)
-/// 
+///
 /// 9. System Health:
 ///    - Use getSystemHealth() for admin monitoring
-/// 
+///
 /// The system is designed to be:
 /// - Non-blocking: Skill updates won't break main app flows
 /// - Intelligent: Calculates skill changes based on real activities

@@ -14,14 +14,15 @@ class TournamentDiscoveryScreen extends StatefulWidget {
   const TournamentDiscoveryScreen({super.key});
 
   @override
-  State<TournamentDiscoveryScreen> createState() => _TournamentDiscoveryScreenState();
+  State<TournamentDiscoveryScreen> createState() =>
+      _TournamentDiscoveryScreenState();
 }
 
 class _TournamentDiscoveryScreenState extends State<TournamentDiscoveryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
-  
+
   // Filter state
   SportType? _selectedSportType;
   TournamentFormat? _selectedFormat;
@@ -151,42 +152,42 @@ class _TournamentDiscoveryScreenState extends State<TournamentDiscoveryScreen>
 
   Widget _buildActiveFilters() {
     final activeFilters = <Widget>[];
-    
+
     if (_selectedSportType != null) {
       activeFilters.add(_buildFilterChip(
         '${_selectedSportType!.displayName}',
         () => setState(() => _selectedSportType = null),
       ));
     }
-    
+
     if (_selectedFormat != null) {
       activeFilters.add(_buildFilterChip(
         '${_selectedFormat!.displayName}',
         () => setState(() => _selectedFormat = null),
       ));
     }
-    
+
     if (_selectedStatus != null) {
       activeFilters.add(_buildFilterChip(
         '${_selectedStatus!.displayName}',
         () => setState(() => _selectedStatus = null),
       ));
     }
-    
+
     if (_maxEntryFee != null) {
       activeFilters.add(_buildFilterChip(
         'Under \$${_maxEntryFee!.toStringAsFixed(0)}',
         () => setState(() => _maxEntryFee = null),
       ));
     }
-    
+
     if (_showFreeOnly) {
       activeFilters.add(_buildFilterChip(
         'Free Only',
         () => setState(() => _showFreeOnly = false),
       ));
     }
-    
+
     if (_showPaidOnly) {
       activeFilters.add(_buildFilterChip(
         'Paid Only',
@@ -273,11 +274,16 @@ class _TournamentDiscoveryScreenState extends State<TournamentDiscoveryScreen>
 
     if (tournaments.isEmpty) {
       return _buildEmptyState(
-        isNearby ? 'No nearby tournaments' : 
-        isLevelBased ? 'No tournaments for your level' : 'No tournaments found',
-        isNearby ? 'Try expanding your search area' :
-        isLevelBased ? 'Check back later for tournaments matching your skill level' :
-        'Try adjusting your filters or search terms',
+        isNearby
+            ? 'No nearby tournaments'
+            : isLevelBased
+                ? 'No tournaments for your level'
+                : 'No tournaments found',
+        isNearby
+            ? 'Try expanding your search area'
+            : isLevelBased
+                ? 'Check back later for tournaments matching your skill level'
+                : 'Try adjusting your filters or search terms',
       );
     }
 
@@ -388,22 +394,24 @@ class _TournamentDiscoveryScreenState extends State<TournamentDiscoveryScreen>
               style: TextStyles.font18DarkBlueBold,
             ),
             Gap(16.h),
-            ...TournamentSortOption.values.map((option) => ListTile(
-              title: Text(option.displayName),
-              leading: Radio<TournamentSortOption>(
-                value: option,
-                groupValue: _sortOption,
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      _sortOption = value;
-                    });
-                    Navigator.pop(context);
-                    _performSearch();
-                  }
-                },
-              ),
-            )).toList(),
+            ...TournamentSortOption.values
+                .map((option) => ListTile(
+                      title: Text(option.displayName),
+                      leading: Radio<TournamentSortOption>(
+                        value: option,
+                        groupValue: _sortOption,
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _sortOption = value;
+                            });
+                            Navigator.pop(context);
+                            _performSearch();
+                          }
+                        },
+                      ),
+                    ))
+                .toList(),
           ],
         ),
       ),
@@ -436,7 +444,7 @@ class _TournamentDiscoveryScreenState extends State<TournamentDiscoveryScreen>
     setState(() {
       _isLoading = true;
     });
-    
+
     // Simulate API call
     Future.delayed(const Duration(seconds: 1), () {
       if (mounted) {

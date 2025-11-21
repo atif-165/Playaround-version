@@ -84,23 +84,29 @@ class VenueAmenitiesDisplay extends StatelessWidget {
       case 'parking':
         return const AmenityInfo(Icons.local_parking, 'Free parking available');
       case 'changing rooms':
-        return const AmenityInfo(Icons.meeting_room, 'Separate changing facilities');
+        return const AmenityInfo(
+            Icons.meeting_room, 'Separate changing facilities');
       case 'restrooms':
         return const AmenityInfo(Icons.wc, 'Clean restroom facilities');
       case 'equipment rental':
-        return const AmenityInfo(Icons.sports_soccer, 'Sports equipment available for rent');
+        return const AmenityInfo(
+            Icons.sports_soccer, 'Sports equipment available for rent');
       case 'refreshments':
         return const AmenityInfo(Icons.local_cafe, 'Food and drinks available');
       case 'first aid':
-        return const AmenityInfo(Icons.medical_services, 'First aid kit and trained staff');
+        return const AmenityInfo(
+            Icons.medical_services, 'First aid kit and trained staff');
       case 'lighting':
-        return const AmenityInfo(Icons.lightbulb, 'Floodlights for evening play');
+        return const AmenityInfo(
+            Icons.lightbulb, 'Floodlights for evening play');
       case 'seating':
-        return const AmenityInfo(Icons.event_seat, 'Spectator seating available');
+        return const AmenityInfo(
+            Icons.event_seat, 'Spectator seating available');
       case 'wi-fi':
         return const AmenityInfo(Icons.wifi, 'Free wireless internet');
       case 'air conditioning':
-        return const AmenityInfo(Icons.ac_unit, 'Climate controlled environment');
+        return const AmenityInfo(
+            Icons.ac_unit, 'Climate controlled environment');
       case 'lockers':
         return const AmenityInfo(Icons.lock, 'Secure storage lockers');
       case 'shower':

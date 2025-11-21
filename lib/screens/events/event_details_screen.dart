@@ -7,7 +7,7 @@ import '../../theming/styles.dart';
 
 class EventDetailsScreen extends StatelessWidget {
   final String eventId;
-  
+
   const EventDetailsScreen({super.key, required this.eventId});
 
   @override
@@ -15,7 +15,8 @@ class EventDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Event Details', style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
+        title: Text('Event Details',
+            style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white)),
         backgroundColor: Colors.grey[900],
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -35,14 +36,22 @@ class EventDetailsScreen extends StatelessWidget {
               ),
             ),
             Gap(16.h),
-            Text('Basketball Tournament Finals', style: TextStyles.font20DarkBlueBold.copyWith(color: Colors.white)),
+            Text('Basketball Tournament Finals',
+                style: TextStyles.font20DarkBlueBold
+                    .copyWith(color: Colors.white)),
             Gap(8.h),
-            Text('December 25, 2024 at 3:00 PM', style: TextStyles.font14Grey400Weight.copyWith(color: Colors.grey[400])),
+            Text('December 25, 2024 at 3:00 PM',
+                style: TextStyles.font14Grey400Weight
+                    .copyWith(color: Colors.grey[400])),
             Gap(16.h),
-            Text('Description', style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.white)),
+            Text('Description',
+                style: TextStyles.font16DarkBlueBold
+                    .copyWith(color: Colors.white)),
             Gap(8.h),
-            Text('Join us for an exciting basketball tournament featuring the best teams in the city. Great prizes await!', 
-                 style: TextStyles.font14Grey400Weight.copyWith(color: Colors.grey[300])),
+            Text(
+                'Join us for an exciting basketball tournament featuring the best teams in the city. Great prizes await!',
+                style: TextStyles.font14Grey400Weight
+                    .copyWith(color: Colors.grey[300])),
             Gap(24.h),
             Container(
               width: double.infinity,
@@ -51,8 +60,10 @@ class EventDetailsScreen extends StatelessWidget {
                 color: ColorsManager.primary,
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Text('Join Event', textAlign: TextAlign.center, 
-                          style: TextStyles.font16DarkBlueBold.copyWith(color: Colors.white)),
+              child: Text('Join Event',
+                  textAlign: TextAlign.center,
+                  style: TextStyles.font16DarkBlueBold
+                      .copyWith(color: Colors.white)),
             ),
           ],
         ),

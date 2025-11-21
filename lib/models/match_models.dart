@@ -149,8 +149,8 @@ class UserMatch {
       user2ImageUrl: map['user2ImageUrl'] as String?,
       status: MatchStatus.fromString(map['status'] as String),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
-      expiredAt: map['expiredAt'] != null 
-          ? (map['expiredAt'] as Timestamp).toDate() 
+      expiredAt: map['expiredAt'] != null
+          ? (map['expiredAt'] as Timestamp).toDate()
           : null,
       commonSports: List<String>.from(map['commonSports'] ?? []),
       compatibilityScore: (map['compatibilityScore'] as num).toDouble(),
@@ -288,7 +288,8 @@ class DailyMood {
 
   /// Generate daily mood ID
   static String generateMoodId(String userId, DateTime date) {
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     return '${userId}_$dateStr';
   }
 }

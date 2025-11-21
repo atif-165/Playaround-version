@@ -9,6 +9,7 @@ class BookingSummary extends StatelessWidget {
   final int duration;
   final int participants;
   final double totalPrice;
+  final String currencySymbol;
 
   const BookingSummary({
     Key? key,
@@ -18,6 +19,7 @@ class BookingSummary extends StatelessWidget {
     required this.duration,
     required this.participants,
     required this.totalPrice,
+    this.currencySymbol = '₨',
   }) : super(key: key);
 
   @override
@@ -46,8 +48,8 @@ class BookingSummary extends StatelessWidget {
               Text(
                 'Booking Summary',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
@@ -98,15 +100,15 @@ class BookingSummary extends StatelessWidget {
               Text(
                 'Total',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               Text(
-                '\$${totalPrice.toStringAsFixed(2)}',
+                '$currencySymbol${totalPrice.toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
               ),
             ],
           ),
@@ -132,15 +134,15 @@ class BookingSummary extends StatelessWidget {
         Text(
           '$label: ',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Colors.grey[600],
-          ),
+                color: Colors.grey[600],
+              ),
         ),
         Expanded(
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
           ),
         ),
       ],
@@ -161,7 +163,7 @@ class BookingSummary extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             Text(
-              '\$${hourlyRate.toStringAsFixed(2)} × $duration',
+              '$currencySymbol${hourlyRate.toStringAsFixed(0)} × $duration',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
@@ -173,14 +175,14 @@ class BookingSummary extends StatelessWidget {
             Text(
               'Subtotal',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
             Text(
-              '\$${subtotal.toStringAsFixed(2)}',
+              '$currencySymbol${subtotal.toStringAsFixed(0)}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ],
         ),
@@ -195,7 +197,7 @@ class BookingSummary extends StatelessWidget {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               Text(
-                '\$${(totalPrice - subtotal).toStringAsFixed(2)}',
+                '$currencySymbol${(totalPrice - subtotal).toStringAsFixed(0)}',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -209,13 +211,13 @@ class BookingSummary extends StatelessWidget {
     final timeParts = startTime.split(':');
     final startHour = int.parse(timeParts[0]);
     final startMinute = int.parse(timeParts[1]);
-    
+
     final startDateTime = DateTime(2023, 1, 1, startHour, startMinute);
     final endDateTime = startDateTime.add(Duration(hours: duration));
-    
+
     final endHour = endDateTime.hour.toString().padLeft(2, '0');
     final endMinute = endDateTime.minute.toString().padLeft(2, '0');
-    
+
     return '$endHour:$endMinute';
   }
 }

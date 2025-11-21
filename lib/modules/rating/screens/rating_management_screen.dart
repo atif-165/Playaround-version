@@ -21,7 +21,7 @@ class _RatingManagementScreenState extends State<RatingManagementScreen>
     with TickerProviderStateMixin {
   final RatingService _ratingService = RatingService();
   late TabController _tabController;
-  
+
   String? _currentUserId;
 
   @override
@@ -225,16 +225,12 @@ class _RatingManagementScreenState extends State<RatingManagementScreen>
               ),
             ],
           ),
-          
           SizedBox(height: 12.h),
-          
           Text(
             'Booking Date: ${_formatDate(pendingRating.bookingDate)}',
             style: TextStyles.font12Grey400Weight,
           ),
-          
           SizedBox(height: 16.h),
-          
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -509,12 +505,14 @@ class _RatingManagementScreenState extends State<RatingManagementScreen>
 
   Stream<List<RatingModel>> _getReceivedRatingsStream() {
     // This would get ratings where ratedEntityId == currentUserId
-    return _ratingService.getRatingsForEntity(_currentUserId!, RatingType.player);
+    return _ratingService.getRatingsForEntity(
+        _currentUserId!, RatingType.player);
   }
 
   Stream<RatingStats> _getUserRatingStatsStream() {
     // Get stats for current user as a player
-    return _ratingService.getRatingStatsStream(_currentUserId!, RatingType.player);
+    return _ratingService.getRatingStatsStream(
+        _currentUserId!, RatingType.player);
   }
 
   Widget _buildGivenRatingCard(RatingModel rating) {
@@ -679,7 +677,7 @@ class _EntityRatingsScreenState extends State<EntityRatingsScreen> {
                   );
                 }
 
-                final stats = snapshot.data ?? 
+                final stats = snapshot.data ??
                     RatingStats.empty(widget.entityId, widget.ratingType);
 
                 return Column(
@@ -724,7 +722,7 @@ class _EntityRatingsScreenState extends State<EntityRatingsScreen> {
               },
             ),
           ),
-          
+
           // Ratings List
           Expanded(
             child: StreamBuilder<List<RatingModel>>(

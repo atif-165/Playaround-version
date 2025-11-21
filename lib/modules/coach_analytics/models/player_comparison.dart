@@ -23,14 +23,16 @@ class PlayerComparison {
     required PlayerPerformanceData player2,
   }) {
     final skillComparisons = <SkillType, ComparisonResult>{};
-    
+
     // Compare each skill
     for (final skillType in SkillType.allSkills) {
       final player1Score = player1.currentSkillScores[skillType] ?? 0;
       final player2Score = player2.currentSkillScores[skillType] ?? 0;
-      final player1Improvement = player1.improvementPercentages[skillType] ?? 0.0;
-      final player2Improvement = player2.improvementPercentages[skillType] ?? 0.0;
-      
+      final player1Improvement =
+          player1.improvementPercentages[skillType] ?? 0.0;
+      final player2Improvement =
+          player2.improvementPercentages[skillType] ?? 0.0;
+
       skillComparisons[skillType] = ComparisonResult(
         skillType: skillType,
         player1Score: player1Score,
@@ -85,9 +87,12 @@ class PlayerComparison {
   /// Get the skill with the biggest difference
   SkillType? get biggestDifferenceSkill {
     if (skillComparisons.isEmpty) return null;
-    
+
     return skillComparisons.entries
-        .reduce((a, b) => a.value.scoreDifference.abs() > b.value.scoreDifference.abs() ? a : b)
+        .reduce((a, b) =>
+            a.value.scoreDifference.abs() > b.value.scoreDifference.abs()
+                ? a
+                : b)
         .key;
   }
 
@@ -144,7 +149,8 @@ class ComparisonResult {
 
   /// Get percentage difference in scores
   double get scorePercentageDifference {
-    final maxScore = [player1Score, player2Score].reduce((a, b) => a > b ? a : b);
+    final maxScore =
+        [player1Score, player2Score].reduce((a, b) => a > b ? a : b);
     if (maxScore == 0) return 0.0;
     return (scoreDifference.abs() / maxScore) * 100;
   }
@@ -227,7 +233,7 @@ class ComparisonSummary {
         .fold(0.0, (sum, improvement) => sum + improvement);
     final player2TotalImprovement = player2.improvementPercentages.values
         .fold(0.0, (sum, improvement) => sum + improvement);
-    
+
     final mostImprovedPlayer = player1TotalImprovement > player2TotalImprovement
         ? player1.playerName
         : player2.playerName;
@@ -297,19 +303,21 @@ class ComparisonSummary {
         .where((entry) => entry.value.scoreDifference > 10)
         .map((entry) => entry.key)
         .toList();
-    
+
     final player2Strengths = skillComparisons.entries
         .where((entry) => entry.value.scoreDifference < -10)
         .map((entry) => entry.key)
         .toList();
 
-    if (player1Strengths.isNotEmpty && player2WeakSkills.any(player1Strengths.contains)) {
+    if (player1Strengths.isNotEmpty &&
+        player2WeakSkills.any(player1Strengths.contains)) {
       recommendations.add(
         '${player1.playerName} could mentor ${player2.playerName} in their strong areas',
       );
     }
 
-    if (player2Strengths.isNotEmpty && player1WeakSkills.any(player2Strengths.contains)) {
+    if (player2Strengths.isNotEmpty &&
+        player1WeakSkills.any(player2Strengths.contains)) {
       recommendations.add(
         '${player2.playerName} could mentor ${player1.playerName} in their strong areas',
       );

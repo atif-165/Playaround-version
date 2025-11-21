@@ -7,6 +7,9 @@ import '../../../core/widgets/app_text_button.dart';
 import '../models/models.dart';
 import '../services/skill_tracking_service.dart';
 import '../widgets/widgets.dart';
+import 'add_goal_screen.dart';
+import 'analytics_dashboard_screen.dart';
+import 'coach_logging_screen.dart';
 
 /// Premium Skill Dashboard Screen for players
 class SkillDashboardScreen extends StatefulWidget {
@@ -27,13 +30,13 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
   late TabController _tabController;
 
   // Data streams
-  late Stream<List<SkillLog>> _skillLogsStream;
+  late Stream<List<SessionLog>> _skillLogsStream;
   late Stream<List<SkillGoal>> _skillGoalsStream;
 
   // Current data
-  List<SkillLog> _skillLogs = [];
+  List<SessionLog> _skillLogs = [];
   List<SkillGoal> _skillGoals = [];
-  SkillAnalytics? _analytics;
+  SkillRecord? _analytics;
 
   @override
   void initState() {
@@ -50,15 +53,16 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
 
   void _initializeStreams() {
     _skillLogsStream = _skillService.getPlayerSkillLogsStream(widget.playerId);
-    _skillGoalsStream = _skillService.getPlayerSkillGoalsStream(widget.playerId);
+    _skillGoalsStream =
+        _skillService.getPlayerSkillGoalsStream(widget.playerId);
   }
 
   void _updateAnalytics() {
     if (_skillLogs.isNotEmpty || _skillGoals.isNotEmpty) {
       final now = DateTime.now();
       final startDate = now.subtract(const Duration(days: 90));
-      
-      _analytics = SkillAnalytics(
+
+      _analytics = SkillRecord(
         playerId: widget.playerId,
         skillLogs: _skillLogs,
         skillGoals: _skillGoals,
@@ -73,7 +77,7 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: _buildAppBar(),
-      body: StreamBuilder<List<SkillLog>>(
+      body: StreamBuilder<List<SessionLog>>(
         stream: _skillLogsStream,
         builder: (context, logsSnapshot) {
           return StreamBuilder<List<SkillGoal>>(
@@ -85,9 +89,9 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
               }
 
               if (logsSnapshot.hasError || goalsSnapshot.hasError) {
-                return _buildErrorState(
-                  logsSnapshot.error?.toString() ?? goalsSnapshot.error?.toString() ?? 'Unknown error'
-                );
+                return _buildErrorState(logsSnapshot.error?.toString() ??
+                    goalsSnapshot.error?.toString() ??
+                    'Unknown error');
               }
 
               // Update data when streams provide new data
@@ -188,8 +192,9 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
               totalSessions: _analytics!.totalSessions,
               overallImprovement: _analytics!.skillImprovements.values.isEmpty
                   ? 0.0
-                  : _analytics!.skillImprovements.values.reduce((a, b) => a + b) / 
-                    _analytics!.skillImprovements.values.length,
+                  : _analytics!.skillImprovements.values
+                          .reduce((a, b) => a + b) /
+                      _analytics!.skillImprovements.values.length,
               isLoading: false,
             ),
             Gap(20.h),
@@ -239,7 +244,7 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
             style: TextStyles.font18DarkBlue600Weight,
           ),
           Gap(16.h),
-          
+
           // Line charts for each skill
           for (final skillType in SkillType.allSkills) ...[
             Builder(
@@ -266,8 +271,11 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
   }
 
   Widget _buildGoalsTab() {
-    final activeGoals = _skillGoals.where((goal) => goal.status == GoalStatus.active).toList();
-    final completedGoals = _skillGoals.where((goal) => goal.status == GoalStatus.achieved).toList();
+    final activeGoals =
+        _skillGoals.where((goal) => goal.status == GoalStatus.active).toList();
+    final completedGoals = _skillGoals
+        .where((goal) => goal.status == GoalStatus.achieved)
+        .toList();
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(16.w),
@@ -296,15 +304,15 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
             ],
           ),
           Gap(12.h),
-          
+
           if (activeGoals.isEmpty) ...[
             _buildEmptyGoalsState(),
           ] else ...[
             for (final goal in activeGoals) _buildGoalCard(goal),
           ],
-          
+
           Gap(24.h),
-          
+
           // Completed goals section
           if (completedGoals.isNotEmpty) ...[
             Text(
@@ -328,14 +336,15 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: goal.status == GoalStatus.achieved
-              ? Colors.green[200]! 
-              : Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}')).withOpacity(0.3),
+              ? Colors.green[200]!
+              : Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}'))
+                  .withOpacity(0.3),
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 4.r,
-            offset: Offset(0, 2.h), 
+            offset: Offset(0, 2.h),
           ),
         ],
       ),
@@ -346,7 +355,8 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
             children: [
               Icon(
                 _getSkillIcon(goal.skillType),
-                color: Color(int.parse('0xFF${goal.skillType.colorHex.substring(1)}')),
+                color: Color(
+                    int.parse('0xFF${goal.skillType.colorHex.substring(1)}')),
                 size: 20.sp,
               ),
               Gap(8.w),
@@ -527,24 +537,51 @@ class _SkillDashboardScreenState extends State<SkillDashboardScreen>
   }
 
   void _showAnalyticsBottomSheet() {
-    // TODO: Show comprehensive analytics
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Analytics coming soon!')),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AnalyticsDashboardScreen(playerId: widget.playerId),
+      ),
     );
   }
 
   void _showAddGoalBottomSheet() {
-    // TODO: Show add goal form
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Add goal coming soon!')),
-    );
+    final currentScores = _analytics?.currentSkillScores ??
+        {
+          for (final skill in SkillType.allSkills) skill: 0,
+        };
+
+    Navigator.of(context)
+        .push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddGoalScreen(
+          playerId: widget.playerId,
+          currentSkillScores: currentScores,
+        ),
+      ),
+    )
+        .then((created) {
+      if (created == true) {
+        _refreshData();
+      }
+    });
   }
 
   void _showQuickLogBottomSheet() {
-    // TODO: Show quick logging form
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Quick log coming soon!')),
-    );
+    Navigator.of(context)
+        .push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CoachLoggingScreen(
+          coachId: widget.playerId,
+          playerId: widget.playerId,
+          playerName: 'Your Performance',
+        ),
+      ),
+    )
+        .then((logged) {
+      if (logged == true) {
+        _refreshData();
+      }
+    });
   }
 
   void _refreshData() {

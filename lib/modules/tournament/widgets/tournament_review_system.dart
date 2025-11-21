@@ -26,7 +26,7 @@ class TournamentReviewSystem extends StatefulWidget {
 
 class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
   final TextEditingController _reviewController = TextEditingController();
-  
+
   List<TournamentReview> _reviews = [];
   bool _isLoading = false;
   bool _isSubmitting = false;
@@ -70,7 +70,7 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
     try {
       // TODO: Load reviews from service
       await Future.delayed(const Duration(seconds: 1));
-      
+
       setState(() {
         _reviews = [
           // Mock reviews
@@ -85,7 +85,8 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
             communicationRating: 4,
             fairnessRating: 5,
             valueRating: 4,
-            reviewText: 'Excellent tournament! Well organized and fair play throughout.',
+            reviewText:
+                'Excellent tournament! Well organized and fair play throughout.',
             isRecommended: true,
             createdAt: DateTime.now().subtract(const Duration(days: 2)),
           ),
@@ -100,7 +101,8 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
             communicationRating: 5,
             fairnessRating: 4,
             valueRating: 3,
-            reviewText: 'Good tournament overall, but could improve on prize distribution.',
+            reviewText:
+                'Good tournament overall, but could improve on prize distribution.',
             isRecommended: true,
             createdAt: DateTime.now().subtract(const Duration(days: 1)),
           ),
@@ -180,8 +182,10 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _buildRatingBar('Organization', _calculateCategoryAverage('organization')),
-        _buildRatingBar('Communication', _calculateCategoryAverage('communication')),
+        _buildRatingBar(
+            'Organization', _calculateCategoryAverage('organization')),
+        _buildRatingBar(
+            'Communication', _calculateCategoryAverage('communication')),
         _buildRatingBar('Fairness', _calculateCategoryAverage('fairness')),
         _buildRatingBar('Value', _calculateCategoryAverage('value')),
       ],
@@ -324,7 +328,8 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
     );
   }
 
-  Widget _buildRatingSection(String label, int rating, Function(int) onRatingChanged) {
+  Widget _buildRatingSection(
+      String label, int rating, Function(int) onRatingChanged) {
     return Row(
       children: [
         SizedBox(
@@ -440,7 +445,8 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
                     ),
                     Row(
                       children: [
-                        _buildStarRating(review.overallRating.toDouble(), 14.sp),
+                        _buildStarRating(
+                            review.overallRating.toDouble(), 14.sp),
                         Gap(8.w),
                         Text(
                           '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
@@ -518,9 +524,9 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
       mainAxisSize: MainAxisSize.min,
       children: List.generate(5, (index) {
         return Icon(
-          index < rating.floor() 
+          index < rating.floor()
               ? Icons.star
-              : index < rating 
+              : index < rating
                   ? Icons.star_half
                   : Icons.star_border,
           color: Colors.amber[600],
@@ -532,13 +538,14 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
 
   double _calculateAverageRating() {
     if (_reviews.isEmpty) return 0.0;
-    final total = _reviews.fold(0.0, (sum, review) => sum + review.overallRating);
+    final total =
+        _reviews.fold(0.0, (sum, review) => sum + review.overallRating);
     return total / _reviews.length;
   }
 
   double _calculateCategoryAverage(String category) {
     if (_reviews.isEmpty) return 0.0;
-    
+
     double total = 0.0;
     for (final review in _reviews) {
       switch (category) {
@@ -564,13 +571,13 @@ class _TournamentReviewSystemState extends State<TournamentReviewSystem> {
   }
 
   bool _canSubmitReview() {
-    return _overallRating > 0 && 
-           _organizationRating > 0 && 
-           _communicationRating > 0 && 
-           _fairnessRating > 0 && 
-           _valueRating > 0 &&
-           _reviewText.trim().isNotEmpty &&
-           !_isSubmitting;
+    return _overallRating > 0 &&
+        _organizationRating > 0 &&
+        _communicationRating > 0 &&
+        _fairnessRating > 0 &&
+        _valueRating > 0 &&
+        _reviewText.trim().isNotEmpty &&
+        !_isSubmitting;
   }
 
   Future<void> _submitReview() async {

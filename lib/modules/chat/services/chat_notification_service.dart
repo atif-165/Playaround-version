@@ -11,9 +11,13 @@ import '../models/chat_room.dart';
 
 /// Service for handling chat-specific push notifications
 class ChatNotificationService {
-  static final ChatNotificationService _instance = ChatNotificationService._internal();
+  static final ChatNotificationService _instance =
+      ChatNotificationService._internal();
   factory ChatNotificationService() => _instance;
   ChatNotificationService._internal();
+
+  static const String _fcmServerKey =
+      String.fromEnvironment('FCM_SERVER_KEY', defaultValue: '');
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -65,7 +69,8 @@ class ChatNotificationService {
       if (currentUser == null) return;
 
       // Don't send notification to sender
-      final filteredTokens = recipientTokens.where((token) => token.isNotEmpty).toList();
+      final filteredTokens =
+          recipientTokens.where((token) => token.isNotEmpty).toList();
       if (filteredTokens.isEmpty) return;
 
       final title = chatRoom.type == ChatType.group
@@ -78,7 +83,7 @@ class ChatNotificationService {
         'type': 'chat_message',
         'chatId': chatRoom.id,
         'messageId': message.id,
-        'senderId': message.senderId,
+        'senderId': message.fromId,
         'senderName': message.senderName,
         'chatType': chatRoom.type.value,
       };
@@ -94,11 +99,13 @@ class ChatNotificationService {
       }
 
       if (kDebugMode) {
-        debugPrint('✅ ChatNotificationService: Sent notifications to ${filteredTokens.length} recipients');
+        debugPrint(
+            '✅ ChatNotificationService: Sent notifications to ${filteredTokens.length} recipients');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatNotificationService: Error sending message notification - $e');
+        debugPrint(
+            '❌ ChatNotificationService: Error sending message notification - $e');
       }
     }
   }
@@ -129,11 +136,13 @@ class ChatNotificationService {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ ChatNotificationService: Sent connection request notification');
+        debugPrint(
+            '✅ ChatNotificationService: Sent connection request notification');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatNotificationService: Error sending connection request notification - $e');
+        debugPrint(
+            '❌ ChatNotificationService: Error sending connection request notification - $e');
       }
     }
   }
@@ -150,7 +159,7 @@ class ChatNotificationService {
 
         final userDoc = await _firestore.collection('users').doc(userId).get();
         final userData = userDoc.data();
-        
+
         if (userData != null && userData['fcmToken'] != null) {
           final token = userData['fcmToken'] as String;
           if (token.isNotEmpty) {
@@ -162,7 +171,8 @@ class ChatNotificationService {
       return tokens;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatNotificationService: Error getting participant tokens - $e');
+        debugPrint(
+            '❌ ChatNotificationService: Error getting participant tokens - $e');
       }
       return [];
     }
@@ -176,15 +186,22 @@ class ChatNotificationService {
     required Map<String, String> data,
   }) async {
     try {
+      if (_fcmServerKey.isEmpty) {
+        if (kDebugMode) {
+          debugPrint(
+              '❌ ChatNotificationService: Missing FCM server key. Add --dart-define=FCM_SERVER_KEY=YOUR_KEY when building.');
+        }
+        return;
+      }
+
       // This is a simplified version. In production, you'd use Firebase Admin SDK
       // or a cloud function to send notifications securely
-      
-      const serverKey = 'YOUR_SERVER_KEY'; // This should be stored securely
+
       const fcmUrl = 'https://fcm.googleapis.com/fcm/send';
 
       final headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'key=$serverKey',
+        'Authorization': 'key=$_fcmServerKey',
       };
 
       final payload = {
@@ -207,16 +224,19 @@ class ChatNotificationService {
 
       if (response.statusCode == 200) {
         if (kDebugMode) {
-          debugPrint('✅ ChatNotificationService: Notification sent successfully');
+          debugPrint(
+              '✅ ChatNotificationService: Notification sent successfully');
         }
       } else {
         if (kDebugMode) {
-          debugPrint('❌ ChatNotificationService: Failed to send notification - ${response.statusCode}');
+          debugPrint(
+              '❌ ChatNotificationService: Failed to send notification - ${response.statusCode} | ${response.body}');
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ ChatNotificationService: Error sending notification to token - $e');
+        debugPrint(
+            '❌ ChatNotificationService: Error sending notification to token - $e');
       }
     }
   }
@@ -261,7 +281,8 @@ class ChatNotificationService {
       // Navigate to chat screen
       // This would typically use a navigation service or global navigator
       if (kDebugMode) {
-        debugPrint('🔄 ChatNotificationService: Should navigate to chat: $chatId');
+        debugPrint(
+            '🔄 ChatNotificationService: Should navigate to chat: $chatId');
       }
     }
   }
@@ -270,7 +291,8 @@ class ChatNotificationService {
   void _handleConnectionRequestTap(Map<String, dynamic> data) {
     // Navigate to connection requests screen
     if (kDebugMode) {
-      debugPrint('🔄 ChatNotificationService: Should navigate to connection requests');
+      debugPrint(
+          '🔄 ChatNotificationService: Should navigate to connection requests');
     }
   }
 

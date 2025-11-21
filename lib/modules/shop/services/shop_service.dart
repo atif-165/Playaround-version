@@ -17,9 +17,7 @@ class ShopService {
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Shop.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Shop.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch shops: $e');
     }
@@ -35,9 +33,7 @@ class ShopService {
           .orderBy('rating', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Shop.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Shop.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch shops by category: $e');
     }
@@ -54,9 +50,7 @@ class ShopService {
           .orderBy('rating', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Shop.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Shop.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch local shops: $e');
     }
@@ -72,9 +66,7 @@ class ShopService {
           .orderBy('rating', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Shop.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Shop.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch online shops: $e');
     }
@@ -83,10 +75,8 @@ class ShopService {
   /// Get shop by ID
   static Future<Shop?> getShopById(String shopId) async {
     try {
-      final doc = await _firestore
-          .collection(_shopsCollection)
-          .doc(shopId)
-          .get();
+      final doc =
+          await _firestore.collection(_shopsCollection).doc(shopId).get();
 
       if (doc.exists) {
         return Shop.fromDoc(doc);
@@ -107,9 +97,7 @@ class ShopService {
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Product.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Product.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch shop products: $e');
     }
@@ -126,9 +114,7 @@ class ShopService {
           .limit(20)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Product.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Product.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch featured products: $e');
     }
@@ -145,9 +131,7 @@ class ShopService {
           .limit(20)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Product.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Product.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch exclusive products: $e');
     }
@@ -185,9 +169,7 @@ class ShopService {
           .limit(limit)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Shop.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Shop.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch top-rated shops: $e');
     }
@@ -203,9 +185,7 @@ class ShopService {
           .orderBy('createdAt', descending: true)
           .get();
 
-      return querySnapshot.docs
-          .map((doc) => Shop.fromDoc(doc))
-          .toList();
+      return querySnapshot.docs.map((doc) => Shop.fromDoc(doc)).toList();
     } catch (e) {
       throw Exception('Failed to fetch verified shops: $e');
     }
@@ -214,9 +194,8 @@ class ShopService {
   /// Create a new shop (for admin/vendor registration)
   static Future<String> createShop(Shop shop) async {
     try {
-      final docRef = await _firestore
-          .collection(_shopsCollection)
-          .add(shop.toMap());
+      final docRef =
+          await _firestore.collection(_shopsCollection).add(shop.toMap());
 
       return docRef.id;
     } catch (e) {
@@ -225,12 +204,10 @@ class ShopService {
   }
 
   /// Update shop information
-  static Future<void> updateShop(String shopId, Map<String, dynamic> updates) async {
+  static Future<void> updateShop(
+      String shopId, Map<String, dynamic> updates) async {
     try {
-      await _firestore
-          .collection(_shopsCollection)
-          .doc(shopId)
-          .update(updates);
+      await _firestore.collection(_shopsCollection).doc(shopId).update(updates);
     } catch (e) {
       throw Exception('Failed to update shop: $e');
     }
@@ -258,10 +235,7 @@ class ShopService {
 
       final averageRating = totalRating / reviewCount;
 
-      await _firestore
-          .collection(_shopsCollection)
-          .doc(shopId)
-          .update({
+      await _firestore.collection(_shopsCollection).doc(shopId).update({
         'rating': averageRating,
         'reviewCount': reviewCount,
       });

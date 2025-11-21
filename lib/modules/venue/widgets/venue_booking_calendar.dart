@@ -31,7 +31,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
   final VenueService _venueService = VenueService();
   final ChatService _chatService = ChatService();
   final TextEditingController _notesController = TextEditingController();
-  
+
   DateTime? _selectedDate;
   TimeSlot? _selectedTimeSlot;
   List<TimeSlot> _availableTimeSlots = [];
@@ -49,7 +49,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.grey[100],
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20.r),
           topRight: Radius.circular(20.r),
@@ -172,11 +172,11 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
           child: Theme(
             data: Theme.of(context).copyWith(
               colorScheme: Theme.of(context).colorScheme.copyWith(
-                primary: ColorsManager.mainBlue, // Selected date color
-                onPrimary: Colors.white, // Selected date text color
-                surface: Colors.white, // Calendar background
-                onSurface: Colors.black87, // Default text color
-              ),
+                    primary: ColorsManager.mainBlue, // Selected date color
+                    onPrimary: Colors.white, // Selected date text color
+                    surface: Colors.white, // Calendar background
+                    onSurface: Colors.black87, // Default text color
+                  ),
               textButtonTheme: TextButtonThemeData(
                 style: TextButton.styleFrom(
                   foregroundColor: ColorsManager.mainBlue, // Navigation buttons
@@ -208,7 +208,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
           const Center(child: CustomProgressIndicator())
         else if (_availableTimeSlots.isEmpty)
           Container(
-            padding: EdgeInsets.all(16.w), 
+            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               color: Colors.orange.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8.r),
@@ -247,12 +247,16 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
                   });
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   decoration: BoxDecoration(
-                    color: isSelected ? ColorsManager.mainBlue : Colors.grey[100],
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[100],
                     borderRadius: BorderRadius.circular(20.r),
                     border: Border.all(
-                      color: isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
+                      color: isSelected
+                          ? ColorsManager.mainBlue
+                          : Colors.grey[300]!,
                     ),
                   ),
                   child: Text(
@@ -295,14 +299,15 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
   }
 
   Widget _buildBookingSummary() {
-    if (_selectedDate == null || _selectedTimeSlot == null) return const SizedBox.shrink();
+    if (_selectedDate == null || _selectedTimeSlot == null)
+      return const SizedBox.shrink();
 
     final duration = _selectedTimeSlot!.durationInHours;
     final totalAmount = widget.venue.hourlyRate * duration;
 
     return Container(
       padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration( 
+      decoration: BoxDecoration(
         color: Colors.green.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: Colors.green.withOpacity(0.2)),
@@ -316,11 +321,14 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
           ),
           Gap(8.h),
           _buildSummaryRow('Date', _formatDate(_selectedDate!)),
-          _buildSummaryRow('Time', '${_selectedTimeSlot!.start} - ${_selectedTimeSlot!.end}'),
+          _buildSummaryRow('Time',
+              '${_selectedTimeSlot!.start} - ${_selectedTimeSlot!.end}'),
           _buildSummaryRow('Duration', '${duration.toStringAsFixed(1)} hours'),
-          _buildSummaryRow('Rate', '₹${widget.venue.hourlyRate.toStringAsFixed(0)}/hour'), 
+          _buildSummaryRow(
+              'Rate', '₹${widget.venue.hourlyRate.toStringAsFixed(0)}/hour'),
           Divider(color: Colors.green.withValues(alpha: 0.3)),
-          _buildSummaryRow('Total Amount', '₹${totalAmount.toStringAsFixed(0)}', isTotal: true),
+          _buildSummaryRow('Total Amount', '₹${totalAmount.toStringAsFixed(0)}',
+              isTotal: true),
         ],
       ),
     );
@@ -403,7 +411,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
         venueId: widget.venue.id,
         date: date,
       );
-      
+
       setState(() {
         _availableTimeSlots = timeSlots;
         _isLoadingTimeSlots = false;
@@ -413,7 +421,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
         _availableTimeSlots = [];
         _isLoadingTimeSlots = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -469,7 +477,7 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
         throw Exception('This time slot is no longer available');
       }
 
-      await _venueService.bookVenue(
+      final bookingId = await _venueService.bookVenue(
         venueId: widget.venue.id,
         selectedDate: _selectedDate!,
         timeSlot: _selectedTimeSlot!,
@@ -479,13 +487,16 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
       );
 
       // Create or get existing chat with venue owner
-      final chatRoom = await _chatService.createDirectChat(widget.venue.ownerId);
+      final chatRoom = await _chatService.getOrCreateDirectChat(
+        widget.venue.ownerId,
+      );
 
       if (chatRoom != null) {
         // Send initial booking message to chat
         await _chatService.sendTextMessage(
           chatId: chatRoom.id,
-          text: '🏟️ I just booked your venue "${widget.venue.title}" for ${_formatDate(_selectedDate!)} at ${_selectedTimeSlot!.start}. Looking forward to it!',
+          text:
+              '🏟️ I just booked your venue "${widget.venue.title}" for ${_formatDate(_selectedDate!)} at ${_selectedTimeSlot!.start}. Looking forward to it!',
         );
       }
 
@@ -549,8 +560,18 @@ class _VenueBookingCalendarState extends State<VenueBookingCalendar> {
 
   String _formatDate(DateTime date) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
+import '../../../core/widgets/safe_cached_image.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
 import '../models/models.dart';
@@ -48,7 +49,7 @@ class TournamentListWidget extends StatelessWidget {
             ),
             Gap(8.h),
             Text(
-              showRegisterButton 
+              showRegisterButton
                   ? 'No tournaments available to register at the moment'
                   : 'You haven\'t registered for any tournaments yet',
               style: TextStyles.font13Grey400Weight,
@@ -65,8 +66,12 @@ class TournamentListWidget extends StatelessWidget {
         final tournament = tournaments[index];
         return TournamentCard(
           tournament: tournament,
-          onTap: onTournamentTap != null ? () => onTournamentTap!(tournament) : null,
-          onRegister: onRegisterTournament != null ? () => onRegisterTournament!(tournament) : null,
+          onTap: onTournamentTap != null
+              ? () => onTournamentTap!(tournament)
+              : null,
+          onRegister: onRegisterTournament != null
+              ? () => onRegisterTournament!(tournament)
+              : null,
           showRegisterButton: showRegisterButton,
         );
       },
@@ -152,7 +157,8 @@ class TournamentCard extends StatelessWidget {
                   children: [
                     _buildInfoChip(
                       icon: Icons.people,
-                      text: '${tournament.currentTeamsCount}/${tournament.maxTeams}',
+                      text:
+                          '${tournament.currentTeamsCount}/${tournament.maxTeams}',
                       color: tournament.isFull ? Colors.red : Colors.green,
                     ),
                     Gap(8.w),
@@ -211,10 +217,13 @@ class TournamentCard extends StatelessWidget {
       child: tournament.imageUrl != null
           ? ClipRRect(
               borderRadius: BorderRadius.circular(8.r),
-              child: Image.network(
-                tournament.imageUrl!,
+              child: SafeCachedImage(
+                imageUrl: tournament.imageUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
+                borderRadius: BorderRadius.circular(8.r),
+                backgroundColor: ColorsManager.mainBlue.withValues(alpha: 0.05),
+                fallbackIcon: Icons.emoji_events,
+                fallbackIconColor: ColorsManager.mainBlue,
               ),
             )
           : _buildDefaultAvatar(),
@@ -231,7 +240,7 @@ class TournamentCard extends StatelessWidget {
 
   Widget _buildRegisterButton() {
     final canRegister = tournament.isRegistrationOpen && !tournament.isFull;
-    
+
     return SizedBox(
       height: 32.h,
       child: ElevatedButton(
@@ -244,10 +253,10 @@ class TournamentCard extends StatelessWidget {
           padding: EdgeInsets.symmetric(horizontal: 16.w),
         ),
         child: Text(
-          tournament.isFull 
-              ? 'Full' 
-              : tournament.isRegistrationOpen 
-                  ? 'Register' 
+          tournament.isFull
+              ? 'Full'
+              : tournament.isRegistrationOpen
+                  ? 'Register'
                   : 'Closed',
           style: TextStyles.font13White400Weight,
         ),
@@ -268,8 +277,7 @@ class TournamentCard extends StatelessWidget {
         color = Colors.orange;
         break;
       case TournamentStatus.ongoing:
-        color = Colors.purple;
-        break;
+      case TournamentStatus.running:
       case TournamentStatus.inProgress:
         color = Colors.purple;
         break;

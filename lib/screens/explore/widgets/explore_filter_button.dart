@@ -39,7 +39,8 @@ class ExploreFilterButton extends StatelessWidget {
           color: hasActiveFilters ? ColorsManager.mainBlue : Colors.grey[100],
           borderRadius: BorderRadius.circular(24.r),
           border: Border.all(
-            color: hasActiveFilters ? ColorsManager.mainBlue : Colors.transparent,
+            color:
+                hasActiveFilters ? ColorsManager.mainBlue : Colors.transparent,
             width: 1.5,
           ),
         ),

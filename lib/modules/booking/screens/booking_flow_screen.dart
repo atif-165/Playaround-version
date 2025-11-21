@@ -1,472 +1,692 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 
-import '../../../core/widgets/app_text_button.dart';
-import '../../../core/widgets/progress_indicator.dart';
-import '../../../helpers/extensions.dart';
-import '../../../models/listing_model.dart';
+import '../../../core/widgets/progress_indicaror.dart';
+import '../../../data/models/booking_model.dart' as data;
+import '../../../data/models/listing_model.dart' as data;
+import '../../../data/repositories/booking_repository.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
-import '../services/booking_service.dart';
-import '../widgets/time_slot_grid.dart';
+import '../providers/booking_draft.dart';
+import '../providers/booking_draft_provider.dart';
 
-/// Screen for the booking flow with date and time selection
 class BookingFlowScreen extends StatefulWidget {
-  final ListingModel listing;
-
   const BookingFlowScreen({
     super.key,
     required this.listing,
+    this.repository,
+    this.firebaseAuth,
   });
+
+  final data.ListingModel listing;
+  final BookingRepository? repository;
+  final FirebaseAuth? firebaseAuth;
 
   @override
   State<BookingFlowScreen> createState() => _BookingFlowScreenState();
 }
 
 class _BookingFlowScreenState extends State<BookingFlowScreen> {
-  final _bookingService = BookingService();
-  final _notesController = TextEditingController();
+  late final BookingDraft _draft;
+  late final BookingRepository _bookingRepository;
+  late final PageController _pageController;
+  FirebaseAuth? _auth;
 
-  DateTime _selectedDate = DateTime.now();
-  TimeSlot? _selectedTimeSlot;
-  List<TimeSlot> _availableTimeSlots = [];
-  bool _isLoadingSlots = false;
-  bool _isBooking = false;
+  final Map<DateTime, List<_Slot>> _slotsByDate = {};
+  final List<_ExtraOption> _extraOptions = [];
+
+  int _currentStep = 0;
+  bool _processingPayment = false;
+  data.BookingModel? _completedBooking;
 
   @override
   void initState() {
     super.initState();
-    _loadAvailableTimeSlots();
+    _bookingRepository = widget.repository ?? BookingRepository();
+    try {
+      _auth = widget.firebaseAuth ?? FirebaseAuth.instance;
+    } catch (_) {
+      _auth = widget.firebaseAuth;
+    }
+    _draft = BookingDraft(listing: widget.listing);
+    _pageController = PageController();
+    _prepareAvailability();
+    _prepareExtras();
+    _bookingRepository.init();
   }
 
   @override
   void dispose() {
-    _notesController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadAvailableTimeSlots() async {
+  void _prepareAvailability() {
+    widget.listing.availability.forEach((dateKey, slots) {
+      if (slots is List && slots.isNotEmpty) {
+        final date = DateTime.parse(dateKey);
+        final normalized = DateTime(date.year, date.month, date.day);
+        _slotsByDate[normalized] =
+            slots.map((slot) => _Slot.fromString(slot as String)).toList();
+      }
+    });
+  }
+
+  void _prepareExtras() {
+    void collect(String prefix, dynamic value) {
+      if (value is Map<String, dynamic>) {
+        value.forEach((key, nestedValue) {
+          final id = prefix.isEmpty ? key : '$prefix • $key';
+          collect(id, nestedValue);
+        });
+      } else if (value is num) {
+        _extraOptions.add(
+          _ExtraOption(
+            id: prefix,
+            label: prefix,
+            price: value.toDouble(),
+          ),
+        );
+      }
+    }
+
+    collect('', widget.listing.extras);
+  }
+
+  Future<void> _submitBooking() async {
+    if (!_draft.isSlotSelected) return;
+    final user = _auth?.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please sign in to complete booking')),
+      );
+      return;
+    }
+
     setState(() {
-      _isLoadingSlots = true;
-      _selectedTimeSlot = null;
+      _processingPayment = true;
     });
 
+    final priceComponents = <data.PriceComponent>[
+      data.PriceComponent(label: 'Base rate', amount: widget.listing.basePrice),
+      ..._draft.selectedExtras.entries
+          .map(
+            (entry) => data.PriceComponent(
+              label: entry.key,
+              amount: entry.value,
+            ),
+          )
+          .toList(),
+    ];
+
     try {
-      final slots = await _bookingService.getAvailableTimeSlots(
-        widget.listing.id,
-        _selectedDate,
+      final booking = await _bookingRepository.createBooking(
+        userId: user.uid,
+        providerId: widget.listing.providerId,
+        listingId: widget.listing.id,
+        sport: widget.listing.sport,
+        startTime: _draft.startTime!,
+        endTime: _draft.endTime!,
+        priceComponents: priceComponents,
+        extras: _draft.selectedExtras,
+        notes: _draft.notes,
       );
 
       setState(() {
-        _availableTimeSlots = slots;
-        _isLoadingSlots = false;
+        _completedBooking = booking;
+        _processingPayment = false;
       });
-    } catch (e) {
+      _draft.markPaymentConfirmed();
+      _nextStep();
+    } catch (error) {
       setState(() {
-        _isLoadingSlots = false;
+        _processingPayment = false;
       });
-      if (mounted) {
-        context.showSnackBar('Failed to load available time slots');
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment failed: $error')),
+      );
     }
+  }
+
+  void _nextStep() {
+    if (_currentStep >= 3) return;
+    setState(() {
+      _currentStep += 1;
+    });
+    _pageController.animateToPage(
+      _currentStep,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _previousStep() {
+    if (_currentStep == 0) return;
+    setState(() {
+      _currentStep -= 1;
+    });
+    _pageController.animateToPage(
+      _currentStep,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Book Session',
-          style: TextStyles.font18DarkBlueBold,
+    return BookingDraftProvider(
+      draft: _draft,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.listing.title,
+            style: TextStyles.font18DarkBlueBold,
+          ),
+          backgroundColor: Colors.white,
+          iconTheme: const IconThemeData(color: ColorsManager.mainBlue),
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: ColorsManager.mainBlue),
+        body: Column(
+          children: [
+            _StepIndicator(currentStep: _currentStep),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _SlotSelectionStep(slotsByDate: _slotsByDate),
+                  _ExtrasStep(extras: _extraOptions),
+                  _PaymentStep(
+                    processing: _processingPayment,
+                    onConfirm: _submitBooking,
+                  ),
+                  _ConfirmationStep(booking: _completedBooking),
+                ],
+              ),
+            ),
+            _NavigationBar(
+              currentStep: _currentStep,
+              onBack: _previousStep,
+              onNext: () {
+                if (_currentStep == 0 && !_draft.isSlotSelected) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Select a time slot first')),
+                  );
+                  return;
+                }
+                if (_currentStep == 1) {
+                  _nextStep();
+                } else if (_currentStep == 2) {
+                  _submitBooking();
+                } else if (_currentStep == 3) {
+                  Navigator.of(context).pop(_completedBooking);
+                } else {
+                  _nextStep();
+                }
+              },
+            ),
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.w),
+    );
+  }
+}
+
+class _SlotSelectionStep extends StatelessWidget {
+  const _SlotSelectionStep({
+    required this.slotsByDate,
+  });
+
+  final Map<DateTime, List<_Slot>> slotsByDate;
+
+  @override
+  Widget build(BuildContext context) {
+    final draft = BookingDraftProvider.of(context);
+    final dates = slotsByDate.keys.toList()..sort();
+
+    if (dates.isEmpty) {
+      return const Center(
+        child: Text('No availability loaded for this listing.'),
+      );
+    }
+
+    final selectedDate = draft.selectedDate ?? dates.first;
+    final slots = slotsByDate[selectedDate] ?? [];
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Select a date',
+            style: TextStyles.font16DarkBlueBold,
+          ),
+          Gap(12.h),
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: dates.map((date) {
+              final isSelected = date == selectedDate;
+              return ChoiceChip(
+                key: ValueKey('date_${date.toIso8601String()}'),
+                label: Text(DateFormat.MMMd().format(date)),
+                selected: isSelected,
+                onSelected: (_) => draft.setDate(date),
+                selectedColor: ColorsManager.mainBlue,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black87,
+                ),
+              );
+            }).toList(),
+          ),
+          Gap(24.h),
+          Text(
+            'Select a time slot',
+            style: TextStyles.font16DarkBlueBold,
+          ),
+          Gap(12.h),
+          if (slots.isEmpty)
+            const Text('No slots available for this date')
+          else
+            Wrap(
+              spacing: 12.w,
+              runSpacing: 12.h,
+              children: slots.map((slot) {
+                final isSelected =
+                    draft.startTime == slot.start && draft.endTime == slot.end;
+                return ChoiceChip(
+                  key: ValueKey(
+                    'slot_${slot.start.toIso8601String()}_${slot.end.toIso8601String()}',
+                  ),
+                  label: Text(slot.label),
+                  selected: isSelected,
+                  onSelected: (_) => draft.setTimeRange(
+                    start: slot.start,
+                    end: slot.end,
+                  ),
+                  selectedColor: ColorsManager.mainBlue,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : Colors.black87,
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExtrasStep extends StatelessWidget {
+  const _ExtrasStep({required this.extras});
+
+  final List<_ExtraOption> extras;
+
+  @override
+  Widget build(BuildContext context) {
+    final draft = BookingDraftProvider.of(context);
+    if (extras.isEmpty) {
+      return const Center(
+        child: Text('No add-ons available for this listing.'),
+      );
+    }
+
+    return ListView.separated(
+      key: const PageStorageKey('extras_list'),
+      padding: EdgeInsets.all(16.w),
+      itemCount: extras.length,
+      separatorBuilder: (_, __) => Gap(8.h),
+      itemBuilder: (context, index) {
+        final extra = extras[index];
+        final selected = draft.hasExtra(extra.id);
+        return SwitchListTile(
+          key: ValueKey('extra_${extra.id}'),
+          value: selected,
+          onChanged: (_) => draft.toggleExtra(extra.id, extra.price),
+          title: Text(extra.label),
+          subtitle: Text('\$${extra.price.toStringAsFixed(2)}'),
+          activeColor: ColorsManager.mainBlue,
+        );
+      },
+    );
+  }
+}
+
+class _PaymentStep extends StatelessWidget {
+  const _PaymentStep({
+    required this.processing,
+    required this.onConfirm,
+  });
+
+  final bool processing;
+  final VoidCallback onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    final draft = BookingDraftProvider.of(context);
+    return Padding(
+      padding: EdgeInsets.all(16.w),
+      child: SingleChildScrollView(
+        key: const Key('payment_scroll'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildListingInfo(),
-            Gap(24.h),
-            _buildDateSelection(),
-            Gap(24.h),
-            _buildTimeSlotSelection(),
-            Gap(24.h),
-            _buildNotesSection(),
-            Gap(24.h),
-            _buildBookingSummary(),
-            Gap(32.h),
-            _buildBookButton(),
+            Text('Review and pay', style: TextStyles.font18DarkBlueBold),
+            Gap(16.h),
+            Card(
+              child: Padding(
+                padding: EdgeInsets.all(16.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _priceRow('Base rate', draft.listing.basePrice),
+                    ...draft.selectedExtras.entries.map(
+                      (entry) => _priceRow(entry.key, entry.value),
+                    ),
+                    const Divider(),
+                    _priceRow('Total', draft.total, bold: true),
+                  ],
+                ),
+              ),
+            ),
+            Gap(16.h),
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Notes (optional)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              maxLines: 3,
+              onChanged: draft.setNotes,
+            ),
+            Gap(16.h),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                key: const Key('confirm_and_pay_button'),
+                onPressed: processing ? null : onConfirm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsManager.mainBlue,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                ),
+                child: processing
+                    ? const CustomProgressIndicator()
+                    : const Text('Confirm & Pay'),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildListingInfo() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: ColorsManager.mainBlue.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: ColorsManager.mainBlue.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.listing.title,
-            style: TextStyles.font18DarkBlueBold,
-          ),
-          Gap(8.h),
-          Row(
-            children: [
-              Icon(
-                Icons.person,
-                size: 16.sp,
-                color: ColorsManager.mainBlue,
-              ),
-              Gap(4.w),
-              Text(
-                widget.listing.ownerName,
-                style: TextStyles.font14BlueRegular,
-              ),
-              const Spacer(),
-              Text(
-                '\$${widget.listing.hourlyRate.toStringAsFixed(0)}/hour',
-                style: TextStyles.font16DarkBlueBold,
-              ),
-            ],
-          ),
-          Gap(8.h),
-          Row(
-            children: [
-              Icon(
-                Icons.location_on,
-                size: 16.sp,
-                color: ColorsManager.mainBlue,
-              ),
-              Gap(4.w),
-              Expanded(
-                child: Text(
-                  widget.listing.location,
-                  style: TextStyles.font14BlueRegular,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select Date',
-          style: TextStyles.font16DarkBlueBold,
-        ),
-        Gap(12.h),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12.r),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.1),
-                spreadRadius: 1,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TableCalendar<Event>(
-            firstDay: DateTime.now(),
-            lastDay: DateTime.now().add(const Duration(days: 90)),
-            focusedDay: _selectedDate,
-            selectedDayPredicate: (day) => isSameDay(_selectedDate, day),
-            onDaySelected: (selectedDay, focusedDay) {
-              if (!isSameDay(_selectedDate, selectedDay)) {
-                setState(() {
-                  _selectedDate = selectedDay;
-                });
-                _loadAvailableTimeSlots();
-              }
-            },
-            calendarStyle: CalendarStyle(
-              outsideDaysVisible: false,
-              selectedDecoration: const BoxDecoration(
-                color: ColorsManager.mainBlue,
-                shape: BoxShape.circle,
-              ),
-              todayDecoration: BoxDecoration(
-                color: ColorsManager.mainBlue.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              weekendTextStyle: TextStyles.font14DarkBlueMedium,
-              defaultTextStyle: TextStyles.font14DarkBlueMedium,
-            ),
-            headerStyle: HeaderStyle(
-              formatButtonVisible: false,
-              titleCentered: true,
-              titleTextStyle: TextStyles.font16DarkBlueBold,
-              leftChevronIcon: const Icon(
-                Icons.chevron_left,
-                color: ColorsManager.mainBlue,
-              ),
-              rightChevronIcon: const Icon(
-                Icons.chevron_right,
-                color: ColorsManager.mainBlue,
-              ),
-            ),
-            enabledDayPredicate: (day) {
-              // Only enable days that are in the listing's available days
-              final dayName = _getDayName(day.weekday);
-              return widget.listing.availableDays.contains(dayName);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTimeSlotSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select Time Slot',
-          style: TextStyles.font16DarkBlueBold,
-        ),
-        Gap(12.h),
-        if (_isLoadingSlots)
-          const Center(child: CustomProgressIndicator())
-        else if (_availableTimeSlots.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(24.w),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  Icons.access_time_filled,
-                  size: 48.sp,
-                  color: Colors.grey[400],
-                ),
-                Gap(12.h),
-                Text(
-                  'No available time slots',
-                  style: TextStyles.font16DarkBlueBold,
-                ),
-                Gap(4.h),
-                Text(
-                  'Please select a different date',
-                  style: TextStyles.font14Grey400Weight,
-                ),
-              ],
-            ),
-          )
-        else
-          TimeSlotGrid(
-            timeSlots: _availableTimeSlots,
-            selectedTimeSlot: _selectedTimeSlot,
-            onTimeSlotSelected: (timeSlot) {
-              setState(() {
-                _selectedTimeSlot = timeSlot;
-              });
-            },
-          ),
-      ],
-    );
-  }
-
-  Widget _buildNotesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Additional Notes (Optional)',
-          style: TextStyles.font16DarkBlueBold,
-        ),
-        Gap(12.h),
-        TextFormField(
-          controller: _notesController,
-          maxLines: 3,
-          maxLength: 200,
-          decoration: InputDecoration(
-            hintText: 'Any special requirements or notes...',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12.r),
-              borderSide: const BorderSide(color: ColorsManager.mainBlue),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBookingSummary() {
-    if (_selectedTimeSlot == null) return const SizedBox.shrink();
-
-    final duration = _calculateDuration(_selectedTimeSlot!);
-    final totalAmount = widget.listing.hourlyRate * duration;
-
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(
-          color: Colors.green.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Booking Summary',
-            style: TextStyles.font16DarkBlueBold,
-          ),
-          Gap(12.h),
-          _buildSummaryRow('Date', _formatDate(_selectedDate)),
-          _buildSummaryRow('Time', '${_selectedTimeSlot!.start} - ${_selectedTimeSlot!.end}'),
-          _buildSummaryRow('Duration', '${duration.toStringAsFixed(1)} hours'),
-          _buildSummaryRow('Rate', '\$${widget.listing.hourlyRate.toStringAsFixed(0)}/hour'),
-          const Divider(),
-          _buildSummaryRow(
-            'Total Amount',
-            '\$${totalAmount.toStringAsFixed(2)}',
-            isTotal: true,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false}) {
+  Widget _priceRow(String label, double amount, {bool bold = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              label,
-              style: isTotal
-                  ? TextStyles.font16DarkBlueBold
-                  : TextStyles.font14DarkBlueMedium,
-              overflow: TextOverflow.ellipsis,
+          Text(
+            label,
+            style: bold
+                ? TextStyles.font14DarkBlueBold
+                : TextStyles.font14Grey400Weight,
+          ),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: bold
+                ? TextStyles.font14DarkBlueBold
+                : TextStyles.font14Grey400Weight,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ConfirmationStep extends StatelessWidget {
+  const _ConfirmationStep({required this.booking});
+
+  final data.BookingModel? booking;
+
+  @override
+  Widget build(BuildContext context) {
+    if (booking == null) {
+      return Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CustomProgressIndicator(),
+              Gap(16.h),
+              Text(
+                'Processing your booking...',
+                style: TextStyles.font16DarkBlueBold,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final dateFormat = DateFormat.yMMMd();
+    final timeFormat = DateFormat.Hm();
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(24.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child:
+                Icon(Icons.check_circle, color: Colors.green[600], size: 72.w),
+          ),
+          Gap(16.h),
+          Text(
+            'Booking confirmed',
+            style: TextStyles.font20DarkBlueBold,
+          ),
+          Gap(12.h),
+          Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _infoRow('Date', dateFormat.format(booking!.startTime)),
+                  _infoRow(
+                    'Time',
+                    '${timeFormat.format(booking!.startTime)} - ${timeFormat.format(booking!.endTime)}',
+                  ),
+                  _infoRow('Sport', booking!.sport),
+                  _infoRow(
+                      'Total paid', '\$${booking!.total.toStringAsFixed(2)}'),
+                ],
+              ),
             ),
           ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              value,
-              style: isTotal
-                  ? TextStyles.font16DarkBlueBold
-                  : TextStyles.font14DarkBlueMedium,
-              textAlign: TextAlign.end,
-              overflow: TextOverflow.ellipsis,
-            ),
+          Gap(16.h),
+          Text(
+            'A confirmation has been sent and the provider has been notified. '
+            'You can manage this booking from the history screen.',
+            style: TextStyles.font14Grey400Weight,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildBookButton() {
-    final canBook = _selectedTimeSlot != null && !_isBooking;
-
-    return AppTextButton(
-      buttonText: _isBooking ? 'Booking...' : 'Confirm Booking',
-      textStyle: TextStyles.font16WhiteSemiBold,
-      onPressed: canBook ? () => _confirmBooking() : null,
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyles.font14Grey400Weight),
+          Text(value, style: TextStyles.font14DarkBlueBold),
+        ],
+      ),
     );
-  }
-
-  Future<void> _confirmBooking() async {
-    if (_selectedTimeSlot == null) return;
-
-    setState(() {
-      _isBooking = true;
-    });
-
-    try {
-      await _bookingService.createBooking(
-        listingId: widget.listing.id,
-        selectedDate: _selectedDate,
-        timeSlot: _selectedTimeSlot!,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-      );
-
-      if (mounted) {
-        context.showSnackBar('Booking confirmed successfully!');
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        context.showSnackBar('Failed to create booking: ${e.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isBooking = false;
-        });
-      }
-    }
-  }
-
-  String _getDayName(int weekday) {
-    const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday'
-    ];
-    return days[weekday - 1];
-  }
-
-  String _formatDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
-  }
-
-  double _calculateDuration(TimeSlot timeSlot) {
-    final startParts = timeSlot.start.split(':');
-    final endParts = timeSlot.end.split(':');
-    
-    final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
-    final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
-    
-    return (endMinutes - startMinutes) / 60.0;
   }
 }
 
-// Placeholder class for calendar events
-class Event {
-  final String title;
-  Event(this.title);
+class _NavigationBar extends StatelessWidget {
+  const _NavigationBar({
+    required this.currentStep,
+    required this.onBack,
+    required this.onNext,
+  });
+
+  final int currentStep;
+  final VoidCallback onBack;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Row(
+          children: [
+            if (currentStep > 0 && currentStep < 3)
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onBack,
+                  child: const Text('Back'),
+                ),
+              ),
+            if (currentStep > 0 && currentStep < 3) Gap(12.w),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: onNext,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColorsManager.mainBlue,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 14.h),
+                ),
+                child: Text(
+                  currentStep == 0
+                      ? 'Continue'
+                      : currentStep == 1
+                          ? 'Continue'
+                          : currentStep == 2
+                              ? 'Confirm & Pay'
+                              : 'Done',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  const _StepIndicator({required this.currentStep});
+
+  final int currentStep;
+  static const _labels = ['Slot', 'Extras', 'Payment', 'Done'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+      child: Row(
+        children: List.generate(_labels.length, (index) {
+          final active = index <= currentStep;
+          return Expanded(
+            child: Column(
+              children: [
+                Container(
+                  width: 32.w,
+                  height: 32.w,
+                  decoration: BoxDecoration(
+                    color: active ? ColorsManager.mainBlue : Colors.grey[300],
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      color: active ? Colors.white : Colors.black54,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Gap(6.h),
+                Text(
+                  _labels[index],
+                  style: TextStyle(
+                    fontSize: 12.sp,
+                    color: active ? ColorsManager.mainBlue : Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _Slot {
+  _Slot({required this.start, required this.end});
+
+  final DateTime start;
+  final DateTime end;
+
+  String get label =>
+      '${DateFormat.Hm().format(start)} - ${DateFormat.Hm().format(end)}';
+
+  static _Slot fromString(String slot) {
+    final normalized = slot.trim();
+    String startString;
+    String endString;
+
+    final isoSeparatorIndex = normalized.indexOf('Z-');
+    if (isoSeparatorIndex != -1) {
+      startString = normalized.substring(0, isoSeparatorIndex + 1).trim();
+      endString = normalized.substring(isoSeparatorIndex + 2).trim();
+    } else {
+      final separatorIndex = normalized.lastIndexOf(' - ');
+      if (separatorIndex != -1) {
+        startString = normalized.substring(0, separatorIndex).trim();
+        endString = normalized.substring(separatorIndex + 3).trim();
+      } else {
+        final fallbackIndex = normalized.lastIndexOf('-');
+        if (fallbackIndex == -1) {
+          throw FormatException('Invalid slot format', slot);
+        }
+        startString = normalized.substring(0, fallbackIndex).trim();
+        endString = normalized.substring(fallbackIndex + 1).trim();
+      }
+    }
+
+    return _Slot(
+      start: DateTime.parse(startString),
+      end: DateTime.parse(endString),
+    );
+  }
+}
+
+class _ExtraOption {
+  const _ExtraOption({
+    required this.id,
+    required this.label,
+    required this.price,
+  });
+
+  final String id;
+  final String label;
+  final double price;
 }

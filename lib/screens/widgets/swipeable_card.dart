@@ -88,19 +88,20 @@ class _SwipeableCardState extends State<SwipeableCard>
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        final offset = _isDragging 
-            ? _dragOffset 
+        final offset = _isDragging
+            ? _dragOffset
             : _slideAnimation.value * MediaQuery.of(context).size.width;
-        
+
         return Transform.translate(
           offset: offset,
           child: Transform.rotate(
-            angle: _isDragging 
-                ? _dragOffset.dx * 0.001 
-                : _rotationAnimation.value * (_slideAnimation.value.dx > 0 ? 1 : -1),
+            angle: _isDragging
+                ? _dragOffset.dx * 0.001
+                : _rotationAnimation.value *
+                    (_slideAnimation.value.dx > 0 ? 1 : -1),
             child: Transform.scale(
               scale: _isDragging ? 1.0 : _scaleAnimation.value,
-              child: widget.isInteractive 
+              child: widget.isInteractive
                   ? GestureDetector(
                       onPanStart: _onPanStart,
                       onPanUpdate: _onPanUpdate,
@@ -197,7 +198,8 @@ class _SwipeableCardState extends State<SwipeableCard>
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: _getCompatibilityColor(widget.suggestion.compatibilityScore),
+                color: _getCompatibilityColor(
+                    widget.suggestion.compatibilityScore),
                 borderRadius: BorderRadius.circular(20.r),
               ),
               child: Text(
@@ -304,15 +306,16 @@ class _SwipeableCardState extends State<SwipeableCard>
               spacing: 6.w,
               runSpacing: 6.h,
               children: widget.suggestion.sportsOfInterest.take(3).map((sport) {
-                final isCommon = widget.suggestion.commonInterests.contains(sport);
+                final isCommon =
+                    widget.suggestion.commonInterests.contains(sport);
                 return Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: isCommon 
+                    color: isCommon
                         ? ColorsManager.primary.withValues(alpha: 0.2)
                         : ColorsManager.outline.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: isCommon 
+                    border: isCommon
                         ? Border.all(color: ColorsManager.primary, width: 1.w)
                         : null,
                   ),
@@ -321,7 +324,9 @@ class _SwipeableCardState extends State<SwipeableCard>
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w500,
-                      color: isCommon ? ColorsManager.primary : ColorsManager.outline,
+                      color: isCommon
+                          ? ColorsManager.primary
+                          : ColorsManager.outline,
                     ),
                   ),
                 );
@@ -375,7 +380,7 @@ class _SwipeableCardState extends State<SwipeableCard>
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: widget.suggestion.role == UserRole.coach 
+        color: widget.suggestion.role == UserRole.coach
             ? ColorsManager.secondary.withValues(alpha: 0.2)
             : ColorsManager.primary.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8.r),
@@ -385,7 +390,7 @@ class _SwipeableCardState extends State<SwipeableCard>
         style: TextStyle(
           fontSize: 10.sp,
           fontWeight: FontWeight.w600,
-          color: widget.suggestion.role == UserRole.coach 
+          color: widget.suggestion.role == UserRole.coach
               ? ColorsManager.secondary
               : ColorsManager.primary,
         ),
@@ -436,7 +441,7 @@ class _SwipeableCardState extends State<SwipeableCard>
 
   void _onPanEnd(DragEndDetails details) {
     if (!widget.isInteractive) return;
-    
+
     setState(() {
       _isDragging = false;
     });
@@ -447,7 +452,7 @@ class _SwipeableCardState extends State<SwipeableCard>
     if (_dragOffset.dx.abs() > threshold) {
       // Trigger swipe action
       final action = _dragOffset.dx > 0 ? SwipeAction.like : SwipeAction.pass;
-      
+
       // Animate card off screen
       _animationController.forward().then((_) {
         widget.onSwipe(action);

@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import '../models/coach_profile.dart';
 import '../models/match_models.dart';
 
-
 /// Model for coach match result
 class CoachMatch {
   final CoachProfile coach;
@@ -26,7 +25,8 @@ class CoachMatch {
 
 /// Service for coach matchmaking
 class CoachMatchingService {
-  static final CoachMatchingService _instance = CoachMatchingService._internal();
+  static final CoachMatchingService _instance =
+      CoachMatchingService._internal();
   factory CoachMatchingService() => _instance;
   CoachMatchingService._internal();
 
@@ -41,18 +41,18 @@ class CoachMatchingService {
   }) async {
     try {
       // Get current user profile
-      final currentUserDoc = await _firestore.collection('users').doc(currentUserId).get();
+      final currentUserDoc =
+          await _firestore.collection('users').doc(currentUserId).get();
       if (!currentUserDoc.exists) throw Exception('User profile not found');
 
       final currentUserData = currentUserDoc.data() as Map<String, dynamic>;
       final currentUserLocation = currentUserData['location'] as String?;
 
-      // Get all active coaches
+      // Get coaches (do not over-filter so we surface available data)
       final coachesQuery = await _firestore
           .collection('users')
           .where('role', isEqualTo: 'coach')
-          .where('isProfileComplete', isEqualTo: true)
-          .where('isActive', isEqualTo: true)
+          .limit(maxResults * 5)
           .get();
 
       List<CoachProfile> potentialMatches = coachesQuery.docs
@@ -63,16 +63,40 @@ class CoachMatchingService {
 
       // Calculate match scores
       List<CoachMatch> matches = [];
+      List<CoachMatch> fallbackMatches = [];
       for (final coach in potentialMatches) {
         final matchResult = _calculateCoachMatchScore(
           currentUserData,
           coach,
           currentUserLocation,
         );
-        
-        if (matchResult != null && matchResult.matchScore > 30) {
-          matches.add(matchResult);
+
+        if (matchResult != null) {
+          fallbackMatches.add(matchResult);
+          final withinDistance = matchResult.distance == null ||
+              matchResult.distance! <= maxDistance;
+          if (withinDistance && matchResult.matchScore >= 15) {
+            matches.add(matchResult);
+          }
         }
+      }
+
+      if (matches.isEmpty && fallbackMatches.isNotEmpty) {
+        matches = fallbackMatches;
+      }
+
+      if (matches.isEmpty) {
+        matches = potentialMatches
+            .map(
+              (coach) => CoachMatch(
+                coach: coach,
+                matchScore: 0,
+                distance: null,
+                commonSports: const [],
+                matchReasons: const [],
+              ),
+            )
+            .toList();
       }
 
       // Sort by match score (highest first)
@@ -96,22 +120,24 @@ class CoachMatchingService {
   ) {
     double totalScore = 0;
     List<String> matchReasons = [];
-    
+
     // Sports compatibility (40% weight)
-    final userSports = List<String>.from(currentUserData['sportsOfInterest'] ?? []);
-    final commonSports = userSports.where((sport) => 
-        coach.specializationSports.contains(sport)).toList();
-    
-    if (commonSports.isNotEmpty) {
+    final userSports = _extractSports(currentUserData);
+    final commonSports = userSports
+        .where((sport) => coach.specializationSports.contains(sport))
+        .toList();
+
+    if (commonSports.isNotEmpty && userSports.isNotEmpty) {
       final sportsScore = (commonSports.length / userSports.length) * 40;
       totalScore += sportsScore;
       matchReasons.add('Common sports: ${commonSports.join(', ')}');
     }
 
     // Skill level compatibility (20% weight)
-    final userSkillLevel = currentUserData['skillLevel'] as String?;
+    final userSkillLevel = _extractSkillLevel(currentUserData);
     if (userSkillLevel != null) {
-      final skillScore = _calculateSkillCompatibility(userSkillLevel, coach.experienceYears);
+      final skillScore =
+          _calculateSkillCompatibility(userSkillLevel, coach.experienceYears);
       totalScore += skillScore * 20;
       if (skillScore > 0.7) {
         matchReasons.add('Good skill level match');
@@ -135,7 +161,8 @@ class CoachMatchingService {
     double? distance;
     if (userLocation != null && coach.location.isNotEmpty) {
       distance = _calculateDistance(userLocation, coach.location);
-      if (distance <= 50) { // Within 50km
+      if (distance <= 50) {
+        // Within 50km
         final locationScore = (50 - distance) / 50 * 10;
         totalScore += locationScore;
         if (distance <= 10) {
@@ -159,7 +186,8 @@ class CoachMatchingService {
     );
   }
 
-  double _calculateSkillCompatibility(String userSkillLevel, int coachExperience) {
+  double _calculateSkillCompatibility(
+      String userSkillLevel, int coachExperience) {
     // Map skill levels to numeric values
     final skillLevels = {
       'beginner': 1,
@@ -167,10 +195,10 @@ class CoachMatchingService {
       'advanced': 3,
       'expert': 4,
     };
-    
+
     final userLevel = skillLevels[userSkillLevel.toLowerCase()] ?? 1;
     final coachLevel = (coachExperience / 10).clamp(1, 4).round();
-    
+
     // Calculate compatibility based on level difference
     final difference = (userLevel - coachLevel).abs();
     return (4 - difference) / 4;
@@ -185,6 +213,50 @@ class CoachMatchingService {
     } else {
       return 0.8; // Very experienced coaches are good but not perfect
     }
+  }
+
+  List<String> _extractSports(Map<String, dynamic> data) {
+    final keys = [
+      'sportsOfInterest',
+      'sports',
+      'interests',
+      'favoriteSports',
+      'preferredSports',
+    ];
+    final sports = <String>{};
+    for (final key in keys) {
+      final value = data[key];
+      if (value is Iterable) {
+        for (final item in value) {
+          if (item == null) continue;
+          final sport = item.toString().trim();
+          if (sport.isNotEmpty) {
+            sports.add(sport.toLowerCase());
+          }
+        }
+      } else if (value is String && value.trim().isNotEmpty) {
+        sports.add(value.trim().toLowerCase());
+      }
+    }
+    return sports.toList();
+  }
+
+  String? _extractSkillLevel(Map<String, dynamic> data) {
+    final keys = ['skillLevel', 'experienceLevel', 'playerLevel'];
+    for (final key in keys) {
+      final value = data[key];
+      if (value == null) continue;
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+      if (value is num) {
+        if (value <= 1.5) return 'beginner';
+        if (value <= 2.5) return 'intermediate';
+        if (value <= 3.5) return 'advanced';
+        return 'expert';
+      }
+    }
+    return null;
   }
 
   double _calculateDistance(String location1, String location2) {
@@ -213,7 +285,10 @@ class CoachMatchingService {
         createdAt: DateTime.now(),
       );
 
-      await _firestore.collection('coach_swipes').doc(swipeId).set(swipe.toFirestore());
+      await _firestore
+          .collection('coach_swipes')
+          .doc(swipeId)
+          .set(swipe.toFirestore());
 
       // If it's a like, check for mutual like (match)
       if (action == SwipeAction.like) {
@@ -248,7 +323,8 @@ class CoachMatchingService {
       return reverseSwipeQuery.docs.isNotEmpty;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ CoachMatchingService: Error checking for coach match - $e');
+        debugPrint(
+            '❌ CoachMatchingService: Error checking for coach match - $e');
       }
       return false;
     }
@@ -257,14 +333,14 @@ class CoachMatchingService {
   Future<void> _createCoachMatch(String userId, String coachId) async {
     try {
       final matchId = UserMatch.generateMatchId(userId, coachId);
-      
+
       // Get user and coach names
       final userDoc = await _firestore.collection('users').doc(userId).get();
       final coachDoc = await _firestore.collection('users').doc(coachId).get();
-      
+
       final userData = userDoc.data() as Map<String, dynamic>;
       final coachData = coachDoc.data() as Map<String, dynamic>;
-      
+
       final match = UserMatch(
         id: matchId,
         user1Id: userId,
@@ -279,7 +355,10 @@ class CoachMatchingService {
         compatibilityScore: 0.0, // Would be calculated
       );
 
-      await _firestore.collection('coach_matches').doc(matchId).set(match.toFirestore());
+      await _firestore
+          .collection('coach_matches')
+          .doc(matchId)
+          .set(match.toFirestore());
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ CoachMatchingService: Error creating coach match - $e');
@@ -288,7 +367,8 @@ class CoachMatchingService {
     }
   }
 
-  Future<void> _sendCoachMatchNotifications(String userId, String coachId) async {
+  Future<void> _sendCoachMatchNotifications(
+      String userId, String coachId) async {
     // Implementation for sending match notifications
     // This would integrate with your notification service
   }
@@ -311,7 +391,8 @@ class CoachMatchingService {
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       final userData = userDoc.data() as Map<String, dynamic>;
 
-      final commentId = '${user.uid}_${toCoachId}_${DateTime.now().millisecondsSinceEpoch}';
+      final commentId =
+          '${user.uid}_${toCoachId}_${DateTime.now().millisecondsSinceEpoch}';
       final profileComment = ProfileComment(
         id: commentId,
         fromUserId: user.uid,

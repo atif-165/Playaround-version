@@ -7,22 +7,28 @@ import '../../theming/styles.dart';
 class AppTextFormField extends StatelessWidget {
   final String hint;
   final Widget? suffixIcon;
+  final Widget? prefixIcon;
   final FocusNode? focusNode;
   final Function(String)? onChanged;
   final bool? isObscureText;
   final bool? isDense;
+  final int? maxLines;
   final TextEditingController? controller;
   final Function(String?) validator;
+  final TextInputType? keyboardType;
   const AppTextFormField({
     super.key,
     required this.hint,
     this.suffixIcon,
+    this.prefixIcon,
     this.isObscureText,
     this.isDense,
+    this.maxLines,
     this.controller,
     this.onChanged,
     this.focusNode,
     required this.validator,
+    this.keyboardType,
   });
   @override
   Widget build(BuildContext context) {
@@ -33,6 +39,8 @@ class AppTextFormField extends StatelessWidget {
       },
       onChanged: onChanged,
       controller: controller,
+      maxLines: maxLines ?? 1,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyles.font14Hint500Weight,
@@ -68,10 +76,15 @@ class AppTextFormField extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(16.0),
         ),
+        prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
       ),
       obscureText: isObscureText ?? false,
-      style: TextStyles.font14DarkBlue500Weight,
+      style: TextStyle(
+        fontSize: 14.sp,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
     );
   }
 }

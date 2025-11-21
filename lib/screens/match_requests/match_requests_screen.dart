@@ -19,7 +19,7 @@ class MatchRequestsScreen extends StatefulWidget {
 class _MatchRequestsScreenState extends State<MatchRequestsScreen>
     with SingleTickerProviderStateMixin {
   final MatchmakingService _matchmakingService = MatchmakingService();
-  
+
   late TabController _tabController;
   List<Map<String, dynamic>> _receivedRequests = [];
   List<Map<String, dynamic>> _sentRequests = [];
@@ -54,10 +54,12 @@ class _MatchRequestsScreenState extends State<MatchRequestsScreen>
       }
 
       // Load received requests
-      final receivedRequests = await _matchmakingService.getMatchRequests(user.uid);
-      
+      final receivedRequests =
+          await _matchmakingService.getMatchRequests(user.uid);
+
       // Load sent requests (we'll need to modify the service for this)
-      final sentRequests = await _matchmakingService.getSentMatchRequests(user.uid);
+      final sentRequests =
+          await _matchmakingService.getSentMatchRequests(user.uid);
 
       if (mounted) {
         setState(() {
@@ -287,7 +289,7 @@ class _MatchRequestsScreenState extends State<MatchRequestsScreen>
             backgroundColor: accepted ? Colors.green : Colors.orange,
           ),
         );
-        
+
         // Reload requests
         _loadMatchRequests();
       }

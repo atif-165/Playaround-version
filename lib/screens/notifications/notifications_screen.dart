@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/widgets/app_text_button.dart';
 import '../../core/widgets/progress_indicator.dart';
 import '../../models/notification_model.dart';
 import '../../services/notification_service.dart';
 import '../../theming/colors.dart';
+import '../../theming/public_profile_theme.dart';
 import '../../theming/styles.dart';
+import '../../config/app_route_paths.dart';
+
+const _notificationHeroGradient = LinearGradient(
+  begin: Alignment.topCenter,
+  end: Alignment.bottomCenter,
+  colors: [
+    Color(0xFF1B1848),
+    Color(0xFF080612),
+  ],
+);
 
 /// Screen displaying user notifications
 class NotificationsScreen extends StatefulWidget {
@@ -18,141 +32,204 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _notificationService = NotificationService();
+  bool _initializedListener = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ensureRealtimeListener();
+  }
+
+  Future<void> _ensureRealtimeListener() async {
+    if (_initializedListener) return;
+    try {
+      await _notificationService.startRealtimeListener();
+      setState(() {
+        _initializedListener = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to start notification listener: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PublicProfileTheme.backgroundColor,
       appBar: AppBar(
-        title: Text(
-          'Notifications',
-          style: TextStyles.font18DarkBlueBold,
-        ),
-        backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
+        toolbarHeight: 40.h,
+        iconTheme: const IconThemeData(color: Colors.white),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: ColorsManager.darkBlue),
-        actions: [
-          TextButton(
-            onPressed: _markAllAsRead,
-            child: Text(
-              'Mark All Read',
-              style: TextStyles.font12MainBlue500Weight,
+        titleSpacing: 0,
+        title: const SizedBox.shrink(),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(gradient: _notificationHeroGradient),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 2.h),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Notifications',
+                        style: TextStyles.font18White600Weight,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _markAllAsRead,
+                    child: Text(
+                      'Mark All Read',
+                      style: TextStyles.font14MainBlue500Weight
+                          .copyWith(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
-      body: StreamBuilder<List<NotificationModel>>(
-        stream: _notificationService.getUserNotifications(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CustomProgressIndicator());
-          }
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: PublicProfileTheme.backgroundGradient,
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Column(
+              children: [
+                Gap(20.h),
+                Expanded(
+                  child: StreamBuilder<List<NotificationModel>>(
+                    stream: _notificationService.getUserNotifications(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(child: CustomProgressIndicator());
+                      }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48.sp,
-                    color: Colors.grey[400],
-                  ),
-                  Gap(16.h),
-                  Text(
-                    'Error loading notifications',
-                    style: TextStyles.font16Grey400Weight,
-                  ),
-                  Gap(8.h),
-                  Text(
-                    snapshot.error.toString(),
-                    style: TextStyles.font12Grey400Weight,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          }
+                      if (snapshot.hasError) {
+                        return _buildStateMessage(
+                          icon: Icons.error_outline,
+                          title: 'Error loading notifications',
+                          message: snapshot.error.toString(),
+                        );
+                      }
 
-          final notifications = snapshot.data ?? [];
+                      final notifications = snapshot.data ?? [];
 
-          if (notifications.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.notifications_none_outlined,
-                    size: 64.sp,
-                    color: Colors.grey[400],
-                  ),
-                  Gap(16.h),
-                  Text(
-                    'No notifications yet',
-                    style: TextStyles.font18DarkBlue600Weight,
-                  ),
-                  Gap(8.h),
-                  Text(
-                    'You\'ll see notifications here when you have updates',
-                    style: TextStyles.font14Grey400Weight,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          }
+                      if (notifications.isEmpty) {
+                        return _buildStateMessage(
+                          icon: Icons.notifications_none_outlined,
+                          title: 'No notifications yet',
+                          message:
+                              'You\'ll see notifications here when you have updates.',
+                        );
+                      }
 
-          return ListView.builder(
-            padding: EdgeInsets.all(16.w),
-            itemCount: notifications.length,
-            itemBuilder: (context, index) {
-              final notification = notifications[index];
-              return _buildNotificationItem(notification);
-            },
-          );
-        },
+                      return ListView.builder(
+                        padding: EdgeInsets.only(bottom: 24.h),
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          final notification = notifications[index];
+                          return _buildNotificationItem(notification);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStateMessage({
+    required IconData icon,
+    required String title,
+    required String message,
+  }) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 64.sp, color: Colors.white30),
+            Gap(16.h),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyles.font18DarkBlueBold.copyWith(color: Colors.white),
+            ),
+            Gap(8.h),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyles.font14Grey400Weight
+                  .copyWith(color: Colors.white70),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildNotificationItem(NotificationModel notification) {
+    final cardColor = notification.isRead
+        ? PublicProfileTheme.panelColor.withOpacity(0.92)
+        : PublicProfileTheme.panelOverlayColor.withOpacity(0.96);
+    final borderColor = notification.isRead
+        ? Colors.white.withOpacity(0.04)
+        : ColorsManager.mainBlue.withOpacity(0.35);
+
     return Dismissible(
       key: Key(notification.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: 16.w),
+        padding: EdgeInsets.only(right: 18.w),
         decoration: BoxDecoration(
           color: Colors.red,
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(22.r),
         ),
-        child: Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 24.sp,
-        ),
+        child: Icon(Icons.delete, color: Colors.white, size: 24.sp),
       ),
-      onDismissed: (direction) {
-        _deleteNotification(notification.id);
-      },
+      onDismissed: (_) => _deleteNotification(notification.id),
       child: GestureDetector(
         onTap: () => _onNotificationTap(notification),
         child: Container(
-          margin: EdgeInsets.only(bottom: 12.h),
-          padding: EdgeInsets.all(16.w),
+          margin: EdgeInsets.only(bottom: 16.h),
+          padding: EdgeInsets.all(18.w),
           decoration: BoxDecoration(
-            color: notification.isRead ? Colors.white : ColorsManager.mainBlue.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(
-              color: notification.isRead 
-                  ? Colors.grey[200]! 
-                  : ColorsManager.mainBlue.withValues(alpha: 0.2),
-            ),
+            color: cardColor,
+            borderRadius: BorderRadius.circular(24.r),
+            border: Border.all(color: borderColor, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.1),
-                spreadRadius: 1,
-                blurRadius: 2,
-                offset: const Offset(0, 1),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 24,
+                offset: const Offset(0, 16),
               ),
             ],
           ),
@@ -160,58 +237,59 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 40.w,
-                height: 40.h,
+                width: 48.w,
+                height: 48.w,
                 decoration: BoxDecoration(
-                  color: _getNotificationColor(notification.type).withValues(alpha: 0.1),
+                  color: _getNotificationColor(notification.type)
+                      .withOpacity(0.18),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   _getNotificationIcon(notification.type),
                   color: _getNotificationColor(notification.type),
-                  size: 20.sp,
+                  size: 22.sp,
                 ),
               ),
-              Gap(12.w),
+              Gap(14.w),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
                           child: Text(
                             notification.title,
-                            style: notification.isRead 
-                                ? TextStyles.font14DarkBlue600Weight
-                                : TextStyles.font14DarkBlueBold,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            style: TextStyles.font16DarkBlueBold
+                                .copyWith(color: Colors.white),
                           ),
                         ),
-                        if (!notification.isRead)
-                          Container(
-                            width: 8.w,
-                            height: 8.h,
-                            decoration: const BoxDecoration(
-                              color: ColorsManager.mainBlue,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                        Text(
+                          _formatDate(notification.createdAt),
+                          style: TextStyles.font12Grey400Weight
+                              .copyWith(color: Colors.white54),
+                        ),
                       ],
                     ),
-                    Gap(4.h),
+                    Gap(6.h),
                     Text(
                       notification.message,
-                      style: TextStyles.font12Grey400Weight,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      style: TextStyles.font14Grey400Weight
+                          .copyWith(color: Colors.white70, height: 1.4),
                     ),
-                    Gap(8.h),
-                    Text(
-                      _formatDate(notification.createdAt),
-                      style: TextStyles.font10Grey400Weight,
-                    ),
+                    if (notification.data != null &&
+                        notification.data!['action'] != null) ...[
+                      Gap(12.h),
+                      AppTextButton(
+                        buttonText: 'View Details',
+                        textStyle: TextStyles.font14White600Weight,
+                        onPressed: () => _handleNotificationAction(notification),
+                        backgroundColor: ColorsManager.mainBlue,
+                        buttonHeight: 38,
+                      ),
+                    ],
+                    Gap(2.h),
                   ],
                 ),
               ),
@@ -254,8 +332,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.favorite;
       case NotificationType.profileComment:
         return Icons.comment;
+      case NotificationType.profileFollow:
+        return Icons.person_add_alt_1;
+      case NotificationType.profileUpdate:
+        return Icons.campaign_outlined;
       case NotificationType.userMatch:
         return Icons.people;
+      case NotificationType.coachVenueRequest:
+        return Icons.apartment;
+      case NotificationType.coachTeamRequest:
+        return Icons.groups;
+      case NotificationType.coachPlayerRequest:
+        return Icons.person_add_alt_1;
+      case NotificationType.sessionCreated:
+        return Icons.event_available;
+      case NotificationType.sessionUpdated:
+        return Icons.edit_calendar;
+      case NotificationType.sessionCancelled:
+        return Icons.event_busy;
+      case NotificationType.bookingUpdate:
+        return Icons.calendar_month_outlined;
       case NotificationType.general:
         return Icons.info_outline;
     }
@@ -293,8 +389,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Colors.pink;
       case NotificationType.profileComment:
         return Colors.blue;
+      case NotificationType.profileFollow:
+        return ColorsManager.primary;
+      case NotificationType.profileUpdate:
+        return ColorsManager.secondary;
       case NotificationType.userMatch:
         return Colors.green;
+      case NotificationType.coachVenueRequest:
+        return ColorsManager.coachAccent;
+      case NotificationType.coachTeamRequest:
+        return ColorsManager.primary;
+      case NotificationType.coachPlayerRequest:
+        return ColorsManager.success;
+      case NotificationType.sessionCreated:
+        return ColorsManager.secondary;
+      case NotificationType.sessionUpdated:
+        return ColorsManager.primary;
+      case NotificationType.sessionCancelled:
+        return ColorsManager.error;
+      case NotificationType.bookingUpdate:
+        return ColorsManager.coachAccent;
       case NotificationType.general:
         return ColorsManager.textSecondary;
     }
@@ -387,15 +501,94 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           // Navigate to profile or comments
           Navigator.pushNamed(context, '/profileScreen');
           break;
+        case NotificationType.profileFollow:
+          Navigator.pushNamed(context, '/peopleSearchScreen');
+          break;
+        case NotificationType.profileUpdate:
+          Navigator.pushNamed(context, '/profileScreen');
+          break;
         case NotificationType.userMatch:
           // Navigate to matches or chat
           Navigator.pushNamed(context, '/peopleSearchScreen');
+          break;
+        case NotificationType.coachVenueRequest:
+          // Navigate to venue management or requests
+          // TODO: Implement navigation for coach venue requests
+          break;
+        case NotificationType.coachTeamRequest:
+          // Navigate to team requests management
+          // TODO: Implement navigation for coach team requests
+          break;
+        case NotificationType.coachPlayerRequest:
+          // Navigate to player management or approvals
+          // TODO: Implement navigation for coach player requests
+          break;
+        case NotificationType.sessionCreated:
+          // Navigate to schedule
+          context.pushNamed(AppRouteNames.schedule);
+          break;
+        case NotificationType.sessionUpdated:
+          context.pushNamed(AppRouteNames.schedule);
+          break;
+        case NotificationType.sessionCancelled:
+          context.pushNamed(AppRouteNames.schedule);
+          break;
+        case NotificationType.bookingUpdate:
+          // Navigate to booking detail screen if available
+          // TODO: Implement navigation to booking detail
           break;
         case NotificationType.general:
           // Handle general notifications
           // TODO: Implement general notification handling
           break;
       }
+    }
+  }
+
+  void _handleNotificationAction(NotificationModel notification) {
+    if (!notification.isRead) {
+      _notificationService.markAsRead(notification.id);
+    }
+
+    final data = notification.data;
+    if (data == null) {
+      _onNotificationTap(notification);
+      return;
+    }
+
+    final action = data['action'] as String?;
+    if (action == null) {
+      _onNotificationTap(notification);
+      return;
+    }
+
+    switch (action) {
+      case 'navigate':
+      case 'navigate_to_route':
+      case 'open_route':
+      case 'route':
+        final routeName = data['routeName'] as String?;
+        final routePath =
+            data['route'] as String? ?? data['path'] as String?;
+        final extra = data['extra'];
+
+        if (routeName != null) {
+          context.pushNamed(routeName, extra: extra);
+        } else if (routePath != null) {
+          context.push(routePath, extra: extra);
+        } else {
+          _onNotificationTap(notification);
+        }
+        break;
+      case 'open_profile':
+        context.pushNamed(
+          AppRouteNames.profile,
+          extra: data['userId'],
+        );
+        break;
+      default:
+        _onNotificationTap(notification);
+        break;
     }
   }
 
@@ -437,3 +630,4 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 }
+

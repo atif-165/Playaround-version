@@ -61,10 +61,15 @@ enum Gender {
 abstract class UserProfile {
   final String uid;
   final String fullName;
+  final String? nickname;
+  final String? bio;
   final Gender gender;
   final int age;
   final String location;
+  final double? latitude; // GPS latitude coordinate
+  final double? longitude; // GPS longitude coordinate
   final String? profilePictureUrl;
+  final List<String> profilePhotos; // Multiple photos support
   final UserRole role;
   final bool isProfileComplete;
   final String? teamId; // Add teamId field
@@ -74,10 +79,15 @@ abstract class UserProfile {
   const UserProfile({
     required this.uid,
     required this.fullName,
+    this.nickname,
+    this.bio,
     required this.gender,
     required this.age,
     required this.location,
+    this.latitude,
+    this.longitude,
     this.profilePictureUrl,
+    this.profilePhotos = const [],
     required this.role,
     required this.isProfileComplete,
     this.teamId,
@@ -101,10 +111,15 @@ abstract class UserProfile {
     return {
       'uid': uid,
       'fullName': fullName,
+      'nickname': nickname,
+      'bio': bio,
       'gender': gender.value,
       'age': age,
       'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
       'profilePictureUrl': profilePictureUrl,
+      'profilePhotos': profilePhotos,
       'role': role.value,
       'isProfileComplete': isProfileComplete,
       'teamId': teamId,
@@ -116,18 +131,91 @@ abstract class UserProfile {
   /// Common fields from Firestore conversion
   @protected
   static Map<String, dynamic> baseFromFirestore(Map<String, dynamic> data) {
+    String? _asString(dynamic value) {
+      if (value == null) return null;
+      final stringValue = value.toString().trim();
+      return stringValue.isEmpty ? null : stringValue;
+    }
+
+    double? _asDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString());
+    }
+
+    int _asInt(dynamic value) {
+      if (value == null) return 0;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString()) ?? 0;
+    }
+
+    DateTime _asDateTime(dynamic value) {
+      if (value is Timestamp) return value.toDate();
+      if (value is DateTime) return value;
+      if (value is num) {
+        final milliseconds =
+            value > 1000000000000 ? value.toInt() : value.toInt() * 1000;
+        return DateTime.fromMillisecondsSinceEpoch(milliseconds);
+      }
+      if (value is String) {
+        return DateTime.tryParse(value) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
+    List<String> _asStringList(dynamic value) {
+      if (value is Iterable) {
+        return value
+            .where((element) => element != null)
+            .map((element) => element.toString())
+            .where((element) => element.trim().isNotEmpty)
+            .toList();
+      }
+      return <String>[];
+    }
+
+    final uid = _asString(data['uid']) ?? _asString(data['id']);
+    if (uid == null) {
+      throw StateError('User profile document is missing a uid.');
+    }
+
+    final roleString = _asString(data['role']) ?? 'player';
+
+    final profilePhotos = <String>{
+      ..._asStringList(data['profilePhotos']),
+      ..._asStringList(data['galleryPhotos']),
+      ..._asStringList(data['gallery']),
+    }.toList();
+
     return {
-      'uid': data['uid'] as String,
-      'fullName': data['fullName'] as String,
-      'gender': Gender.fromString(data['gender'] as String? ?? 'male'),
-      'age': data['age'] as int,
-      'location': data['location'] as String,
-      'profilePictureUrl': data['profilePictureUrl'] as String?,
-      'role': UserRole.fromString(data['role'] as String),
-      'isProfileComplete': data['isProfileComplete'] as bool? ?? false,
-      'teamId': data['teamId'] as String?,
-      'createdAt': (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      'updatedAt': (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      'uid': uid,
+      'fullName': _asString(data['fullName']) ??
+          _asString(data['name']) ??
+          'Unnamed User',
+      'nickname': _asString(data['nickname']),
+      'bio': _asString(data['bio']) ??
+          _asString(data['about']) ??
+          _asString(data['description']),
+      'gender': Gender.fromString(_asString(data['gender']) ?? 'male'),
+      'age': _asInt(data['age']),
+      'location': _asString(data['location']) ??
+          _asString(data['city']) ??
+          _asString(data['country']) ??
+          'Unknown',
+      'latitude': _asDouble(data['latitude']),
+      'longitude': _asDouble(data['longitude']),
+      'profilePictureUrl': _asString(data['profilePictureUrl']) ??
+          _asString(data['photoUrl']) ??
+          _asString(data['avatarUrl']) ??
+          _asString(data['imageUrl']),
+      'profilePhotos': profilePhotos,
+      'role': UserRole.fromString(roleString),
+      'isProfileComplete': data['isProfileComplete'] is bool
+          ? data['isProfileComplete'] as bool
+          : true,
+      'teamId': _asString(data['teamId']) ?? _asString(data['team']),
+      'createdAt': _asDateTime(data['createdAt']),
+      'updatedAt': _asDateTime(data['updatedAt']),
     };
   }
 
@@ -218,10 +306,35 @@ class TimeSlot {
   }
 
   static TimeSlot fromMap(Map<String, dynamic> map) {
+    String _asString(dynamic value, String fallback) {
+      if (value == null) return fallback;
+      final stringValue = value.toString().trim();
+      return stringValue.isEmpty ? fallback : stringValue;
+    }
+
+    final resolvedDay = _asString(
+      map['day'] ??
+          map['weekday'] ??
+          map['dayOfWeek'] ??
+          map['label'] ??
+          'Flexible',
+      'Flexible',
+    );
+
+    final resolvedStart = _asString(
+      map['startTime'] ?? map['start'] ?? map['from'] ?? map['open'],
+      'Anytime',
+    );
+
+    final resolvedEnd = _asString(
+      map['endTime'] ?? map['end'] ?? map['to'] ?? map['close'],
+      'Anytime',
+    );
+
     return TimeSlot(
-      day: map['day'] as String,
-      startTime: map['startTime'] as String,
-      endTime: map['endTime'] as String,
+      day: resolvedDay,
+      startTime: resolvedStart,
+      endTime: resolvedEnd,
     );
   }
 

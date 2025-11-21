@@ -103,9 +103,11 @@ class TournamentTeamRegistration {
       'teamMemberIds': teamMemberIds,
       'teamMemberNames': teamMemberNames,
       'status': status.name,
-      'qualifyingAnswers': qualifyingAnswers.map((answer) => answer.toMap()).toList(),
+      'qualifyingAnswers':
+          qualifyingAnswers.map((answer) => answer.toMap()).toList(),
       'registrationDate': Timestamp.fromDate(registrationDate),
-      'approvalDate': approvalDate != null ? Timestamp.fromDate(approvalDate!) : null,
+      'approvalDate':
+          approvalDate != null ? Timestamp.fromDate(approvalDate!) : null,
       'rejectionReason': rejectionReason,
       'notes': notes,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -131,11 +133,13 @@ class TournamentTeamRegistration {
         orElse: () => TeamRegistrationStatus.pending,
       ),
       qualifyingAnswers: (map['qualifyingAnswers'] as List<dynamic>?)
-          ?.map((answerMap) => QualifyingAnswer.fromMap(answerMap as Map<String, dynamic>))
-          .toList() ?? [],
+              ?.map((answerMap) =>
+                  QualifyingAnswer.fromMap(answerMap as Map<String, dynamic>))
+              .toList() ??
+          [],
       registrationDate: (map['registrationDate'] as Timestamp).toDate(),
-      approvalDate: map['approvalDate'] != null 
-          ? (map['approvalDate'] as Timestamp).toDate() 
+      approvalDate: map['approvalDate'] != null
+          ? (map['approvalDate'] as Timestamp).toDate()
           : null,
       rejectionReason: map['rejectionReason'],
       notes: map['notes'],

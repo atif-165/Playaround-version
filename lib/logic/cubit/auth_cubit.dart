@@ -108,14 +108,16 @@ class AuthCubit extends Cubit<AuthState> {
       await GoogleSignIn.instance.initialize();
 
       // Authenticate the user
-      final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
+      final GoogleSignInAccount googleUser =
+          await GoogleSignIn.instance.authenticate();
 
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.idToken, // Note: In v7.x, use idToken for accessToken
+        accessToken:
+            googleAuth.idToken, // Note: In v7.x, use idToken for accessToken
         idToken: googleAuth.idToken,
       );
       final UserCredential authResult =
@@ -169,13 +171,21 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final currentUser = _auth.currentUser;
       if (currentUser != null) {
+        // Force reload to get latest verification status
         await currentUser.reload();
+        await Future.delayed(const Duration(milliseconds: 500)); // Give Firebase time to sync
+        
+        // Get fresh user instance after reload
         final updatedUser = _auth.currentUser;
         if (updatedUser != null && updatedUser.emailVerified) {
           // Check if user profile is complete
           await _checkUserProfileAndEmitState(updatedUser.uid);
         } else {
-          emit(UserNotVerified());
+          // Provide helpful error message
+          emit(AuthError(
+            'Email not yet verified. Please check your inbox and click the verification link. '
+            'If you already clicked it, wait a few seconds and try again.'
+          ));
         }
       } else {
         emit(AuthError('No user found. Please sign up first.'));
@@ -187,12 +197,28 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Skip email verification for testing purposes (Debug only)
+  Future<void> skipEmailVerificationForTesting() async {
+    emit(AuthLoading());
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        // For test accounts, just check profile and proceed
+        await _checkUserProfileAndEmitState(currentUser.uid);
+      } else {
+        emit(AuthError('No user found. Please sign up first.'));
+      }
+    } catch (e) {
+      emit(AuthError('Failed to proceed. Please try again.'));
+    }
+  }
+
   Future<void> signUpWithEmail(
       String name, String email, String password) async {
     emit(AuthLoading());
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
       final currentUser = userCredential.user;
       if (currentUser != null) {
         await currentUser.updateDisplayName(name);
@@ -244,9 +270,11 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final profile = await _userRepository.getUserProfile(uid);
 
-      if (profile != null && profile.isProfileComplete) {
+      if (profile != null) {
+        // Profile exists (complete or incomplete), allow access to app
         emit(AuthenticatedWithProfile(userProfile: profile));
       } else {
+        // No profile found, need to select role
         emit(UserNeedsOnboarding());
       }
     } catch (e) {

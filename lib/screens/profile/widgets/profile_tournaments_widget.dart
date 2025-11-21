@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -56,8 +55,9 @@ class ProfileTournamentsWidget extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    final totalTournaments = pastTournaments.length + upcomingTournaments.length;
-    
+    final totalTournaments =
+        pastTournaments.length + upcomingTournaments.length;
+
     return Row(
       children: [
         Icon(
@@ -133,13 +133,15 @@ class ProfileTournamentsWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (upcomingTournaments.isNotEmpty) ...[
-          _buildSectionHeader('Upcoming Tournaments', upcomingTournaments.length, Colors.green),
+          _buildSectionHeader(
+              'Upcoming Tournaments', upcomingTournaments.length, Colors.green),
           Gap(8.h),
           _buildTournamentsList(upcomingTournaments, isUpcoming: true),
           if (pastTournaments.isNotEmpty) Gap(20.h),
         ],
         if (pastTournaments.isNotEmpty) ...[
-          _buildSectionHeader('Past Tournaments', pastTournaments.length, Colors.grey),
+          _buildSectionHeader(
+              'Past Tournaments', pastTournaments.length, Colors.grey),
           Gap(8.h),
           _buildTournamentsList(pastTournaments, isUpcoming: false),
         ],
@@ -182,15 +184,19 @@ class ProfileTournamentsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTournamentsList(List<Tournament> tournaments, {required bool isUpcoming}) {
+  Widget _buildTournamentsList(List<Tournament> tournaments,
+      {required bool isUpcoming}) {
     return Column(
-      children: tournaments.take(3).map((tournament) => 
-        _buildTournamentTile(tournament, isUpcoming: isUpcoming)
-      ).toList(),
+      children: tournaments
+          .take(3)
+          .map((tournament) =>
+              _buildTournamentTile(tournament, isUpcoming: isUpcoming))
+          .toList(),
     );
   }
 
-  Widget _buildTournamentTile(Tournament tournament, {required bool isUpcoming}) {
+  Widget _buildTournamentTile(Tournament tournament,
+      {required bool isUpcoming}) {
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       padding: EdgeInsets.all(16.w),
@@ -212,7 +218,8 @@ class ProfileTournamentsWidget extends StatelessWidget {
                 width: 50.w,
                 height: 50.w,
                 decoration: BoxDecoration(
-                  color: _getStatusColor(tournament.status).withValues(alpha: 0.1),
+                  color:
+                      _getStatusColor(tournament.status).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 child: ImageUtils.buildSafeCachedImage(
@@ -224,7 +231,8 @@ class ProfileTournamentsWidget extends StatelessWidget {
                   fallbackIcon: Icons.emoji_events,
                   fallbackIconColor: _getStatusColor(tournament.status),
                   fallbackIconSize: 24.sp,
-                  backgroundColor: _getStatusColor(tournament.status).withValues(alpha: 0.1),
+                  backgroundColor:
+                      _getStatusColor(tournament.status).withValues(alpha: 0.1),
                 ),
               ),
               Gap(12.w),
@@ -280,9 +288,11 @@ class ProfileTournamentsWidget extends StatelessWidget {
                         ),
                         Gap(4.w),
                         Text(
-                          isUpcoming 
-                              ? DateFormat('MMM dd, yyyy').format(tournament.startDate)
-                              : DateFormat('MMM dd, yyyy').format(tournament.endDate ?? tournament.startDate),
+                          isUpcoming
+                              ? DateFormat('MMM dd, yyyy')
+                                  .format(tournament.startDate)
+                              : DateFormat('MMM dd, yyyy').format(
+                                  tournament.endDate ?? tournament.startDate),
                           style: TextStyles.font12Grey400Weight,
                         ),
                       ],
@@ -296,7 +306,8 @@ class ProfileTournamentsWidget extends StatelessWidget {
                 children: [
                   if (_isWinner(tournament)) ...[
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                       decoration: BoxDecoration(
                         color: ColorsManager.success,
                         borderRadius: BorderRadius.circular(12.r),
@@ -323,9 +334,11 @@ class ProfileTournamentsWidget extends StatelessWidget {
                     Gap(4.h),
                   ],
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(tournament.status).withValues(alpha: 0.1),
+                      color: _getStatusColor(tournament.status)
+                          .withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Text(
@@ -375,7 +388,7 @@ class ProfileTournamentsWidget extends StatelessWidget {
       case TournamentStatus.registrationClosed:
         return Colors.orange;
       case TournamentStatus.ongoing:
-        return Colors.green;
+      case TournamentStatus.running:
       case TournamentStatus.inProgress:
         return Colors.green;
       case TournamentStatus.completed:
@@ -387,6 +400,7 @@ class ProfileTournamentsWidget extends StatelessWidget {
 
   IconData _getSportIcon(team_models.SportType sportType) {
     switch (sportType) {
+      case team_models.SportType.soccer:
       case team_models.SportType.football:
         return Icons.sports_soccer;
       case team_models.SportType.basketball:
@@ -399,6 +413,18 @@ class ProfileTournamentsWidget extends StatelessWidget {
         return Icons.sports_tennis;
       case team_models.SportType.volleyball:
         return Icons.sports_volleyball;
+      case team_models.SportType.hockey:
+        return Icons.sports_hockey;
+      case team_models.SportType.rugby:
+        return Icons.sports_rugby;
+      case team_models.SportType.baseball:
+        return Icons.sports_baseball;
+      case team_models.SportType.swimming:
+        return Icons.pool;
+      case team_models.SportType.running:
+        return Icons.directions_run;
+      case team_models.SportType.cycling:
+        return Icons.directions_bike;
       case team_models.SportType.other:
         return Icons.sports;
     }
@@ -409,6 +435,6 @@ class ProfileTournamentsWidget extends StatelessWidget {
     // TODO: This needs to be enhanced to check if the current user's team won
     // For now, we'll check if there's a winner and the tournament is completed
     return tournament.status == TournamentStatus.completed &&
-           tournament.winnerTeamId != null;
+        tournament.winnerTeamId != null;
   }
 }

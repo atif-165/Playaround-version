@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -161,7 +160,8 @@ class ProfileTeamsWidget extends StatelessWidget {
                   fallbackIcon: _getSportIcon(team.sportType),
                   fallbackIconColor: _getSportColor(team.sportType),
                   fallbackIconSize: 24.sp,
-                  backgroundColor: _getSportColor(team.sportType).withValues(alpha: 0.1),
+                  backgroundColor:
+                      _getSportColor(team.sportType).withValues(alpha: 0.1),
                 ),
               ),
               Gap(12.w),
@@ -212,7 +212,8 @@ class ProfileTeamsWidget extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
-                  color: _getRoleColor(_getUserRole(team)).withValues(alpha: 0.1),
+                  color:
+                      _getRoleColor(_getUserRole(team)).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Text(
@@ -247,6 +248,7 @@ class ProfileTeamsWidget extends StatelessWidget {
 
   Color _getSportColor(SportType sportType) {
     switch (sportType) {
+      case SportType.soccer:
       case SportType.football:
         return Colors.green;
       case SportType.basketball:
@@ -259,6 +261,18 @@ class ProfileTeamsWidget extends StatelessWidget {
         return Colors.purple;
       case SportType.volleyball:
         return Colors.indigo;
+      case SportType.hockey:
+        return Colors.lightBlueAccent;
+      case SportType.rugby:
+        return Colors.deepOrange;
+      case SportType.baseball:
+        return Colors.brown;
+      case SportType.swimming:
+        return Colors.cyan;
+      case SportType.running:
+        return Colors.teal;
+      case SportType.cycling:
+        return Colors.amber;
       case SportType.other:
         return Colors.blueGrey;
     }
@@ -266,6 +280,7 @@ class ProfileTeamsWidget extends StatelessWidget {
 
   IconData _getSportIcon(SportType sportType) {
     switch (sportType) {
+      case SportType.soccer:
       case SportType.football:
         return Icons.sports_soccer;
       case SportType.basketball:
@@ -278,6 +293,18 @@ class ProfileTeamsWidget extends StatelessWidget {
         return Icons.sports_tennis;
       case SportType.volleyball:
         return Icons.sports_volleyball;
+      case SportType.hockey:
+        return Icons.sports_hockey;
+      case SportType.rugby:
+        return Icons.sports_rugby;
+      case SportType.baseball:
+        return Icons.sports_baseball;
+      case SportType.swimming:
+        return Icons.pool;
+      case SportType.running:
+        return Icons.directions_run;
+      case SportType.cycling:
+        return Icons.directions_bike;
       case SportType.other:
         return Icons.sports;
     }
@@ -291,6 +318,8 @@ class ProfileTeamsWidget extends StatelessWidget {
         return Colors.blue;
       case TeamRole.viceCaptain:
         return Colors.orange;
+      case TeamRole.coach:
+        return Colors.green;
       case TeamRole.member:
         return Colors.green;
     }

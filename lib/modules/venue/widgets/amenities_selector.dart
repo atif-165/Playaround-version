@@ -112,13 +112,15 @@ class _AmenitiesSelectorState extends State<AmenitiesSelector> {
       itemBuilder: (context, index) {
         final amenity = _availableAmenities[index];
         final isSelected = widget.selectedAmenities.contains(amenity.name);
-        
+
         return GestureDetector(
           onTap: () => _toggleAmenity(amenity.name),
           child: Container(
             padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
             decoration: BoxDecoration(
-              color: isSelected ? ColorsManager.mainBlue.withValues(alpha: 0.1) : Colors.grey[50],
+              color: isSelected
+                  ? ColorsManager.mainBlue.withValues(alpha: 0.1)
+                  : Colors.grey[50],
               borderRadius: BorderRadius.circular(8.r),
               border: Border.all(
                 color: isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
@@ -138,7 +140,9 @@ class _AmenitiesSelectorState extends State<AmenitiesSelector> {
                     style: TextStyle(
                       fontSize: 11.sp,
                       fontWeight: FontWeight.w500,
-                      color: isSelected ? ColorsManager.mainBlue : Colors.grey[700],
+                      color: isSelected
+                          ? ColorsManager.mainBlue
+                          : Colors.grey[700],
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -173,7 +177,8 @@ class _AmenitiesSelectorState extends State<AmenitiesSelector> {
           decoration: BoxDecoration(
             color: ColorsManager.mainBlue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(8.r),
-            border: Border.all(color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
+            border: Border.all(
+                color: ColorsManager.mainBlue.withValues(alpha: 0.2)),
           ),
           child: Wrap(
             spacing: 8.w,
@@ -187,7 +192,7 @@ class _AmenitiesSelectorState extends State<AmenitiesSelector> {
                   description: '',
                 ),
               );
-              
+
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -232,13 +237,13 @@ class _AmenitiesSelectorState extends State<AmenitiesSelector> {
 
   void _toggleAmenity(String amenityName) {
     final currentAmenities = List<String>.from(widget.selectedAmenities);
-    
+
     if (currentAmenities.contains(amenityName)) {
       currentAmenities.remove(amenityName);
     } else {
       currentAmenities.add(amenityName);
     }
-    
+
     widget.onAmenitiesChanged(currentAmenities);
   }
 }

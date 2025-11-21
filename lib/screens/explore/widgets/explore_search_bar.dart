@@ -37,7 +37,8 @@ class _ExploreSearchBarState extends State<ExploreSearchBar> {
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(24.r),
         border: Border.all(
-          color: _focusNode.hasFocus ? ColorsManager.mainBlue : Colors.transparent,
+          color:
+              _focusNode.hasFocus ? ColorsManager.mainBlue : Colors.transparent,
           width: 1.5,
         ),
       ),

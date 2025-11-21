@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../theming/colors.dart';
+import '../../../theming/styles.dart';
+
 class BookingCalendar extends StatefulWidget {
   final DateTime selectedDate;
   final Function(DateTime) onDateSelected;
@@ -37,12 +40,30 @@ class _BookingCalendarState extends State<BookingCalendar> {
 
   @override
   Widget build(BuildContext context) {
+    final accent = ColorsManager.primary;
+    final surface = const Color(0xFF14122E);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1C1A3A),
+            Color(0xFF090817),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(0.18),
+            blurRadius: 22,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: TableCalendar<dynamic>(
         firstDay: DateTime.now(),
         lastDay: DateTime.now().add(const Duration(days: 365)),
@@ -64,55 +85,80 @@ class _BookingCalendarState extends State<BookingCalendar> {
         },
         calendarFormat: CalendarFormat.month,
         startingDayOfWeek: StartingDayOfWeek.monday,
-        calendarStyle: CalendarStyle(
-          outsideDaysVisible: false,
-          weekendTextStyle: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-          ),
-          holidayTextStyle: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
-          ),
-          selectedDecoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-            shape: BoxShape.circle,
-          ),
-          todayDecoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
-            shape: BoxShape.circle,
-          ),
-          defaultDecoration: const BoxDecoration(
-            shape: BoxShape.circle,
-          ),
-          weekendDecoration: const BoxDecoration(
-            shape: BoxShape.circle,
-          ),
-        ),
+        availableGestures: AvailableGestures.horizontalSwipe,
+        daysOfWeekVisible: true,
+        rowHeight: 46,
         headerStyle: HeaderStyle(
           formatButtonVisible: false,
           titleCentered: true,
-          titleTextStyle: (Theme.of(context).textTheme.titleMedium ?? const TextStyle()).copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          titleTextStyle: TextStyles.font16White600Weight,
           leftChevronIcon: Icon(
-            Icons.chevron_left,
-            color: Theme.of(context).primaryColor,
+            Icons.chevron_left_rounded,
+            color: accent,
           ),
           rightChevronIcon: Icon(
-            Icons.chevron_right,
-            color: Theme.of(context).primaryColor,
+            Icons.chevron_right_rounded,
+            color: accent,
           ),
         ),
         daysOfWeekStyle: DaysOfWeekStyle(
           weekdayStyle: TextStyle(
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
+            color: Colors.white.withOpacity(0.65),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
           ),
           weekendStyle: TextStyle(
-            color: Theme.of(context).primaryColor,
-            fontWeight: FontWeight.bold,
+            color: accent,
+            fontWeight: FontWeight.w700,
           ),
+        ),
+        calendarStyle: CalendarStyle(
+          outsideDaysVisible: false,
+          defaultTextStyle: TextStyle(
+            color: Colors.white.withOpacity(0.9),
+            fontWeight: FontWeight.w500,
+          ),
+          weekendTextStyle: TextStyle(
+            color: accent,
+            fontWeight: FontWeight.w700,
+          ),
+          disabledTextStyle: TextStyle(
+            color: Colors.white.withOpacity(0.25),
+          ),
+          selectedDecoration: BoxDecoration(
+            gradient: ColorsManager.primaryGradient,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: accent.withOpacity(0.35),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          selectedTextStyle: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+          todayDecoration: BoxDecoration(
+            border: Border.all(color: accent.withOpacity(0.6), width: 2),
+            color: accent.withOpacity(0.12),
+            shape: BoxShape.circle,
+          ),
+          todayTextStyle: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+          defaultDecoration: BoxDecoration(
+            color: surface,
+            shape: BoxShape.circle,
+          ),
+          weekendDecoration: BoxDecoration(
+            color: surface,
+            shape: BoxShape.circle,
+          ),
+          cellMargin: const EdgeInsets.all(6),
+          cellPadding: EdgeInsets.zero,
         ),
       ),
     );

@@ -1,0 +1,216 @@
+rules_version = '2';
+service cloud.firestore {
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+  function hasRole(role) {
+    return isSignedIn() && role in getRoles();
+  }
+
+  function getRoles() {
+    return request.auth.token.roles != null
+      ? request.auth.token.roles
+      : (request.auth.token.role != null ? [request.auth.token.role] : []);
+  }
+
+  function isSelf(userId) {
+    return isSignedIn() && request.auth.uid == userId;
+  }
+
+  function isValidPaymentStatus(status) {
+    return status in [
+      'requires_payment_method',
+      'requires_confirmation',
+      'requires_action',
+      'processing',
+      'succeeded',
+      'failed',
+      'canceled'
+    ];
+  }
+
+  function isMockPayment(data) {
+    return data.mode == 'emulator' || data.provider == 'mock';
+  }
+
+  match /databases/{database}/documents {
+    match /payments/{paymentId} {
+      allow read: if isSignedIn() && (hasRole('admin') || request.auth.uid == resource.data.userId);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.keys().hasOnly([
+          'userId',
+          'amount',
+          'currency',
+          'description',
+          'mode',
+          'provider',
+          'status',
+          'payment_method_types',
+          'paymentMethodTypes',
+          'metadata',
+          'orderId',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.amount is int &&
+        request.resource.data.amount > 0 &&
+        request.resource.data.currency is string &&
+        request.resource.data.currency.size() == 3 &&
+        request.resource.data.mode in ['emulator', 'stripe'] &&
+        request.resource.data.provider in ['mock', 'stripe'] &&
+        isValidPaymentStatus(request.resource.data.status) &&
+        !(request.resource.data.mode == 'stripe' && request.resource.data.status == 'succeeded');
+
+      allow update: if isSignedIn() &&
+        request.auth.uid == resource.data.userId &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.amount == resource.data.amount &&
+        request.resource.data.currency == resource.data.currency &&
+        request.resource.data.mode == resource.data.mode &&
+        request.resource.data.provider == resource.data.provider &&
+        request.resource.data.metadata == resource.data.metadata &&
+        request.resource.data.orderId == resource.data.orderId &&
+        request.resource.data.payment_method_types == resource.data.payment_method_types &&
+        request.resource.data.paymentMethodTypes == resource.data.paymentMethodTypes &&
+        request.resource.data.keys().hasOnly([
+          'userId',
+          'amount',
+          'currency',
+          'description',
+          'mode',
+          'provider',
+          'status',
+          'payment_method_types',
+          'paymentMethodTypes',
+          'metadata',
+          'orderId',
+          'createdAt',
+          'updatedAt',
+          'client_secret',
+          'clientSecret',
+          'stripePaymentIntentId',
+          'paymentIntentId',
+          'paymentMethodId',
+          'lastPaymentIntentStatus',
+          'amountReceived',
+          'lastClientError'
+        ]) &&
+        isValidPaymentStatus(request.resource.data.status) &&
+        (
+          request.resource.data.status == resource.data.status ||
+          (isMockPayment(resource.data) &&
+            resource.data.status in ['requires_confirmation', 'processing'] &&
+            request.resource.data.status == 'succeeded')
+        ) &&
+        (
+          !('client_secret' in request.resource.data.keys()) ||
+          isMockPayment(resource.data)
+        ) &&
+        (
+          !('clientSecret' in request.resource.data.keys()) ||
+          isMockPayment(resource.data)
+        );
+
+      allow update: if hasRole('admin');
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if hasRole('admin') || isSelf(userId);
+      allow create: if hasRole('admin');
+      allow update: if hasRole('admin') || (isSelf(userId) && !('role' in request.resource.data.keys()));
+      allow delete: if hasRole('admin');
+    }
+
+    match /coachListings/{listingId} {
+      allow read: if true; // public coach discovery
+      allow create, update, delete: if hasRole('coach') && request.auth.uid == request.resource.data.coachId;
+    }
+
+    match /venues/{venueId} {
+      allow read: if true;
+      allow create, update, delete: if hasRole('admin') || (hasRole('coach') && request.auth.uid == request.resource.data.managerId);
+    }
+
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create, update: if hasRole('coach') && request.auth.uid == request.resource.data.coachId;
+      allow delete: if hasRole('coach') && request.auth.uid == resource.data.coachId;
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if hasRole('admin') || (isSignedIn() && request.auth.uid in [resource.data.userId, resource.data.coachId, resource.data.venueManagerId]);
+      allow create: if hasRole('athlete') || hasRole('coach');
+      allow update, delete: if hasRole('admin') || (isSignedIn() && request.auth.uid == resource.data.userId);
+    }
+
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if hasRole('admin') || hasRole('coach');
+    }
+
+    match /leaderboardEntries/{entryId} {
+      allow read: if true;
+      allow write: if hasRole('admin') || hasRole('coach');
+    }
+
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow write: if hasRole('admin');
+    }
+
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if hasRole('coach');
+      allow update, delete: if hasRole('coach') && request.auth.uid == resource.data.coachId;
+    }
+
+    match /teamMembers/{memberId} {
+      allow read: if isSignedIn();
+      allow write: if hasRole('coach') && request.auth.uid == request.resource.data.coachId;
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if hasRole('coach') || hasRole('admin');
+    }
+
+    match /messageThreads/{threadId} {
+      allow read, update: if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow delete: if hasRole('admin');
+    }
+
+    match /messageThreads/{threadId}/messages/{messageId} {
+      allow read: if isSignedIn() && request.auth.uid in getThreadParticipants(threadId);
+      allow create: if isSignedIn() && request.auth.uid in getThreadParticipants(threadId);
+      allow delete: if hasRole('admin') || (isSignedIn() && request.auth.uid == resource.data.senderId);
+    }
+
+    function getThreadParticipants(threadId) {
+      return get(/databases/$(database)/documents/messageThreads/$(threadId)).data.participants;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
+      allow write: if hasRole('admin');
+    }
+
+    match /adminReports/{docId} {
+      allow read, write: if hasRole('admin');
+    }
+
+    match /systemConfigs/{docId} {
+      allow read, write: if hasRole('admin');
+    }
+
+    match /{document=**} {
+      allow read: if hasRole('admin');
+      allow write: if false;
+    }
+  }
+}
+

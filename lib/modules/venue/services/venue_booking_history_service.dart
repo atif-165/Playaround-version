@@ -51,17 +51,18 @@ class VenueBookingHistoryService {
           .snapshots()
           .map((snapshot) {
         final bookings = snapshot.docs
-            .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+            .map((doc) =>
+                VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
             .where((booking) {
-              // Filter out past bookings
-              final bookingDate = DateTime(
-                booking.selectedDate.year,
-                booking.selectedDate.month,
-                booking.selectedDate.day,
-              );
-              return bookingDate.isAfter(today) || bookingDate.isAtSameMomentAs(today);
-            })
-            .toList();
+          // Filter out past bookings
+          final bookingDate = DateTime(
+            booking.selectedDate.year,
+            booking.selectedDate.month,
+            booking.selectedDate.day,
+          );
+          return bookingDate.isAfter(today) ||
+              bookingDate.isAtSameMomentAs(today);
+        }).toList();
 
         return bookings;
       });
@@ -103,11 +104,10 @@ class VenueBookingHistoryService {
             .where('status', isEqualTo: 'completed');
       }
 
-      return query
-          .orderBy('completedAt', descending: true)
-          .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+      return query.orderBy('completedAt', descending: true).snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((doc) =>
+                  VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       if (kDebugMode) {
@@ -147,11 +147,10 @@ class VenueBookingHistoryService {
             .where('status', isEqualTo: 'cancelled');
       }
 
-      return query
-          .orderBy('cancelledAt', descending: true)
-          .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+      return query.orderBy('cancelledAt', descending: true).snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((doc) =>
+                  VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       if (kDebugMode) {
@@ -190,11 +189,10 @@ class VenueBookingHistoryService {
         query = query.limit(limit);
       }
 
-      return query
-          .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
-              .toList());
+      return query.snapshots().map((snapshot) => snapshot.docs
+          .map((doc) =>
+              VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList());
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error getting all venue bookings: $e');
@@ -234,11 +232,10 @@ class VenueBookingHistoryService {
             .where('status', isEqualTo: status.value);
       }
 
-      return query
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+      return query.orderBy('createdAt', descending: true).snapshots().map(
+          (snapshot) => snapshot.docs
+              .map((doc) =>
+                  VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList());
     } catch (e) {
       if (kDebugMode) {
@@ -268,7 +265,8 @@ class VenueBookingHistoryService {
 
       final snapshot = await query.get();
       final bookings = snapshot.docs
-          .map((doc) => VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
+          .map((doc) =>
+              VenueBookingModel.fromMap(doc.data() as Map<String, dynamic>))
           .toList();
 
       final stats = <String, int>{

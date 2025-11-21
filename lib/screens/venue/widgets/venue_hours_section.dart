@@ -17,8 +17,8 @@ class VenueHoursSection extends StatelessWidget {
         Text(
           'Opening Hours',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 12),
         Container(
@@ -37,8 +37,8 @@ class VenueHoursSection extends StatelessWidget {
           Text(
             'Holidays',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 8),
           Container(
@@ -64,8 +64,8 @@ class VenueHoursSection extends StatelessWidget {
                       Text(
                         holiday,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.amber[700],
-                        ),
+                              color: Colors.amber[700],
+                            ),
                       ),
                     ],
                   ),
@@ -92,7 +92,7 @@ class VenueHoursSection extends StatelessWidget {
     return days.map((day) {
       final dayHours = hours.weeklyHours[day.toLowerCase()];
       final isToday = _isToday(day);
-      
+
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
@@ -117,7 +117,8 @@ class VenueHoursSection extends StatelessWidget {
     }).toList();
   }
 
-  Widget _buildDayHours(BuildContext context, DayHours? dayHours, bool isToday) {
+  Widget _buildDayHours(
+      BuildContext context, DayHours? dayHours, bool isToday) {
     if (dayHours == null || !dayHours.isOpen) {
       return Text(
         'Closed',
@@ -161,7 +162,7 @@ class VenueHoursSection extends StatelessWidget {
       'Saturday',
       'Sunday',
     ];
-    
+
     final todayIndex = now.weekday - 1; // Monday = 0, Sunday = 6
     return weekdays[todayIndex] == day;
   }

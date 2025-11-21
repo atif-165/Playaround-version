@@ -1,12 +1,12 @@
 import 'skill_type.dart';
-import 'skill_log.dart';
-import 'skill_goal.dart';
+import 'session_log.dart';
+import 'goal.dart';
 
 /// Model for skill analytics and performance insights
 class SkillAnalytics {
   final String playerId;
-  final List<SkillLog> skillLogs;
-  final List<SkillGoal> skillGoals;
+  final List<SessionLog> skillLogs;
+  final List<Goal> skillGoals;
   final DateTime periodStart;
   final DateTime periodEnd;
 
@@ -21,21 +21,21 @@ class SkillAnalytics {
   /// Get current skill scores (latest log entry for each skill)
   Map<SkillType, int> get currentSkillScores {
     final Map<SkillType, int> currentScores = {};
-    
+
     for (final skillType in SkillType.allSkills) {
       // Find the most recent log that has this skill type
       final logsWithSkill = skillLogs
           .where((log) => log.skillScores.containsKey(skillType))
           .toList()
         ..sort((a, b) => b.date.compareTo(a.date));
-      
+
       if (logsWithSkill.isNotEmpty) {
         currentScores[skillType] = logsWithSkill.first.getSkillScore(skillType);
       } else {
         currentScores[skillType] = 0;
       }
     }
-    
+
     return currentScores;
   }
 
@@ -57,7 +57,7 @@ class SkillAnalytics {
   /// Get overall performance trend (average of all skills)
   List<SkillDataPoint> get overallTrend {
     final logsByDate = <DateTime, List<int>>{};
-    
+
     for (final log in skillLogs) {
       final dateKey = DateTime(log.date.year, log.date.month, log.date.day);
       if (!logsByDate.containsKey(dateKey)) {
@@ -68,8 +68,8 @@ class SkillAnalytics {
 
     final trendPoints = <SkillDataPoint>[];
     for (final entry in logsByDate.entries) {
-      final averageScore = entry.value.isEmpty 
-          ? 0.0 
+      final averageScore = entry.value.isEmpty
+          ? 0.0
           : entry.value.reduce((a, b) => a + b) / entry.value.length;
       trendPoints.add(SkillDataPoint(
         date: entry.key,
@@ -102,13 +102,13 @@ class SkillAnalytics {
   /// Get skill improvement percentage for each skill type
   Map<SkillType, double> get skillImprovements {
     final Map<SkillType, double> improvements = {};
-    
+
     for (final skillType in SkillType.allSkills) {
       final trend = getSkillTrend(skillType);
       if (trend.length >= 2) {
         final firstScore = trend.first.score;
         final lastScore = trend.last.score;
-        final improvement = firstScore > 0 
+        final improvement = firstScore > 0
             ? ((lastScore - firstScore) / firstScore) * 100
             : 0.0;
         improvements[skillType] = improvement;
@@ -116,24 +116,23 @@ class SkillAnalytics {
         improvements[skillType] = 0.0;
       }
     }
-    
+
     return improvements;
   }
 
   /// Get active goals for each skill type
-  Map<SkillType, SkillGoal?> get activeGoalsBySkill {
-    final Map<SkillType, SkillGoal?> goalsBySkill = {};
-    
+  Map<SkillType, Goal?> get activeGoalsBySkill {
+    final Map<SkillType, Goal?> goalsBySkill = {};
+
     for (final skillType in SkillType.allSkills) {
       final activeGoal = skillGoals
-          .where((goal) => 
-              goal.skillType == skillType && 
-              goal.status == GoalStatus.active)
-          .cast<SkillGoal?>()
+          .where((goal) =>
+              goal.skillType == skillType && goal.status == GoalStatus.active)
+          .cast<Goal?>()
           .firstWhere((goal) => true, orElse: () => null);
       goalsBySkill[skillType] = activeGoal;
     }
-    
+
     return goalsBySkill;
   }
 
@@ -143,13 +142,12 @@ class SkillAnalytics {
   /// Get average score across all skills and time
   double get overallAverageScore {
     if (skillLogs.isEmpty) return 0.0;
-    
-    final allScores = skillLogs
-        .expand((log) => log.skillScores.values)
-        .toList();
-    
+
+    final allScores =
+        skillLogs.expand((log) => log.skillScores.values).toList();
+
     if (allScores.isEmpty) return 0.0;
-    
+
     return allScores.reduce((a, b) => a + b) / allScores.length;
   }
 
@@ -157,7 +155,7 @@ class SkillAnalytics {
   SkillType? get strongestSkill {
     final currentScores = currentSkillScores;
     if (currentScores.isEmpty) return null;
-    
+
     return currentScores.entries
         .reduce((a, b) => a.value > b.value ? a : b)
         .key;
@@ -167,7 +165,7 @@ class SkillAnalytics {
   SkillType? get weakestSkill {
     final currentScores = currentSkillScores;
     if (currentScores.isEmpty) return null;
-    
+
     return currentScores.entries
         .reduce((a, b) => a.value < b.value ? a : b)
         .key;
@@ -177,20 +175,17 @@ class SkillAnalytics {
   SkillType? get mostImprovedSkill {
     final improvements = skillImprovements;
     if (improvements.isEmpty) return null;
-    
-    return improvements.entries
-        .reduce((a, b) => a.value > b.value ? a : b)
-        .key;
+
+    return improvements.entries.reduce((a, b) => a.value > b.value ? a : b).key;
   }
 
   /// Get goals completion rate
   double get goalsCompletionRate {
     if (skillGoals.isEmpty) return 0.0;
-    
-    final completedGoals = skillGoals
-        .where((goal) => goal.status == GoalStatus.achieved)
-        .length;
-    
+
+    final completedGoals =
+        skillGoals.where((goal) => goal.status == GoalStatus.achieved).length;
+
     return (completedGoals / skillGoals.length) * 100;
   }
 
@@ -198,7 +193,7 @@ class SkillAnalytics {
   bool get isImproving {
     final trend = overallTrend;
     if (trend.length < 2) return false;
-    
+
     return trend.last.score > trend.first.score;
   }
 }
@@ -216,9 +211,9 @@ class SkillDataPoint {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is SkillDataPoint && 
-           other.date == date && 
-           other.score == score;
+    return other is SkillDataPoint &&
+        other.date == date &&
+        other.score == score;
   }
 
   @override

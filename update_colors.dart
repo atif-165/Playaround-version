@@ -38,20 +38,26 @@ void main() {
 void updateFile(String filePath) {
   final file = File(filePath);
   if (!file.existsSync()) return;
-  
+
   String content = file.readAsStringSync();
-  
+
   // Update white backgrounds to black
-  content = content.replaceAll('backgroundColor: Colors.white', 'backgroundColor: Colors.black');
+  content = content.replaceAll(
+      'backgroundColor: Colors.white', 'backgroundColor: Colors.black');
   content = content.replaceAll('color: Colors.white,', 'color: Colors.black,');
-  content = content.replaceAll('Colors.white.withValues(alpha:', 'Colors.black.withValues(alpha:');
-  content = content.replaceAll('Colors.white.withOpacity(', 'Colors.black.withOpacity(');
-  
+  content = content.replaceAll(
+      'Colors.white.withValues(alpha:', 'Colors.black.withValues(alpha:');
+  content = content.replaceAll(
+      'Colors.white.withOpacity(', 'Colors.black.withOpacity(');
+
   // Update text colors to white where needed
-  content = content.replaceAll('color: Colors.grey[800]', 'color: Colors.white');
-  content = content.replaceAll('color: Colors.grey[700]', 'color: Colors.white');
-  content = content.replaceAll('color: Colors.grey[600]', 'color: Colors.white');
-  
+  content =
+      content.replaceAll('color: Colors.grey[800]', 'color: Colors.white');
+  content =
+      content.replaceAll('color: Colors.grey[700]', 'color: Colors.white');
+  content =
+      content.replaceAll('color: Colors.grey[600]', 'color: Colors.white');
+
   file.writeAsStringSync(content);
   print('Updated: $filePath');
 }

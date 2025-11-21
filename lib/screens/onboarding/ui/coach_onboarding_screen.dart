@@ -22,6 +22,7 @@ import '../../../models/user_profile.dart';
 import '../../../models/player_profile.dart';
 import '../../../routing/routes.dart';
 import '../../../theming/colors.dart';
+import '../../../theming/public_profile_theme.dart';
 import '../../../theming/styles.dart';
 
 /// Coach onboarding form screen
@@ -69,22 +70,32 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PublicProfileTheme.backgroundColor,
       appBar: AppBar(
         title: Text(
           'Coach Profile',
-          style: TextStyles.font18DarkBlue600Weight,
+          style: TextStyles.font18DarkBlue600Weight.copyWith(color: Colors.white),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
-            color: ColorsManager.darkBlue,
+            color: Colors.white,
           ),
           onPressed: () => context.pop(),
         ),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: PublicProfileTheme.backgroundGradient,
+          ),
+        ),
       ),
-      body: BlocListener<OnboardingCubit, OnboardingState>(
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: PublicProfileTheme.backgroundGradient,
+        ),
+        child: (BlocListener<OnboardingCubit, OnboardingState>(
         listener: (context, state) {
           if (state is OnboardingValidating) {
             AppProgressIndicator.showProgressIndicator(context);
@@ -143,7 +154,9 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
                             _selectedImage = file;
                           });
                           if (file != null) {
-                            context.read<OnboardingCubit>().uploadSelectedImage(file);
+                            context
+                                .read<OnboardingCubit>()
+                                .uploadSelectedImage(file);
                           }
                         },
                       );
@@ -169,7 +182,8 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
                         _selectedGender = value;
                       });
                     },
-                    validator: (value) => FormValidators.validateDropdownSelection(
+                    validator: (value) =>
+                        FormValidators.validateDropdownSelection(
                       value,
                       'gender',
                     ),
@@ -222,7 +236,8 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
                   AppTextFormField(
                     hint: 'Enter your certifications (optional)',
                     controller: _certificationsController,
-                    validator: (value) => FormValidators.validateCertifications(value),
+                    validator: (value) =>
+                        FormValidators.validateCertifications(value),
                   ),
                   Gap(20.h),
 
@@ -273,7 +288,8 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
                         _selectedCoachingType = value;
                       });
                     },
-                    validator: (value) => FormValidators.validateDropdownSelection(
+                    validator: (value) =>
+                        FormValidators.validateDropdownSelection(
                       value,
                       'coaching type',
                     ),
@@ -284,7 +300,8 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
 
                   // Bio (Optional)
                   AppTextFormField(
-                    hint: 'Tell us about yourself (optional, max 500 characters)',
+                    hint:
+                        'Tell us about yourself (optional, max 500 characters)',
                     controller: _bioController,
                     validator: (value) => FormValidators.validateBio(value),
                   ),
@@ -302,6 +319,7 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
             ),
           ),
         ),
+        )),
       ),
     );
   }
@@ -332,8 +350,8 @@ class _CoachOnboardingScreenState extends State<CoachOnboardingScreen> {
             location: _locationController.text,
             specializationSports: _selectedSports,
             experienceYears: int.parse(_experienceController.text),
-            certifications: _certificationsController.text.isEmpty 
-                ? null 
+            certifications: _certificationsController.text.isEmpty
+                ? null
                 : _certificationsController.text,
             hourlyRate: double.parse(_hourlyRateController.text),
             availableTimeSlots: _selectedTimeSlots,

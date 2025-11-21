@@ -151,7 +151,8 @@ class _VenueFilterSheetState extends State<VenueFilterSheet> {
                   color: isSelected ? ColorsManager.mainBlue : Colors.grey[700],
                   borderRadius: BorderRadius.circular(20.r),
                   border: Border.all(
-                    color: isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
                   ),
                 ),
                 child: Text(
@@ -195,7 +196,8 @@ class _VenueFilterSheetState extends State<VenueFilterSheet> {
             },
             decoration: InputDecoration(
               hintText: 'Enter city or area',
-              hintStyle: TextStyles.font14Grey400Weight.copyWith(color: Colors.grey[400]),
+              hintStyle: TextStyles.font14Grey400Weight
+                  .copyWith(color: Colors.grey[400]),
               prefixIcon: Icon(
                 Icons.location_on_outlined,
                 color: Colors.grey[400],
@@ -212,7 +214,8 @@ class _VenueFilterSheetState extends State<VenueFilterSheet> {
         Gap(12.h),
         Text(
           'Popular Cities',
-          style: TextStyles.font14DarkBlue600Weight.copyWith(color: Colors.white),
+          style:
+              TextStyles.font14DarkBlue600Weight.copyWith(color: Colors.white),
         ),
         Gap(8.h),
         Wrap(
@@ -233,10 +236,13 @@ class _VenueFilterSheetState extends State<VenueFilterSheet> {
                   vertical: 6.h,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? ColorsManager.mainBlue.withValues(alpha: 0.1) : Colors.grey[700],
+                  color: isSelected
+                      ? ColorsManager.mainBlue.withValues(alpha: 0.1)
+                      : Colors.grey[700],
                   borderRadius: BorderRadius.circular(16.r),
                   border: Border.all(
-                    color: isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[300]!,
                   ),
                 ),
                 child: Text(
@@ -244,7 +250,8 @@ class _VenueFilterSheetState extends State<VenueFilterSheet> {
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
-                    color: isSelected ? ColorsManager.mainBlue : Colors.grey[300],
+                    color:
+                        isSelected ? ColorsManager.mainBlue : Colors.grey[300],
                   ),
                 ),
               ),

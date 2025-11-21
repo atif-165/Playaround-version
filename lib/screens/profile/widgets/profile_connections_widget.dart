@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
 import '../../../core/utils/image_utils.dart';
+import '../../../core/navigation/detail_navigator.dart';
 import '../../../models/models.dart';
 import '../../../theming/colors.dart';
 import '../../../theming/styles.dart';
@@ -43,7 +44,7 @@ class ProfileConnectionsWidget extends StatelessWidget {
           else if (connectedUsers.isEmpty)
             _buildEmptyState()
           else
-            _buildConnectionsList(),
+            _buildConnectionsList(context),
         ],
       ),
     );
@@ -120,10 +121,12 @@ class ProfileConnectionsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildConnectionsList() {
+  Widget _buildConnectionsList(BuildContext context) {
     // Separate coaches and players
-    final coaches = connectedUsers.where((user) => user.role == UserRole.coach).toList();
-    final players = connectedUsers.where((user) => user.role == UserRole.player).toList();
+    final coaches =
+        connectedUsers.where((user) => user.role == UserRole.coach).toList();
+    final players =
+        connectedUsers.where((user) => user.role == UserRole.player).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -131,13 +134,13 @@ class ProfileConnectionsWidget extends StatelessWidget {
         if (coaches.isNotEmpty) ...[
           _buildSectionHeader('Coaches', coaches.length),
           Gap(8.h),
-          _buildUsersList(coaches),
+          _buildUsersList(context, coaches),
           if (players.isNotEmpty) Gap(16.h),
         ],
         if (players.isNotEmpty) ...[
           _buildSectionHeader('Players', players.length),
           Gap(8.h),
-          _buildUsersList(players),
+          _buildUsersList(context, players),
         ],
       ],
     );
@@ -166,90 +169,94 @@ class ProfileConnectionsWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildUsersList(List<UserProfile> users) {
+  Widget _buildUsersList(BuildContext context, List<UserProfile> users) {
     return Column(
-      children: users.map((user) => _buildUserTile(user)).toList(),
+      children: users.map((user) => _buildUserTile(context, user)).toList(),
     );
   }
 
-  Widget _buildUserTile(UserProfile user) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
+  Widget _buildUserTile(BuildContext context, UserProfile user) {
+    return InkWell(
+      onTap: () => DetailNavigator.openPlayer(context, userId: user.uid),
+      borderRadius: BorderRadius.circular(8.r),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        padding: EdgeInsets.all(12.w),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(
+            color: Colors.grey[200]!,
+            width: 1,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // Profile picture
-          ImageUtils.buildSafeCircleAvatar(
-            imageUrl: user.profilePictureUrl,
-            radius: 20.r,
-            backgroundColor: Colors.grey[300],
-            fallbackText: ImageUtils.getInitials(user.fullName),
-            fallbackTextColor: Colors.grey[600],
-          ),
-          Gap(12.w),
-          // User info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.fullName,
-                  style: TextStyles.font14DarkBlue600Weight,
-                ),
-                Gap(2.h),
-                Row(
-                  children: [
-                    Icon(
-                      user.role == UserRole.coach ? Icons.sports : Icons.person,
-                      size: 12.sp,
-                      color: Colors.grey[600],
-                    ),
-                    Gap(4.w),
-                    Text(
-                      user.role.displayName,
-                      style: TextStyles.font12Grey400Weight,
-                    ),
-                    if (user is CoachProfile) ...[
-                      Gap(8.w),
+        child: Row(
+          children: [
+            // Profile picture
+            ImageUtils.buildSafeCircleAvatar(
+              imageUrl: user.profilePictureUrl,
+              radius: 20.r,
+              backgroundColor: Colors.grey[300],
+              fallbackText: ImageUtils.getInitials(user.fullName),
+              fallbackTextColor: Colors.grey[600],
+            ),
+            Gap(12.w),
+            // User info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.fullName,
+                    style: TextStyles.font14DarkBlue600Weight,
+                  ),
+                  Gap(2.h),
+                  Row(
+                    children: [
+                      Icon(
+                        user.role == UserRole.coach ? Icons.sports : Icons.person,
+                        size: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                      Gap(4.w),
                       Text(
-                        '•',
+                        user.role.displayName,
                         style: TextStyles.font12Grey400Weight,
                       ),
-                      Gap(8.w),
-                      Text(
-                        user.specializationSports.take(2).join(', '),
-                        style: TextStyles.font12Grey400Weight,
-                      ),
+                      if (user is CoachProfile) ...[
+                        Gap(8.w),
+                        Text(
+                          '•',
+                          style: TextStyles.font12Grey400Weight,
+                        ),
+                        Gap(8.w),
+                        Text(
+                          user.specializationSports.take(2).join(', '),
+                          style: TextStyles.font12Grey400Weight,
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Role indicator
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: _getRoleColor(user.role).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Text(
-              user.role.displayName,
-              style: TextStyles.font10Grey400Weight.copyWith(
-                color: _getRoleColor(user.role),
-                fontWeight: FontWeight.w600,
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            // Role indicator
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: _getRoleColor(user.role).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Text(
+                user.role.displayName,
+                style: TextStyles.font10Grey400Weight.copyWith(
+                  color: _getRoleColor(user.role),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

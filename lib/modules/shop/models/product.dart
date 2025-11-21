@@ -89,6 +89,11 @@ class Product {
     );
   }
 
+  // Alias for fromDoc to maintain compatibility
+  factory Product.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    return Product.fromDoc(doc);
+  }
+
   Map<String, dynamic> toMap() => {
         'title': title,
         'description': description,
@@ -167,6 +172,9 @@ class Product {
   bool get hasDiscount => originalPrice != null && originalPrice! > price;
 }
 
+// Typedef to maintain backward compatibility with code using ShopProduct
+typedef ShopProduct = Product;
+
 // Simple DTO for lightweight listing tiles
 class ProductSummary {
   final String id;
@@ -183,4 +191,3 @@ class ProductSummary {
     required this.category,
   });
 }
-

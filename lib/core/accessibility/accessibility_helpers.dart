@@ -45,18 +45,18 @@ class AccessibilityHelper {
     int? badgeCount,
   }) {
     final parts = <String>[];
-    
+
     if (isSelected) {
       parts.add('Selected');
     }
-    
+
     parts.add(destination);
     parts.add('tab');
-    
+
     if (badgeCount != null && badgeCount > 0) {
       parts.add('$badgeCount notifications');
     }
-    
+
     return parts.join(' ');
   }
 
@@ -68,19 +68,19 @@ class AccessibilityHelper {
     String? error,
   }) {
     final parts = <String>[fieldName];
-    
+
     if (isRequired) {
       parts.add('required');
     }
-    
+
     if (hint != null) {
       parts.add(hint);
     }
-    
+
     if (error != null) {
       parts.add('Error: $error');
     }
-    
+
     return parts.join(', ');
   }
 
@@ -92,15 +92,15 @@ class AccessibilityHelper {
     int? totalItems,
   }) {
     final parts = <String>[title];
-    
+
     if (subtitle != null) {
       parts.add(subtitle);
     }
-    
+
     if (position != null && totalItems != null) {
       parts.add('item $position of $totalItems');
     }
-    
+
     return parts.join(', ');
   }
 
@@ -348,10 +348,10 @@ class AccessibilityTester {
     // Calculate WCAG contrast ratio
     final fgLuminance = _getLuminance(foreground);
     final bgLuminance = _getLuminance(background);
-    
+
     final lighter = fgLuminance > bgLuminance ? fgLuminance : bgLuminance;
     final darker = fgLuminance > bgLuminance ? bgLuminance : fgLuminance;
-    
+
     return (lighter + 0.05) / (darker + 0.05);
   }
 
@@ -359,13 +359,13 @@ class AccessibilityTester {
     final r = _getRelativeLuminance(color.r / 255.0);
     final g = _getRelativeLuminance(color.g / 255.0);
     final b = _getRelativeLuminance(color.b / 255.0);
-    
+
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
 
   static double _getRelativeLuminance(double value) {
-    return value <= 0.03928 
-        ? value / 12.92 
+    return value <= 0.03928
+        ? value / 12.92
         : ((value + 0.055) / 1.055) * ((value + 0.055) / 1.055);
   }
 

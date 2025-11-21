@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'user_profile.dart';
+import '../modules/shop/models/product.dart';
 
 /// Dashboard statistics model for displaying user progress and activity
 class DashboardStats {
@@ -258,63 +259,6 @@ class MatchmakingSuggestion {
 
   String get sportsText => sportsOfInterest.join(', ');
   String get distanceText => '${distance.toStringAsFixed(1)} km away';
-  String get compatibilityText => '${(compatibilityScore * 100).toInt()}% match';
-}
-
-/// Shop product model for dashboard shop integration
-class ShopProduct {
-  final String id;
-  final String name;
-  final String description;
-  final String imageUrl;
-  final double price;
-  final double? originalPrice;
-  final String category;
-  final List<String> tags;
-  final double rating;
-  final int reviewCount;
-  final bool isOnSale;
-  final bool isRecommended;
-
-  const ShopProduct({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.imageUrl,
-    required this.price,
-    this.originalPrice,
-    required this.category,
-    required this.tags,
-    required this.rating,
-    required this.reviewCount,
-    this.isOnSale = false,
-    this.isRecommended = false,
-  });
-
-  factory ShopProduct.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return ShopProduct(
-      id: doc.id,
-      name: data['name'] ?? '',
-      description: data['description'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      price: (data['price'] ?? 0.0).toDouble(),
-      originalPrice: data['originalPrice']?.toDouble(),
-      category: data['category'] ?? '',
-      tags: List<String>.from(data['tags'] ?? []),
-      rating: (data['rating'] ?? 0.0).toDouble(),
-      reviewCount: data['reviewCount'] ?? 0,
-      isOnSale: data['isOnSale'] ?? false,
-      isRecommended: data['isRecommended'] ?? false,
-    );
-  }
-
-  bool get hasDiscount => originalPrice != null && originalPrice! > price;
-  double get discountPercentage => hasDiscount 
-      ? ((originalPrice! - price) / originalPrice! * 100) 
-      : 0.0;
-  String get priceText => '\$${price.toStringAsFixed(2)}';
-  String get originalPriceText => originalPrice != null 
-      ? '\$${originalPrice!.toStringAsFixed(2)}' 
-      : '';
+  String get compatibilityText =>
+      '${(compatibilityScore * 100).toInt()}% match';
 }

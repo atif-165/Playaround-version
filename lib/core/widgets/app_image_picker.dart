@@ -103,7 +103,8 @@ class _AppImagePickerState extends State<AppImagePicker> {
         ),
 
         // Remove image button
-        if ((widget.imageFile != null || widget.imageUrl != null) && !widget.isLoading) ...[
+        if ((widget.imageFile != null || widget.imageUrl != null) &&
+            !widget.isLoading) ...[
           Gap(8.h),
           Center(
             child: TextButton(
@@ -203,7 +204,7 @@ class _AppImagePickerState extends State<AppImagePicker> {
                 style: TextStyles.font18DarkBlue600Weight,
               ),
               Gap(20.h),
-              
+
               // Camera option
               ListTile(
                 leading: Icon(

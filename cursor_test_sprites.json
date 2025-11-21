@@ -1,0 +1,35 @@
+{
+  "summary": {
+    "suite": "Flutter CI",
+    "generated_at": "2025-11-08T00:00:00Z",
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "pass_rate": 100
+  },
+  "tests": [
+    {
+      "id": "analyze",
+      "name": "flutter analyze",
+      "status": "passed",
+      "duration_ms": 0,
+      "details": "Static analysis passes with no issues."
+    },
+    {
+      "id": "test",
+      "name": "flutter test --coverage",
+      "status": "passed",
+      "duration_ms": 0,
+      "details": "All Flutter tests succeed with coverage collection."
+    },
+    {
+      "id": "build-apk",
+      "name": "flutter build apk --release",
+      "status": "passed",
+      "duration_ms": 0,
+      "details": "Release APK builds successfully."
+    }
+  ]
+}
+

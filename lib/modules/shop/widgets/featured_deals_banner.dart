@@ -33,7 +33,7 @@ class _FeaturedDealsBannerState extends State<FeaturedDealsBanner>
       duration: const Duration(seconds: 3),
       vsync: this,
     );
-    
+
     if (widget.products.isNotEmpty) {
       _startAutoSlide();
     }
@@ -57,11 +57,11 @@ class _FeaturedDealsBannerState extends State<FeaturedDealsBanner>
 
   void _nextSlide() {
     if (widget.products.isEmpty) return;
-    
+
     setState(() {
       _currentIndex = (_currentIndex + 1) % widget.products.length;
     });
-    
+
     _pageController.animateToPage(
       _currentIndex,
       duration: const Duration(milliseconds: 300),
@@ -176,13 +176,15 @@ class _FeaturedDealsBannerState extends State<FeaturedDealsBanner>
                           Text(
                             '₹${product.originalPrice!.toStringAsFixed(0)}',
                             style: AppTypography.bodyMedium.copyWith(
-                              color: ColorsManager.onPrimary.withValues(alpha: 0.7),
+                              color: ColorsManager.onPrimary
+                                  .withValues(alpha: 0.7),
                               decoration: TextDecoration.lineThrough,
                             ),
                           ),
                           Gap(8.w),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8.w, vertical: 4.h),
                             decoration: BoxDecoration(
                               color: ColorsManager.error,
                               borderRadius: BorderRadius.circular(12.r),

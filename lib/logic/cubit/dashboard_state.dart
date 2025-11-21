@@ -41,7 +41,8 @@ class DashboardLoaded extends DashboardState {
       stats: stats ?? this.stats,
       nearbyEvents: nearbyEvents ?? this.nearbyEvents,
       featuredCoaches: featuredCoaches ?? this.featuredCoaches,
-      matchmakingSuggestions: matchmakingSuggestions ?? this.matchmakingSuggestions,
+      matchmakingSuggestions:
+          matchmakingSuggestions ?? this.matchmakingSuggestions,
       recommendedProducts: recommendedProducts ?? this.recommendedProducts,
     );
   }
@@ -70,8 +71,7 @@ class DashboardLoaded extends DashboardState {
 
       return nearbyEvents
           .where((event) =>
-              event.dateTime.isAfter(now) &&
-              event.dateTime.isBefore(nextWeek))
+              event.dateTime.isAfter(now) && event.dateTime.isBefore(nextWeek))
           .take(3)
           .toList();
     } catch (e) {
@@ -97,9 +97,7 @@ class DashboardLoaded extends DashboardState {
 
   /// Get on-sale products
   List<ShopProduct> get onSaleProducts {
-    return recommendedProducts
-        .where((product) => product.isOnSale)
-        .toList();
+    return recommendedProducts.where((product) => product.hasDiscount).toList();
   }
 }
 

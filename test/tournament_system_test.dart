@@ -4,7 +4,6 @@ import 'package:playaround/modules/team/models/models.dart' as team_models;
 
 void main() {
   group('Tournament System Tests', () {
-
     group('Tournament Model Tests', () {
       test('Tournament model should create with all required fields', () {
         final tournament = Tournament(
@@ -64,10 +63,14 @@ void main() {
         final reconstructedTournament = Tournament.fromMap(map);
 
         expect(reconstructedTournament.name, equals(originalTournament.name));
-        expect(reconstructedTournament.entryFee, equals(originalTournament.entryFee));
-        expect(reconstructedTournament.winningPrize, equals(originalTournament.winningPrize));
-        expect(reconstructedTournament.qualifyingQuestions, equals(originalTournament.qualifyingQuestions));
-        expect(reconstructedTournament.teamPoints, equals(originalTournament.teamPoints));
+        expect(reconstructedTournament.entryFee,
+            equals(originalTournament.entryFee));
+        expect(reconstructedTournament.winningPrize,
+            equals(originalTournament.winningPrize));
+        expect(reconstructedTournament.qualifyingQuestions,
+            equals(originalTournament.qualifyingQuestions));
+        expect(reconstructedTournament.teamPoints,
+            equals(originalTournament.teamPoints));
       });
     });
 
@@ -76,56 +79,72 @@ void main() {
         final match = TournamentMatch(
           id: 'match-1',
           tournamentId: 'tournament-1',
-          team1Id: 'team-1',
-          team1Name: 'Team Alpha',
-          team2Id: 'team-2',
-          team2Name: 'Team Beta',
-          scheduledDate: DateTime.now().add(const Duration(days: 1)),
-          status: MatchStatus.scheduled,
+          tournamentName: 'Test Tournament',
+          sportType: team_models.SportType.football,
+          team1: const TeamMatchScore(
+            teamId: 'team-1',
+            teamName: 'Team Alpha',
+            score: 0,
+          ),
+          team2: const TeamMatchScore(
+            teamId: 'team-2',
+            teamName: 'Team Beta',
+            score: 0,
+          ),
+          matchNumber: 'Quarter Final 1',
           round: 'Quarter Final',
-          matchNumber: 1,
+          scheduledTime: DateTime.now().add(const Duration(days: 1)),
+          status: TournamentMatchStatus.scheduled,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
 
-        expect(match.team1Name, equals('Team Alpha'));
-        expect(match.team2Name, equals('Team Beta'));
-        expect(match.status, equals(MatchStatus.scheduled));
+        expect(match.team1.teamName, equals('Team Alpha'));
+        expect(match.team2.teamName, equals('Team Beta'));
+        expect(match.status, equals(TournamentMatchStatus.scheduled));
         expect(match.round, equals('Quarter Final'));
-        expect(match.isFuture, isTrue);
-        expect(match.isPast, isFalse);
+        expect(match.isUpcoming, isTrue);
       });
 
       test('TournamentMatch should handle score updates correctly', () {
         final match = TournamentMatch(
           id: 'match-2',
           tournamentId: 'tournament-1',
-          team1Id: 'team-1',
-          team1Name: 'Team Alpha',
-          team2Id: 'team-2',
-          team2Name: 'Team Beta',
-          scheduledDate: DateTime.now().subtract(const Duration(hours: 2)),
-          status: MatchStatus.completed,
-          team1Score: 3,
-          team2Score: 1,
-          winnerTeamId: 'team-1',
-          winnerTeamName: 'Team Alpha',
+          tournamentName: 'Test Tournament',
+          sportType: team_models.SportType.football,
+          team1: const TeamMatchScore(
+            teamId: 'team-1',
+            teamName: 'Team Alpha',
+            score: 3,
+          ),
+          team2: const TeamMatchScore(
+            teamId: 'team-2',
+            teamName: 'Team Beta',
+            score: 1,
+          ),
+          matchNumber: 'Final',
           round: 'Final',
-          matchNumber: 1,
+          scheduledTime: DateTime.now().subtract(const Duration(hours: 2)),
+          actualStartTime: DateTime.now().subtract(const Duration(hours: 2)),
+          actualEndTime: DateTime.now().subtract(const Duration(hours: 1)),
+          status: TournamentMatchStatus.completed,
+          winnerTeamId: 'team-1',
+          result: 'Team Alpha won by 2 goals',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
 
-        expect(match.team1Score, equals(3));
-        expect(match.team2Score, equals(1));
-        expect(match.winnerTeamName, equals('Team Alpha'));
-        expect(match.status, equals(MatchStatus.completed));
-        expect(match.isPast, isTrue);
+        expect(match.team1.score, equals(3));
+        expect(match.team2.score, equals(1));
+        expect(match.winnerTeamId, equals('team-1'));
+        expect(match.status, equals(TournamentMatchStatus.completed));
+        expect(match.isCompleted, isTrue);
       });
     });
 
     group('Team Registration Model Tests', () {
-      test('TournamentTeamRegistration should create with qualifying answers', () {
+      test('TournamentTeamRegistration should create with qualifying answers',
+          () {
         final registration = TournamentTeamRegistration(
           id: 'registration-1',
           tournamentId: 'tournament-1',
@@ -178,7 +197,7 @@ void main() {
       test('Tournament should validate name uniqueness requirements', () {
         // This test would require mocking Firestore
         // For now, we'll test the model logic
-        
+
         final tournament1 = Tournament(
           id: 'tournament-1',
           name: 'Summer Championship',
@@ -227,10 +246,13 @@ void main() {
 
     group('Match Status Tests', () {
       test('Match status should have correct display names', () {
-        expect(MatchStatus.scheduled.displayName, equals('Scheduled'));
-        expect(MatchStatus.inProgress.displayName, equals('In Progress'));
-        expect(MatchStatus.completed.displayName, equals('Completed'));
-        expect(MatchStatus.cancelled.displayName, equals('Cancelled'));
+        expect(
+            TournamentMatchStatus.scheduled.displayName, equals('Scheduled'));
+        expect(TournamentMatchStatus.live.displayName, equals('Live'));
+        expect(
+            TournamentMatchStatus.completed.displayName, equals('Completed'));
+        expect(
+            TournamentMatchStatus.cancelled.displayName, equals('Cancelled'));
       });
     });
 
@@ -239,7 +261,8 @@ void main() {
         expect(TeamRegistrationStatus.pending.displayName, equals('Pending'));
         expect(TeamRegistrationStatus.approved.displayName, equals('Approved'));
         expect(TeamRegistrationStatus.rejected.displayName, equals('Rejected'));
-        expect(TeamRegistrationStatus.withdrawn.displayName, equals('Withdrawn'));
+        expect(
+            TeamRegistrationStatus.withdrawn.displayName, equals('Withdrawn'));
       });
     });
   });

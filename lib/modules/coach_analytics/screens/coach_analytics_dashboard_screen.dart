@@ -14,12 +14,14 @@ class CoachAnalyticsDashboardScreen extends StatefulWidget {
   const CoachAnalyticsDashboardScreen({super.key});
 
   @override
-  State<CoachAnalyticsDashboardScreen> createState() => _CoachAnalyticsDashboardScreenState();
+  State<CoachAnalyticsDashboardScreen> createState() =>
+      _CoachAnalyticsDashboardScreenState();
 }
 
-class _CoachAnalyticsDashboardScreenState extends State<CoachAnalyticsDashboardScreen> {
+class _CoachAnalyticsDashboardScreenState
+    extends State<CoachAnalyticsDashboardScreen> {
   final CoachAnalyticsService _analyticsService = CoachAnalyticsService();
-  
+
   List<Team> _teams = [];
   Map<String, dynamic> _dashboardSummary = {};
   bool _isLoading = true;
@@ -233,7 +235,9 @@ class _CoachAnalyticsDashboardScreenState extends State<CoachAnalyticsDashboardS
             Expanded(
               child: _buildStatCard(
                 'Avg Team Score',
-                (_dashboardSummary['averageTeamScore'] as double?)?.toStringAsFixed(1) ?? '0.0',
+                (_dashboardSummary['averageTeamScore'] as double?)
+                        ?.toStringAsFixed(1) ??
+                    '0.0',
                 Icons.trending_up,
                 const Color(0xFF45B7D1),
               ),

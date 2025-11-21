@@ -22,15 +22,16 @@ void main() {
     }
 
     group('MessageBubble Tests', () {
-      testWidgets('should display text message correctly', (WidgetTester tester) async {
+      testWidgets('should display text message correctly',
+          (WidgetTester tester) async {
         final message = ChatMessage(
           id: 'msg_1',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.text,
           text: 'Hello, world!',
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
         );
 
         await tester.pumpWidget(
@@ -45,15 +46,21 @@ void main() {
         expect(find.text('Hello, world!'), findsOneWidget);
       });
 
-      testWidgets('should display image message correctly', (WidgetTester tester) async {
+      testWidgets('should display image message correctly',
+          (WidgetTester tester) async {
         final message = ChatMessage(
           id: 'msg_2',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.image,
-          imageUrl: 'https://example.com/image.jpg',
-          timestamp: DateTime.now(),
+          attachments: const [
+            ChatAttachment(
+              type: AttachmentType.image,
+              url: 'https://example.com/image.jpg',
+            ),
+          ],
+          createdAt: DateTime.now(),
         );
 
         await tester.pumpWidget(
@@ -69,7 +76,8 @@ void main() {
         expect(find.byType(Image), findsOneWidget);
       });
 
-      testWidgets('should display entity message correctly', (WidgetTester tester) async {
+      testWidgets('should display entity message correctly',
+          (WidgetTester tester) async {
         const entity = SharedEntity(
           type: EntityType.profile,
           id: 'profile_1',
@@ -80,11 +88,11 @@ void main() {
         final message = ChatMessage(
           id: 'msg_3',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.entity,
           sharedEntity: entity,
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
         );
 
         await tester.pumpWidget(
@@ -102,15 +110,16 @@ void main() {
         expect(find.text('Tap to view'), findsOneWidget);
       });
 
-      testWidgets('should show sender info for group messages', (WidgetTester tester) async {
+      testWidgets('should show sender info for group messages',
+          (WidgetTester tester) async {
         final message = ChatMessage(
           id: 'msg_4',
           chatId: 'group_1',
-          senderId: 'user_2',
+          fromId: 'user_2',
           senderName: 'Jane Smith',
           type: MessageType.text,
           text: 'Group message',
-          timestamp: DateTime.now(),
+          createdAt: DateTime.now(),
         );
 
         await tester.pumpWidget(
@@ -127,16 +136,17 @@ void main() {
         expect(find.text('Group message'), findsOneWidget);
       });
 
-      testWidgets('should show read status for sent messages', (WidgetTester tester) async {
+      testWidgets('should show read status for sent messages',
+          (WidgetTester tester) async {
         final message = ChatMessage(
           id: 'msg_5',
           chatId: 'chat_1',
-          senderId: 'user_1',
+          fromId: 'user_1',
           senderName: 'John Doe',
           type: MessageType.text,
           text: 'Read message',
-          timestamp: DateTime.now(),
-          readAt: DateTime.now(),
+          createdAt: DateTime.now(),
+          readBy: const ['user_1', 'user_2'],
         );
 
         await tester.pumpWidget(
@@ -154,7 +164,8 @@ void main() {
     });
 
     group('ChatRoomCard Tests', () {
-      testWidgets('should display direct chat correctly', (WidgetTester tester) async {
+      testWidgets('should display direct chat correctly',
+          (WidgetTester tester) async {
         final participants = [
           ChatParticipant(
             userId: 'user_1',
@@ -196,7 +207,8 @@ void main() {
         expect(find.text('2'), findsOneWidget); // Unread count
       });
 
-      testWidgets('should display group chat correctly', (WidgetTester tester) async {
+      testWidgets('should display group chat correctly',
+          (WidgetTester tester) async {
         final participants = [
           ChatParticipant(
             userId: 'user_1',
@@ -286,7 +298,8 @@ void main() {
     });
 
     group('EntityCard Tests', () {
-      testWidgets('should display profile entity correctly', (WidgetTester tester) async {
+      testWidgets('should display profile entity correctly',
+          (WidgetTester tester) async {
         const entity = SharedEntity(
           type: EntityType.profile,
           id: 'profile_1',
@@ -311,7 +324,8 @@ void main() {
         expect(find.byIcon(Icons.person), findsOneWidget);
       });
 
-      testWidgets('should display venue entity correctly', (WidgetTester tester) async {
+      testWidgets('should display venue entity correctly',
+          (WidgetTester tester) async {
         const entity = SharedEntity(
           type: EntityType.venue,
           id: 'venue_1',
@@ -340,7 +354,8 @@ void main() {
         expect(find.byIcon(Icons.attach_money), findsOneWidget);
       });
 
-      testWidgets('should display team entity correctly', (WidgetTester tester) async {
+      testWidgets('should display team entity correctly',
+          (WidgetTester tester) async {
         const entity = SharedEntity(
           type: EntityType.team,
           id: 'team_1',
@@ -367,7 +382,8 @@ void main() {
         expect(find.byIcon(Icons.sports), findsOneWidget);
       });
 
-      testWidgets('should display tournament entity correctly', (WidgetTester tester) async {
+      testWidgets('should display tournament entity correctly',
+          (WidgetTester tester) async {
         const entity = SharedEntity(
           type: EntityType.tournament,
           id: 'tournament_1',

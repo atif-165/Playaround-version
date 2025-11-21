@@ -27,7 +27,7 @@ class TeamPerformanceScreen extends StatefulWidget {
 class _TeamPerformanceScreenState extends State<TeamPerformanceScreen>
     with SingleTickerProviderStateMixin {
   final CoachAnalyticsService _analyticsService = CoachAnalyticsService();
-  
+
   late TabController _tabController;
   TeamAnalytics? _teamAnalytics;
   bool _isLoading = true;
@@ -53,8 +53,9 @@ class _TeamPerformanceScreenState extends State<TeamPerformanceScreen>
         _error = null;
       });
 
-      final analytics = await _analyticsService.getTeamAnalytics(widget.team.id);
-      
+      final analytics =
+          await _analyticsService.getTeamAnalytics(widget.team.id);
+
       setState(() {
         _teamAnalytics = analytics;
         _isLoading = false;
@@ -309,7 +310,9 @@ class _TeamPerformanceScreenState extends State<TeamPerformanceScreen>
           child: _buildStatCard(
             'Improvement',
             '${_teamAnalytics!.isImproving ? '+' : ''}${_teamAnalytics!.improvementPercentage.toStringAsFixed(1)}%',
-            _teamAnalytics!.isImproving ? Icons.arrow_upward : Icons.arrow_downward,
+            _teamAnalytics!.isImproving
+                ? Icons.arrow_upward
+                : Icons.arrow_downward,
             _teamAnalytics!.isImproving ? Colors.green : Colors.red,
           ),
         ),
@@ -329,7 +332,8 @@ class _TeamPerformanceScreenState extends State<TeamPerformanceScreen>
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -398,7 +402,9 @@ class _TeamPerformanceScreenState extends State<TeamPerformanceScreen>
     final strongestSkill = _teamAnalytics!.strongestSkill;
     final weakestSkill = _teamAnalytics!.weakestSkill;
     final mostImprovedPlayer = _teamAnalytics!.mostImprovedPlayerId != null
-        ? _teamAnalytics!.playerPerformances[_teamAnalytics!.mostImprovedPlayerId!]?.playerName
+        ? _teamAnalytics!
+            .playerPerformances[_teamAnalytics!.mostImprovedPlayerId!]
+            ?.playerName
         : null;
 
     return Column(

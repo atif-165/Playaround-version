@@ -29,7 +29,7 @@ class _RatingPromptModalState extends State<RatingPromptModal>
     with TickerProviderStateMixin {
   final TextEditingController _feedbackController = TextEditingController();
   final RatingService _ratingService = RatingService();
-  
+
   int _selectedStars = 0;
   bool _isSubmitting = false;
   late AnimationController _slideController;
@@ -40,17 +40,17 @@ class _RatingPromptModalState extends State<RatingPromptModal>
   @override
   void initState() {
     super.initState();
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 1),
       end: Offset.zero,
@@ -58,12 +58,12 @@ class _RatingPromptModalState extends State<RatingPromptModal>
       parent: _slideController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(_fadeController);
-    
+
     // Start animations
     _fadeController.forward();
     _slideController.forward();
@@ -93,14 +93,14 @@ class _RatingPromptModalState extends State<RatingPromptModal>
         ratedEntityId: widget.pendingRating.ratedEntityId,
         ratingType: widget.pendingRating.ratingType,
         stars: _selectedStars,
-        feedback: _feedbackController.text.trim().isEmpty 
-            ? null 
+        feedback: _feedbackController.text.trim().isEmpty
+            ? null
             : _feedbackController.text.trim(),
       );
 
       // Show success animation
       await _showSuccessAnimation();
-      
+
       widget.onCompleted();
     } catch (e) {
       _showErrorDialog('Failed to submit rating: ${e.toString()}');
@@ -169,7 +169,8 @@ class _RatingPromptModalState extends State<RatingPromptModal>
                           borderRadius: BorderRadius.circular(8.r),
                         ),
                         child: Icon(
-                          _getIconForRatingType(widget.pendingRating.ratingType),
+                          _getIconForRatingType(
+                              widget.pendingRating.ratingType),
                           color: ColorsManager.mainBlue,
                           size: 24.sp,
                         ),
@@ -192,17 +193,17 @@ class _RatingPromptModalState extends State<RatingPromptModal>
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: 24.h),
-                  
+
                   // Star Rating
                   Text(
                     'How was your experience?',
                     style: TextStyles.font16DarkBlue500Weight,
                   ),
-                  
+
                   SizedBox(height: 16.h),
-                  
+
                   StarRatingInput(
                     initialRating: _selectedStars,
                     starSize: 40,
@@ -214,9 +215,9 @@ class _RatingPromptModalState extends State<RatingPromptModal>
                       });
                     },
                   ),
-                  
+
                   SizedBox(height: 24.h),
-                  
+
                   // Feedback Text Field
                   TextField(
                     controller: _feedbackController,
@@ -231,14 +232,15 @@ class _RatingPromptModalState extends State<RatingPromptModal>
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8.r),
-                        borderSide: const BorderSide(color: ColorsManager.mainBlue),
+                        borderSide:
+                            const BorderSide(color: ColorsManager.mainBlue),
                       ),
                       contentPadding: EdgeInsets.all(12.w),
                     ),
                   ),
-                  
+
                   SizedBox(height: 24.h),
-                  
+
                   // Action Buttons
                   Row(
                     children: [
@@ -258,9 +260,7 @@ class _RatingPromptModalState extends State<RatingPromptModal>
                             ),
                           ),
                         ),
-                      
                       if (widget.onSkipped != null) SizedBox(width: 12.w),
-                      
                       Expanded(
                         flex: 2,
                         child: ElevatedButton(
@@ -315,7 +315,8 @@ class _SuccessAnimationDialog extends StatefulWidget {
   const _SuccessAnimationDialog();
 
   @override
-  State<_SuccessAnimationDialog> createState() => _SuccessAnimationDialogState();
+  State<_SuccessAnimationDialog> createState() =>
+      _SuccessAnimationDialogState();
 }
 
 class _SuccessAnimationDialogState extends State<_SuccessAnimationDialog>
@@ -327,12 +328,12 @@ class _SuccessAnimationDialogState extends State<_SuccessAnimationDialog>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -340,7 +341,7 @@ class _SuccessAnimationDialogState extends State<_SuccessAnimationDialog>
       parent: _controller,
       curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
     ));
-    
+
     _rotationAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -348,9 +349,9 @@ class _SuccessAnimationDialogState extends State<_SuccessAnimationDialog>
       parent: _controller,
       curve: const Interval(0.4, 1.0, curve: Curves.easeInOut),
     ));
-    
+
     _controller.forward();
-    
+
     // Auto close after animation
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
@@ -479,7 +480,7 @@ class FullScreenRatingPrompt extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             // Rating Cards
             Expanded(
               child: Container(
@@ -495,7 +496,7 @@ class FullScreenRatingPrompt extends StatelessWidget {
                   itemCount: pendingRatings.length,
                   itemBuilder: (context, index) {
                     final pendingRating = pendingRatings[index];
-                    
+
                     return Container(
                       margin: EdgeInsets.only(bottom: 16.h),
                       child: RatingPromptModal(

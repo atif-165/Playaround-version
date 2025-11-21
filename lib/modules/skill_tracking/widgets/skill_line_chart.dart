@@ -111,13 +111,15 @@ class _SkillLineChartState extends State<SkillLineChart>
           width: 32.w,
           height: 32.h,
           decoration: BoxDecoration(
-            color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+            color: Color(
+                    int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
                 .withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8.r),
           ),
           child: Icon(
             _getSkillIcon(widget.skillType),
-            color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
+            color: Color(
+                int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
             size: 16.sp,
           ),
         ),
@@ -147,7 +149,8 @@ class _SkillLineChartState extends State<SkillLineChart>
                     ),
                     SizedBox(width: 8.w),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
                       decoration: BoxDecoration(
                         color: isImproving ? Colors.green[50] : Colors.red[50],
                         borderRadius: BorderRadius.circular(4.r),
@@ -156,9 +159,13 @@ class _SkillLineChartState extends State<SkillLineChart>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            isImproving ? Icons.trending_up : Icons.trending_down,
+                            isImproving
+                                ? Icons.trending_up
+                                : Icons.trending_down,
                             size: 12.sp,
-                            color: isImproving ? Colors.green[600] : Colors.red[600],
+                            color: isImproving
+                                ? Colors.green[600]
+                                : Colors.red[600],
                           ),
                           SizedBox(width: 2.w),
                           Text(
@@ -166,7 +173,9 @@ class _SkillLineChartState extends State<SkillLineChart>
                             style: TextStyle(
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w500,
-                              color: isImproving ? Colors.green[600] : Colors.red[600],
+                              color: isImproving
+                                  ? Colors.green[600]
+                                  : Colors.red[600],
                             ),
                           ),
                         ],
@@ -225,7 +234,7 @@ class _SkillLineChartState extends State<SkillLineChart>
 
   LineChartData _buildLineChartData() {
     final spots = <FlSpot>[];
-    
+
     for (int i = 0; i < widget.dataPoints.length; i++) {
       final point = widget.dataPoints[i];
       final animatedScore = point.score * _animation.value;
@@ -246,7 +255,8 @@ class _SkillLineChartState extends State<SkillLineChart>
       ),
       titlesData: FlTitlesData(
         show: true,
-        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:
+            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
@@ -314,7 +324,8 @@ class _SkillLineChartState extends State<SkillLineChart>
                 radius: 4.r,
                 color: Colors.white,
                 strokeWidth: 2.w,
-                strokeColor: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
+                strokeColor: Color(
+                    int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
               );
             },
           ),
@@ -322,9 +333,11 @@ class _SkillLineChartState extends State<SkillLineChart>
             show: true,
             gradient: LinearGradient(
               colors: [
-                Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+                Color(int.parse(
+                        '0xFF${widget.skillType.colorHex.substring(1)}'))
                     .withValues(alpha: 0.2),
-                Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+                Color(int.parse(
+                        '0xFF${widget.skillType.colorHex.substring(1)}'))
                     .withValues(alpha: 0.05),
               ],
               begin: Alignment.topCenter,
@@ -346,7 +359,8 @@ class _SkillLineChartState extends State<SkillLineChart>
                 return LineTooltipItem(
                   '${DateFormat('MMM dd').format(point.date)}\n${point.score}',
                   TextStyle(
-                    color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
+                    color: Color(int.parse(
+                        '0xFF${widget.skillType.colorHex.substring(1)}')),
                     fontWeight: FontWeight.bold,
                     fontSize: 12.sp,
                   ),
@@ -362,12 +376,12 @@ class _SkillLineChartState extends State<SkillLineChart>
 
   double _calculateImprovement() {
     if (widget.dataPoints.length < 2) return 0.0;
-    
+
     final firstScore = widget.dataPoints.first.score;
     final lastScore = widget.dataPoints.last.score;
-    
+
     if (firstScore == 0) return 0.0;
-    
+
     return ((lastScore - firstScore) / firstScore) * 100;
   }
 

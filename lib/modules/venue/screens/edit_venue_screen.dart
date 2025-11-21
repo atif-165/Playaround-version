@@ -53,10 +53,13 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
   void _initializeControllers() {
     // Initialize controllers with existing venue data
     _titleController = TextEditingController(text: widget.venue.title);
-    _descriptionController = TextEditingController(text: widget.venue.description);
+    _descriptionController =
+        TextEditingController(text: widget.venue.description);
     _locationController = TextEditingController(text: widget.venue.location);
-    _hourlyRateController = TextEditingController(text: widget.venue.hourlyRate.toString());
-    _contactInfoController = TextEditingController(text: widget.venue.contactInfo ?? '');
+    _hourlyRateController =
+        TextEditingController(text: widget.venue.hourlyRate.toString());
+    _contactInfoController =
+        TextEditingController(text: widget.venue.contactInfo ?? '');
 
     // Initialize form state with existing venue data
     _selectedSportType = widget.venue.sportType;
@@ -236,7 +239,8 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
               borderRadius: BorderRadius.circular(12.r),
             ),
             prefixIcon: const Icon(Icons.sports),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
           ),
           items: SportType.values.map((sport) {
             return DropdownMenuItem(
@@ -458,9 +462,12 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     try {
       // Form validation with detailed checking
       print('🔍 EditVenueScreen: Checking form validation...');
-      print('📝 Title: "${_titleController.text.trim()}" (length: ${_titleController.text.trim().length})');
-      print('📝 Description: "${_descriptionController.text.trim()}" (length: ${_descriptionController.text.trim().length})');
-      print('📝 Location: "${_locationController.text.trim()}" (length: ${_locationController.text.trim().length})');
+      print(
+          '📝 Title: "${_titleController.text.trim()}" (length: ${_titleController.text.trim().length})');
+      print(
+          '📝 Description: "${_descriptionController.text.trim()}" (length: ${_descriptionController.text.trim().length})');
+      print(
+          '📝 Location: "${_locationController.text.trim()}" (length: ${_locationController.text.trim().length})');
       print('📝 Hourly Rate: "${_hourlyRateController.text.trim()}"');
       print('📝 Contact Info: "${_contactInfoController.text.trim()}"');
 
@@ -512,13 +519,15 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       // Additional validation
       if (_selectedDays.isEmpty) {
         print('❌ EditVenueScreen: No days selected');
-        _showErrorDialog('Validation Error', 'Please select at least one available day.');
+        _showErrorDialog(
+            'Validation Error', 'Please select at least one available day.');
         return;
       }
 
       if (_selectedTimeSlots.isEmpty) {
         print('❌ EditVenueScreen: No time slots selected');
-        _showErrorDialog('Validation Error', 'Please add at least one time slot.');
+        _showErrorDialog(
+            'Validation Error', 'Please add at least one time slot.');
         return;
       }
 
@@ -527,11 +536,13 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       final hourlyRate = double.tryParse(hourlyRateText);
       if (hourlyRate == null || hourlyRate <= 0) {
         print('❌ EditVenueScreen: Invalid hourly rate: $hourlyRateText');
-        _showErrorDialog('Validation Error', 'Please enter a valid hourly rate (greater than 0).');
+        _showErrorDialog('Validation Error',
+            'Please enter a valid hourly rate (greater than 0).');
         return;
       }
 
-      print('🔄 EditVenueScreen: Starting venue update for venue ID: ${widget.venue.id}');
+      print(
+          '🔄 EditVenueScreen: Starting venue update for venue ID: ${widget.venue.id}');
       print('📝 EditVenueScreen: Title: ${_titleController.text.trim()}');
       print('🏃 EditVenueScreen: Sport: $_selectedSportType');
       print('💰 EditVenueScreen: Rate: $hourlyRate');
@@ -563,7 +574,8 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
     } catch (e) {
       print('❌ EditVenueScreen: Error updating venue: $e');
       if (mounted) {
-        _showErrorDialog('Update Failed', 'Failed to update venue: ${e.toString()}');
+        _showErrorDialog(
+            'Update Failed', 'Failed to update venue: ${e.toString()}');
       }
     } finally {
       if (mounted) {
@@ -573,8 +585,6 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
       }
     }
   }
-
-
 
   void _showErrorDialog(String title, String message) {
     showDialog(
@@ -602,7 +612,8 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
-              Navigator.pop(context, true); // Close edit screen with success result
+              Navigator.pop(
+                  context, true); // Close edit screen with success result
             },
             child: const Text('OK'),
           ),

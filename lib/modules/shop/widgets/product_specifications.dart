@@ -113,17 +113,17 @@ class ProductSpecifications extends StatelessWidget {
 
   String _formatValue(dynamic value) {
     if (value == null) return 'Not specified';
-    
+
     if (value is List) {
       return value.join(', ');
     }
-    
+
     if (value is Map) {
       return value.entries
           .map((e) => '${_formatKey(e.key)}: ${e.value}')
           .join(', ');
     }
-    
+
     return value.toString();
   }
 }

@@ -19,7 +19,7 @@ class RiveAnimationControllerHelper {
   RiveAnimationControllerHelper._internal();
 
   Artboard? _riveArtboard;
-  
+
   late RiveAnimationController _controllerIdle;
   late RiveAnimationController _controllerHandsUp;
   late RiveAnimationController _controllerHandsDown;

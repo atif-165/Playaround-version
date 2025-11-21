@@ -103,12 +103,12 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
   @override
   void initState() {
     super.initState();
-    
+
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
     );
-    
+
     _progressController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -140,7 +140,7 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
 
   @override
   Widget build(BuildContext context) {
-    final progress = widget.goal != null 
+    final progress = widget.goal != null
         ? (widget.currentScore / widget.goal!.targetScore).clamp(0.0, 1.0)
         : (widget.currentScore / 100.0).clamp(0.0, 1.0);
 
@@ -160,13 +160,15 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16.r),
                 border: Border.all(
-                  color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+                  color: Color(int.parse(
+                          '0xFF${widget.skillType.colorHex.substring(1)}'))
                       .withValues(alpha: 0.2),
                   width: 1.5.w,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+                    color: Color(int.parse(
+                            '0xFF${widget.skillType.colorHex.substring(1)}'))
                         .withValues(alpha: 0.1),
                     blurRadius: 8.r,
                     offset: Offset(0, 4.h),
@@ -183,21 +185,25 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
                         width: 36.w,
                         height: 36.h,
                         decoration: BoxDecoration(
-                          color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+                          color: Color(int.parse(
+                                  '0xFF${widget.skillType.colorHex.substring(1)}'))
                               .withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10.r),
                         ),
                         child: Icon(
                           _getSkillIcon(widget.skillType),
-                          color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
+                          color: Color(int.parse(
+                              '0xFF${widget.skillType.colorHex.substring(1)}')),
                           size: 18.sp,
                         ),
                       ),
                       const Spacer(),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
                         decoration: BoxDecoration(
-                          color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}'))
+                          color: Color(int.parse(
+                                  '0xFF${widget.skillType.colorHex.substring(1)}'))
                               .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8.r),
                         ),
@@ -206,15 +212,16 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
                           style: TextStyle(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
-                            color: Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
+                            color: Color(int.parse(
+                                '0xFF${widget.skillType.colorHex.substring(1)}')),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   SizedBox(height: 12.h),
-                  
+
                   // Skill name
                   Text(
                     widget.skillType.displayName,
@@ -224,9 +231,9 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
                       color: Colors.grey[800],
                     ),
                   ),
-                  
+
                   SizedBox(height: 4.h),
-                  
+
                   // Goal info or current status
                   if (widget.goal != null) ...[
                     Text(
@@ -253,9 +260,9 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
                       ),
                     ),
                   ],
-                  
+
                   const Spacer(),
-                  
+
                   // Progress bar
                   AnimatedBuilder(
                     animation: _progressAnimation,
@@ -288,7 +295,8 @@ class _SkillProgressCardState extends State<_SkillProgressCard>
                               value: progress * _progressAnimation.value,
                               backgroundColor: Colors.grey[200],
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(int.parse('0xFF${widget.skillType.colorHex.substring(1)}')),
+                                Color(int.parse(
+                                    '0xFF${widget.skillType.colorHex.substring(1)}')),
                               ),
                               minHeight: 6.h,
                             ),
@@ -343,9 +351,10 @@ class SkillSummaryStats extends StatelessWidget {
       return _buildLoadingState();
     }
 
-    final averageScore = skillScores.values.isEmpty 
-        ? 0.0 
-        : skillScores.values.reduce((a, b) => a + b) / skillScores.values.length;
+    final averageScore = skillScores.values.isEmpty
+        ? 0.0
+        : skillScores.values.reduce((a, b) => a + b) /
+            skillScores.values.length;
 
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -387,7 +396,8 @@ class SkillSummaryStats extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+      String label, String value, IconData icon, Color color) {
     return Expanded(
       child: Column(
         children: [

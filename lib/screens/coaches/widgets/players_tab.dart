@@ -17,15 +17,14 @@ class PlayersTab extends StatefulWidget {
   State<PlayersTab> createState() => _PlayersTabState();
 }
 
-class _PlayersTabState extends State<PlayersTab>
-    with TickerProviderStateMixin {
+class _PlayersTabState extends State<PlayersTab> with TickerProviderStateMixin {
   final PeopleMatchingService _matchingService = PeopleMatchingService();
-  
+
   List<MatchmakingSuggestion> _suggestions = [];
   bool _isLoading = true;
   bool _isLoadingMore = false;
   int _currentIndex = 0;
-  
+
   late AnimationController _cardAnimationController;
   late AnimationController _buttonAnimationController;
   late Animation<double> _cardAnimation;
@@ -50,7 +49,7 @@ class _PlayersTabState extends State<PlayersTab>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _buttonAnimationController = AnimationController(
       duration: const Duration(milliseconds: 150),
       vsync: this,
@@ -80,18 +79,20 @@ class _PlayersTabState extends State<PlayersTab>
       });
 
       // Filter to only show players (not coaches)
-      final allSuggestions = await _matchingService.getPotentialMatches(limit: 20);
-      final playerSuggestions = allSuggestions.where((suggestion) => 
-        suggestion.role.toString().split('.').last == 'player'
-      ).toList();
-      
+      final allSuggestions =
+          await _matchingService.getPotentialMatches(limit: 20);
+      final playerSuggestions = allSuggestions
+          .where((suggestion) =>
+              suggestion.role.toString().split('.').last == 'player')
+          .toList();
+
       if (mounted) {
         setState(() {
           _suggestions = playerSuggestions;
           _currentIndex = 0;
           _isLoading = false;
         });
-        
+
         _cardAnimationController.forward();
       }
     } catch (e) {
@@ -99,7 +100,7 @@ class _PlayersTabState extends State<PlayersTab>
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading players: $e')),
         );
@@ -109,7 +110,7 @@ class _PlayersTabState extends State<PlayersTab>
 
   Future<void> _loadMoreSuggestions() async {
     if (_isLoadingMore) return;
-    
+
     try {
       setState(() {
         _isLoadingMore = true;
@@ -120,10 +121,11 @@ class _PlayersTabState extends State<PlayersTab>
         limit: 10,
         excludeUserIds: excludeIds,
       );
-      final playerSuggestions = allSuggestions.where((suggestion) => 
-        suggestion.role.toString().split('.').last == 'player'
-      ).toList();
-      
+      final playerSuggestions = allSuggestions
+          .where((suggestion) =>
+              suggestion.role.toString().split('.').last == 'player')
+          .toList();
+
       if (mounted) {
         setState(() {
           _suggestions.addAll(playerSuggestions);
@@ -211,7 +213,7 @@ class _PlayersTabState extends State<PlayersTab>
                       ),
                     ),
                   ),
-                
+
                 // Current card
                 if (_currentIndex < _suggestions.length)
                   Positioned.fill(
@@ -369,7 +371,7 @@ class _PlayersTabState extends State<PlayersTab>
 
   void _handleComment() {
     if (_currentIndex >= _suggestions.length) return;
-    
+
     final suggestion = _suggestions[_currentIndex];
     _showCommentDialog(suggestion);
   }
@@ -442,7 +444,7 @@ class _PlayersTabState extends State<PlayersTab>
 
   void _showCommentDialog(MatchmakingSuggestion suggestion) {
     final commentController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -474,7 +476,7 @@ class _PlayersTabState extends State<PlayersTab>
                     toUserId: suggestion.id,
                     comment: commentController.text.trim(),
                   );
-                  
+
                   if (mounted) {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(

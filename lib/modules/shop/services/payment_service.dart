@@ -30,35 +30,36 @@ class PaymentService {
 
       // Create separate orders for each shop
       final orderIds = <String>[];
-      
+
       for (var entry in itemsByShop.entries) {
         final shopId = entry.key;
         final shopItems = entry.value;
-        
+
         // Get shop name
-        final shopDoc = await _firestore
-            .collection('shops')
-            .doc(shopId)
-            .get();
+        final shopDoc = await _firestore.collection('shops').doc(shopId).get();
         final shopName = shopDoc.data()?['name'] ?? 'Unknown Shop';
 
         // Calculate totals
-        final subtotal = shopItems.fold(0.0, (total, item) => total + item.totalPrice);
+        final subtotal =
+            shopItems.fold(0.0, (total, item) => total + item.totalPrice);
         final tax = subtotal * 0.18; // 18% GST
-        final shipping = deliveryType == order_model.DeliveryType.home ? 50.0 : 0.0;
+        final shipping =
+            deliveryType == order_model.DeliveryType.home ? 50.0 : 0.0;
         final discount = 0.0; // Can be calculated based on promotions
         final totalAmount = subtotal + tax + shipping - discount;
 
         // Create order items
-        final orderItems = shopItems.map((item) => order_model.OrderItem(
-          productId: item.productId,
-          productName: item.productName,
-          productImage: item.productImage,
-          price: item.price,
-          quantity: item.quantity,
-          size: item.size,
-          color: item.color,
-        )).toList();
+        final orderItems = shopItems
+            .map((item) => order_model.OrderItem(
+                  productId: item.productId,
+                  productName: item.productName,
+                  productImage: item.productImage,
+                  price: item.price,
+                  quantity: item.quantity,
+                  size: item.size,
+                  color: item.color,
+                ))
+            .toList();
 
         // Create order
         final order = order_model.Order(
@@ -83,10 +84,9 @@ class PaymentService {
         );
 
         // Save order to Firestore
-        final docRef = await _firestore
-            .collection(_ordersCollection)
-            .add(order.toMap());
-        
+        final docRef =
+            await _firestore.collection(_ordersCollection).add(order.toMap());
+
         orderIds.add(docRef.id);
       }
 
@@ -106,7 +106,7 @@ class PaymentService {
     try {
       // In a real implementation, this would integrate with payment gateways
       // like Razorpay, Stripe, etc.
-      
+
       // For now, simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
 
@@ -115,10 +115,7 @@ class PaymentService {
 
       if (isSuccess) {
         // Update order status
-        await _firestore
-            .collection(_ordersCollection)
-            .doc(orderId)
-            .update({
+        await _firestore.collection(_ordersCollection).doc(orderId).update({
           'status': order_model.OrderStatus.confirmed.name,
           'paymentStatus': order_model.PaymentStatus.paid.name,
           'metadata.paymentId': 'PAY_${DateTime.now().millisecondsSinceEpoch}',
@@ -127,9 +124,7 @@ class PaymentService {
         });
 
         // Create payment record
-        await _firestore
-            .collection(_paymentsCollection)
-            .add({
+        await _firestore.collection(_paymentsCollection).add({
           'orderId': orderId,
           'amount': amount,
           'paymentMethod': paymentMethod.toMap(),
@@ -146,10 +141,7 @@ class PaymentService {
         };
       } else {
         // Update order status for failed payment
-        await _firestore
-            .collection(_ordersCollection)
-            .doc(orderId)
-            .update({
+        await _firestore.collection(_ordersCollection).doc(orderId).update({
           'paymentStatus': order_model.PaymentStatus.failed.name,
           'metadata.paymentError': 'Payment failed',
         });
@@ -184,10 +176,8 @@ class PaymentService {
   /// Get order by ID
   static Future<order_model.Order?> getOrderById(String orderId) async {
     try {
-      final doc = await _firestore
-          .collection(_ordersCollection)
-          .doc(orderId)
-          .get();
+      final doc =
+          await _firestore.collection(_ordersCollection).doc(orderId).get();
 
       if (doc.exists) {
         return order_model.Order.fromDoc(doc);
@@ -236,10 +226,7 @@ class PaymentService {
   /// Cancel order
   static Future<void> cancelOrder(String orderId) async {
     try {
-      await _firestore
-          .collection(_ordersCollection)
-          .doc(orderId)
-          .update({
+      await _firestore.collection(_ordersCollection).doc(orderId).update({
         'status': order_model.OrderStatus.cancelled.name,
         'metadata.cancelledAt': Timestamp.fromDate(DateTime.now()),
       });
@@ -261,13 +248,17 @@ class PaymentService {
           .toList();
 
       final totalOrders = orders.length;
-      final totalSpent = orders.fold(0.0, (total, order) => total + order.totalAmount);
-      final pendingOrders = orders.where((order) => 
-          order.status == order_model.OrderStatus.pending || 
-          order.status == order_model.OrderStatus.confirmed ||
-          order.status == order_model.OrderStatus.processing).length;
-      final deliveredOrders = orders.where((order) => 
-          order.status == order_model.OrderStatus.delivered).length;
+      final totalSpent =
+          orders.fold(0.0, (total, order) => total + order.totalAmount);
+      final pendingOrders = orders
+          .where((order) =>
+              order.status == order_model.OrderStatus.pending ||
+              order.status == order_model.OrderStatus.confirmed ||
+              order.status == order_model.OrderStatus.processing)
+          .length;
+      final deliveredOrders = orders
+          .where((order) => order.status == order_model.OrderStatus.delivered)
+          .length;
 
       return {
         'totalOrders': totalOrders,

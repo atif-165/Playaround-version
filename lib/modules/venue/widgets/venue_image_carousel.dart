@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../core/widgets/safe_cached_image.dart';
 import '../../../theming/colors.dart';
-
 
 /// Widget for displaying venue images in a carousel
 class VenueImageCarousel extends StatefulWidget {
@@ -48,7 +48,7 @@ class _VenueImageCarouselState extends State<VenueImageCarousel> {
             },
             itemCount: widget.images.length,
             itemBuilder: (context, index) {
-              return _buildImageItem(widget.images[index]);
+              return _buildImageItem(index, widget.images[index]);
             },
           ),
         ),
@@ -58,29 +58,29 @@ class _VenueImageCarouselState extends State<VenueImageCarousel> {
     );
   }
 
-  Widget _buildImageItem(String imageUrl) {
+  Widget _buildImageItem(int index, String imageUrl) {
     return GestureDetector(
-      onTap: () => _showFullScreenImage(imageUrl),
-      child: Image.network(
-        imageUrl,
-        width: double.infinity,
-        height: widget.height.h,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholder();
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
+      onTap: () => _showFullScreenImage(index),
+      child: Hero(
+        tag: 'venue_image_${widget.images[index]}_$index',
+        child: SafeCachedImage(
+          imageUrl: imageUrl,
+          width: double.infinity,
+          height: widget.height.h,
+          fit: BoxFit.cover,
+          backgroundColor: Colors.grey[200],
+          placeholder: (context, _) => Container(
             color: Colors.grey[200],
             child: const Center(
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(ColorsManager.mainBlue),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(ColorsManager.mainBlue),
               ),
             ),
-          );
-        },
+          ),
+          errorWidget: (context, _, __) => _buildPlaceholder(),
+        ),
       ),
     );
   }
@@ -241,13 +241,13 @@ class _VenueImageCarouselState extends State<VenueImageCarousel> {
     }
   }
 
-  void _showFullScreenImage(String imageUrl) {
+  void _showFullScreenImage(int startIndex) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => _FullScreenImageViewer(
           images: widget.images,
-          initialIndex: _currentIndex,
+          initialIndex: startIndex,
         ),
       ),
     );
@@ -306,20 +306,22 @@ class _FullScreenImageViewerState extends State<_FullScreenImageViewer> {
         },
         itemCount: widget.images.length,
         itemBuilder: (context, index) {
-          return InteractiveViewer(
-            child: Center(
-              child: Image.network(
-                widget.images[index],
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
+          return Hero(
+            tag: 'venue_image_${widget.images[index]}_$index',
+            child: InteractiveViewer(
+              child: Center(
+                child: SafeCachedImage(
+                  imageUrl: widget.images[index],
+                  fit: BoxFit.contain,
+                  backgroundColor: Colors.black,
+                  errorWidget: (context, _, __) => const Center(
                     child: Icon(
                       Icons.error_outline,
                       color: Colors.white,
                       size: 64,
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
           );
