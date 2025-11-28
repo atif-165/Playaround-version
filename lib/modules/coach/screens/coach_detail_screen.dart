@@ -512,12 +512,14 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
 
       if (mounted) {
         setState(() {
-          _coachVenues =
-              venues.isNotEmpty ? venues : _generateFallbackVenues();
-          _coachTeams = teams.isNotEmpty ? teams : _generateFallbackTeams();
-          _coachPlayers =
-              players.isNotEmpty ? players : _generateShowcaseAthletes();
-          _coachReviews = _generateCoachReviews();
+          // Use actual data only - no fallback dummy data
+          // This ensures each coach shows their own unique data
+          _coachVenues = venues;
+          _coachTeams = teams;
+          _coachPlayers = players;
+          // TODO: Load actual reviews from database when review system is implemented
+          // For now, use empty list - reviews will show "No reviews yet"
+          _coachReviews = [];
           _isLoadingTabs = false;
         });
       }
@@ -798,30 +800,50 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
   }
 
   Widget _buildHighlightMetrics() {
-    final athleteCount = (_coachPlayers.length + 14).clamp(14, 48);
-    final averageRating = _coachReviews.isEmpty
-        ? 4.85
-        : _coachReviews
-                .map((review) =>
-                    double.tryParse(review['rating'] as String? ?? '4.8') ?? 4.8)
-                .fold<double>(0, (sum, value) => sum + value) /
-            _coachReviews.length;
-    final completionRate =
-        min(99, 90 + widget.coach.availableTimeSlots.length * 3);
+    // Use actual player count from coach's players
+    final athleteCount = _coachPlayers.length;
+    
+    // Calculate actual average rating from reviews - only if reviews exist
+    final hasReviews = _coachReviews.isNotEmpty;
+    final averageRating = hasReviews
+        ? _coachReviews
+                .map((review) {
+                  final ratingValue = review['rating'];
+                  if (ratingValue is num) {
+                    return ratingValue.toDouble();
+                  } else if (ratingValue is String) {
+                    return double.tryParse(ratingValue) ?? 0.0;
+                  }
+                  return 0.0;
+                })
+                .where((value) => value > 0)
+                .fold<double>(0.0, (sum, value) => sum + value) /
+            _coachReviews.length
+        : null; // No rating if no reviews
+    
+    // Calculate completion rate based on actual time slots and experience
+    // More time slots and experience = higher completion rate
+    final baseRate = 70.0;
+    final timeSlotBonus = widget.coach.availableTimeSlots.length * 2.0;
+    final experienceBonus = widget.coach.experienceYears * 1.5;
+    final completionRate = min(99.0, baseRate + timeSlotBonus + experienceBonus);
 
     final cards = [
       {
         'icon': Icons.people_outline,
         'title': 'Athletes mentored',
-        'value': '$athleteCount+',
-        'subtitle': 'Personal coaching journeys',
+        'value': athleteCount > 0 ? '$athleteCount${athleteCount >= 10 ? '+' : ''}' : '0',
+        'subtitle': athleteCount > 0 
+            ? 'Personal coaching journeys' 
+            : 'No athletes yet',
       },
-      {
-        'icon': Icons.star_half_rounded,
-        'title': 'Session rating',
-        'value': averageRating.toStringAsFixed(2),
-        'subtitle': 'Coach satisfaction score',
-      },
+      if (hasReviews && averageRating != null)
+        {
+          'icon': Icons.star_half_rounded,
+          'title': 'Session rating',
+          'value': averageRating.toStringAsFixed(2),
+          'subtitle': 'Coach satisfaction score',
+        },
       {
         'icon': Icons.show_chart_rounded,
         'title': 'Plan adherence',
@@ -855,9 +877,70 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
   }
 
   Widget _buildRatingRow() {
-    // TODO: Implement actual rating system
-    const rating = 4.8;
-    const reviewCount = 42;
+    // Calculate actual rating from reviews
+    final reviewCount = _coachReviews.length;
+    
+    // Only calculate rating if there are actual reviews
+    if (reviewCount == 0) {
+      return Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(18.r),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.star_border_rounded,
+                  color: Colors.white.withOpacity(0.5),
+                  size: 20.sp,
+                ),
+                Gap(6.w),
+                Text(
+                  'No rating',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13.sp,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Gap(12.w),
+          Expanded(
+            child: Text(
+              'No reviews yet',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.65),
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Calculate actual rating from reviews
+    final rating = _coachReviews
+        .map((review) {
+          final ratingValue = review['rating'];
+          if (ratingValue is num) {
+            return ratingValue.toDouble();
+          } else if (ratingValue is String) {
+            return double.tryParse(ratingValue) ?? 0.0;
+          }
+          return 0.0;
+        })
+        .where((value) => value > 0)
+        .fold<double>(0.0, (sum, value) => sum + value) /
+        reviewCount;
 
     return Row(
       children: [
@@ -890,7 +973,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen>
         Gap(12.w),
         Expanded(
           child: Text(
-            '$reviewCount verified reviews',
+            '$reviewCount ${reviewCount == 1 ? 'review' : 'reviews'}',
             style: TextStyle(
               color: Colors.white.withOpacity(0.65),
               fontSize: 13.sp,
@@ -2523,15 +2606,40 @@ class _CoachTabBarDelegate extends SliverPersistentHeaderDelegate {
 
   final TabBar tabBar;
 
-  double get _verticalPadding => 10.h;
-  double get _innerPadding => 4.h;
+  // Calculate padding values and round to avoid floating point issues
+  double get _verticalPadding => ((10.h) * 100).round() / 100.0;
+  double get _innerPadding => ((4.h) * 100).round() / 100.0;
+  double get _extraPadding => ((2.h) * 100).round() / 100.0;
+
+  // Calculate extent with precise rounding to prevent floating point errors
+  double _getExtent() {
+    // Use the getters to ensure consistency
+    final verticalPadding = _verticalPadding;
+    final innerPadding = _innerPadding;
+    final extraPadding = _extraPadding;
+    final tabBarHeight = (kTextTabBarHeight * 100).round() / 100.0;
+    
+    // Calculate total extent with all rounded values
+    final total = tabBarHeight + 
+                  (verticalPadding * 2) + 
+                  extraPadding + 
+                  (innerPadding * 2);
+    
+    // Round to 2 decimal places and use a very small epsilon to ensure layoutExtent <= paintExtent
+    // This prevents the tiny floating point differences (e.g., 0.00000000000002) that cause the error
+    final rounded = (total * 100).round() / 100.0;
+    
+    // Subtract a minimal epsilon (0.0001) to ensure layoutExtent is always <= paintExtent
+    // This is a workaround for Flutter's internal geometry calculation precision issues
+    // The epsilon is small enough to not cause visual differences but prevents the error
+    return (rounded * 10000 - 1).floor() / 10000.0;
+  }
 
   @override
-  double get minExtent =>
-      kTextTabBarHeight + (_verticalPadding * 2) + 2.h + (_innerPadding * 2);
+  double get minExtent => _getExtent();
 
   @override
-  double get maxExtent => minExtent;
+  double get maxExtent => _getExtent();
 
   @override
   Widget build(
@@ -2540,8 +2648,11 @@ class _CoachTabBarDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     final baseColor = const Color(0xFF050414);
+    final extent = minExtent;
 
-    return Container(
+    return SizedBox(
+      height: extent,
+      child: Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -2564,7 +2675,7 @@ class _CoachTabBarDelegate extends SliverPersistentHeaderDelegate {
         left: 20.w,
         right: 20.w,
         top: _verticalPadding,
-        bottom: _verticalPadding + 2.h,
+        bottom: _verticalPadding + _extraPadding,
       ),
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -2580,6 +2691,7 @@ class _CoachTabBarDelegate extends SliverPersistentHeaderDelegate {
           ),
         ),
       ),
+    ),
     );
   }
 

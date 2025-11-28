@@ -257,11 +257,18 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
             if (value == null || value.trim().isEmpty) {
               return 'Please provide the Google Maps link';
             }
-            final trimmed = value.trim();
-            if (!trimmed.startsWith('http')) {
-              return 'Link should start with http or https';
+            final trimmed = value.trim().toLowerCase();
+            if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+              return 'Link should start with http:// or https://';
             }
-            if (!trimmed.contains('google')) {
+            // Check for various Google Maps URL formats
+            final isGoogleMapsLink = trimmed.contains('google.com/maps') ||
+                trimmed.contains('maps.google.com') ||
+                trimmed.contains('goo.gl/maps') ||
+                trimmed.contains('maps.app.goo.gl') ||
+                trimmed.contains('google.com/maps/place') ||
+                trimmed.contains('maps.google.com/maps');
+            if (!isGoogleMapsLink) {
               return 'Please provide a valid Google Maps link';
             }
             return null;
@@ -772,8 +779,20 @@ class _AddVenueScreenState extends State<AddVenueScreen> {
       _showErrorSnackBar('Please provide the Google Maps link for your venue');
       return;
     }
-    if (!googleMapsLink.startsWith('http')) {
-      _showErrorSnackBar('Google Maps link should start with http or https');
+    final lowerLink = googleMapsLink.toLowerCase();
+    if (!lowerLink.startsWith('http://') && !lowerLink.startsWith('https://')) {
+      _showErrorSnackBar('Google Maps link should start with http:// or https://');
+      return;
+    }
+    // Check for various Google Maps URL formats
+    final isGoogleMapsLink = lowerLink.contains('google.com/maps') ||
+        lowerLink.contains('maps.google.com') ||
+        lowerLink.contains('goo.gl/maps') ||
+        lowerLink.contains('maps.app.goo.gl') ||
+        lowerLink.contains('google.com/maps/place') ||
+        lowerLink.contains('maps.google.com/maps');
+    if (!isGoogleMapsLink) {
+      _showErrorSnackBar('Please provide a valid Google Maps link');
       return;
     }
 

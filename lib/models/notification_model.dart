@@ -27,6 +27,8 @@ enum NotificationType {
   bookingUpdate('booking_update'),
   profileFollow('profile_follow'),
   profileUpdate('profile_update'),
+  newMessage('new_message'),
+  newPost('new_post'),
   general('general');
 
   const NotificationType(this.value);
@@ -91,6 +93,10 @@ enum NotificationType {
         return 'New Follower';
       case NotificationType.profileUpdate:
         return 'Profile Update';
+      case NotificationType.newMessage:
+        return 'New Message';
+      case NotificationType.newPost:
+        return 'New Post';
       case NotificationType.general:
         return 'General';
     }

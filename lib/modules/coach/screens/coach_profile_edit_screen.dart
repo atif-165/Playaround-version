@@ -2197,6 +2197,7 @@ class _CoachProfileEditScreenState extends State<CoachProfileEditScreen>
         specializationSports: _selectedSports,
         certifications: certifications,
         availableTimeSlots: _availableTimeSlots,
+        isProfileComplete: true, // Mark profile as complete when basic info is saved
         updatedAt: DateTime.now(),
       );
 

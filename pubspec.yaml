@@ -113,10 +113,11 @@ flutter:
     - assets/animation/
     - assets/images/
     - assets/svgs/
-    - mocks/
     - lib/core/i18n/
-    - mocks/
-    - assets/demo/placeholders/
+    # Demo placeholders excluded from production builds
+    # Uncomment below only for development/testing
+    # - mocks/
+    # - assets/demo/placeholders/
 
 flutter_launcher_icons:
   android: "launcher_icon"

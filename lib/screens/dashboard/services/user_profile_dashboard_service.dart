@@ -91,16 +91,22 @@ class PublicProfileService {
     final associationsMap =
         data['associations'] as Map<String, dynamic>? ?? const {};
 
-    final teams =
+    List<AssociationCardData> teams =
         _parseAssociationsList(associationsMap['teams']) ?? fallback.teams;
-    final tournaments = _parseAssociationsList(
+    List<AssociationCardData> tournaments = _parseAssociationsList(
           associationsMap['tournaments'],
         ) ??
         fallback.tournaments;
-    final venues =
+    List<AssociationCardData> venues =
         _parseAssociationsList(associationsMap['venues']) ?? fallback.venues;
-    final coaches =
+    List<AssociationCardData> coaches =
         _parseAssociationsList(associationsMap['coaches']) ?? fallback.coaches;
+
+    // Enrich with user-owned items (venues, teams, tournaments)
+    final ownedItems = await _loadUserOwnedAssociations(userId);
+    venues = _mergeAssociations(venues, ownedItems['venues'] ?? []);
+    teams = _mergeAssociations(teams, ownedItems['teams'] ?? []);
+    tournaments = _mergeAssociations(tournaments, ownedItems['tournaments'] ?? []);
 
     final followersList =
         _parseConnections(data['followers']) ?? fallback.followers;
@@ -416,6 +422,158 @@ class PublicProfileService {
         .set(payload, SetOptions(merge: true));
   }
 
+  /// Update profile name (fullName) in both public_profiles and users collections
+  Future<void> updateProfileName({
+    required String userId,
+    required String fullName,
+  }) async {
+    if (fullName.trim().isEmpty) return;
+
+    final batch = _firestore.batch();
+    final profileRef = _firestore.collection('public_profiles').doc(userId);
+    final userRef = _firestore.collection('users').doc(userId);
+
+    // Get current identity to merge properly
+    final profileSnapshot = await profileRef.get();
+    final currentData = profileSnapshot.data() ?? {};
+    final currentIdentity = currentData['identity'] as Map<String, dynamic>? ?? {};
+    
+    // Update nested identity structure
+    final updatedIdentity = Map<String, dynamic>.from(currentIdentity);
+    updatedIdentity['fullName'] = fullName.trim();
+
+    batch.set(profileRef, {
+      'identity': updatedIdentity,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    batch.set(userRef, {
+      'fullName': fullName.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    await batch.commit();
+
+    // Update cache
+    await _cacheService.mergeDocument(
+      collection: FirestoreCacheCollection.users,
+      docId: userId,
+      updates: {
+        'fullName': fullName.trim(),
+        'updatedAt': Timestamp.now(),
+      },
+    );
+  }
+
+  /// Update matchmaking featured links
+  Future<void> updateMatchmakingFeaturedLinks({
+    required String userId,
+    AssociationCardData? featuredTeam,
+    AssociationCardData? featuredVenue,
+    AssociationCardData? featuredCoach,
+    AssociationCardData? featuredTournament,
+  }) async {
+    final profileRef = _firestore.collection('public_profiles').doc(userId);
+    
+    // Get current matchmaking data
+    final profileSnapshot = await profileRef.get();
+    final currentData = profileSnapshot.data() ?? {};
+    final currentMatchmaking = currentData['matchmaking'] as Map<String, dynamic>? ?? {};
+    
+    // Update matchmaking with new featured links
+    final updatedMatchmaking = Map<String, dynamic>.from(currentMatchmaking);
+    
+    if (featuredTeam != null) {
+      updatedMatchmaking['featuredTeam'] = _associationToMap(featuredTeam);
+    } else if (featuredTeam == null && updatedMatchmaking.containsKey('featuredTeam')) {
+      updatedMatchmaking['featuredTeam'] = null;
+    }
+    
+    if (featuredVenue != null) {
+      updatedMatchmaking['featuredVenue'] = _associationToMap(featuredVenue);
+    } else if (featuredVenue == null && updatedMatchmaking.containsKey('featuredVenue')) {
+      updatedMatchmaking['featuredVenue'] = null;
+    }
+    
+    if (featuredCoach != null) {
+      updatedMatchmaking['featuredCoach'] = _associationToMap(featuredCoach);
+    } else if (featuredCoach == null && updatedMatchmaking.containsKey('featuredCoach')) {
+      updatedMatchmaking['featuredCoach'] = null;
+    }
+    
+    if (featuredTournament != null) {
+      updatedMatchmaking['featuredTournament'] = _associationToMap(featuredTournament);
+    } else if (featuredTournament == null && updatedMatchmaking.containsKey('featuredTournament')) {
+      updatedMatchmaking['featuredTournament'] = null;
+    }
+
+    await profileRef.set({
+      'matchmaking': updatedMatchmaking,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  /// Auto-populate featured links from public profile associations
+  /// Only one of each type will be selected (first available)
+  Future<void> autoPopulateFeaturedLinks({
+    required String userId,
+  }) async {
+    final profileRef = _firestore.collection('public_profiles').doc(userId);
+    final profileSnapshot = await profileRef.get();
+    
+    if (!profileSnapshot.exists) return;
+    
+    final data = profileSnapshot.data() ?? {};
+    final associations = data['associations'] as Map<String, dynamic>? ?? {};
+    
+    // Get first item from each association type
+    final teams = associations['teams'] as List<dynamic>? ?? [];
+    final tournaments = associations['tournaments'] as List<dynamic>? ?? [];
+    final coaches = associations['coaches'] as List<dynamic>? ?? [];
+    final venues = associations['venues'] as List<dynamic>? ?? [];
+    
+    // Get current matchmaking data
+    final currentMatchmaking = data['matchmaking'] as Map<String, dynamic>? ?? {};
+    final updatedMatchmaking = Map<String, dynamic>.from(currentMatchmaking);
+    
+    // Set first team if available
+    if (teams.isNotEmpty) {
+      final teamData = teams.first as Map<String, dynamic>?;
+      if (teamData != null) {
+        updatedMatchmaking['featuredTeam'] = teamData;
+      }
+    }
+    
+    // Set first tournament if available
+    if (tournaments.isNotEmpty) {
+      final tournamentData = tournaments.first as Map<String, dynamic>?;
+      if (tournamentData != null) {
+        updatedMatchmaking['featuredTournament'] = tournamentData;
+      }
+    }
+    
+    // Set first coach if available
+    if (coaches.isNotEmpty) {
+      final coachData = coaches.first as Map<String, dynamic>?;
+      if (coachData != null) {
+        updatedMatchmaking['featuredCoach'] = coachData;
+      }
+    }
+    
+    // Set first venue if available
+    if (venues.isNotEmpty) {
+      final venueData = venues.first as Map<String, dynamic>?;
+      if (venueData != null) {
+        updatedMatchmaking['featuredVenue'] = venueData;
+      }
+    }
+
+    await profileRef.set({
+      'matchmaking': updatedMatchmaking,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   Future<void> updateProfileMedia({
     required String userId,
     String? profilePictureUrl,
@@ -425,20 +583,31 @@ class PublicProfileService {
     final userUpdates = <String, dynamic>{};
     final cacheUserUpdates = <String, dynamic>{};
 
+    // Get current profile to merge identity properly
+    final profileRef = _firestore.collection('public_profiles').doc(userId);
+    final profileSnapshot = await profileRef.get();
+    final currentData = profileSnapshot.data() ?? {};
+    final currentIdentity = currentData['identity'] as Map<String, dynamic>? ?? {};
+
     if (profilePictureUrl != null && profilePictureUrl.isNotEmpty) {
-      updates['identity.profilePictureUrl'] = profilePictureUrl;
+      // Update nested identity structure properly
+      final updatedIdentity = Map<String, dynamic>.from(currentIdentity);
+      updatedIdentity['profilePictureUrl'] = profilePictureUrl;
+      updates['identity'] = updatedIdentity;
       userUpdates['profilePictureUrl'] = profilePictureUrl;
       cacheUserUpdates['profilePictureUrl'] = profilePictureUrl;
     }
     if (coverMediaUrl != null && coverMediaUrl.isNotEmpty) {
-      updates['identity.coverMediaUrl'] = coverMediaUrl;
+      // Update nested identity structure properly
+      final updatedIdentity = Map<String, dynamic>.from(currentIdentity);
+      updatedIdentity['coverMediaUrl'] = coverMediaUrl;
+      updates['identity'] = updatedIdentity;
       userUpdates['coverMediaUrl'] = coverMediaUrl;
     }
 
     if (updates.isEmpty && userUpdates.isEmpty) return;
 
     final batch = _firestore.batch();
-    final profileRef = _firestore.collection('public_profiles').doc(userId);
     final userRef = _firestore.collection('users').doc(userId);
 
     if (updates.isNotEmpty) {
@@ -473,6 +642,8 @@ class PublicProfileService {
     if (association.ownerId == null || association.ownerId!.isEmpty) {
       return;
     }
+    
+    // Create the association request document
     await _firestore.collection('profile_association_requests').add({
       'requesterId': requesterId,
       'requesterName': requesterName,
@@ -484,9 +655,76 @@ class PublicProfileService {
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     });
+    
+    // Send notification to the owner
+    try {
+      final notificationService = NotificationService();
+      final notificationType = _getNotificationTypeForAssociation(type);
+      final title = _getNotificationTitleForAssociation(type);
+      final message = '$requesterName wants to add ${association.title} to their profile.';
+      
+      await notificationService.createNotification(
+        userId: association.ownerId!,
+        type: notificationType,
+        title: title,
+        message: message,
+        data: {
+          'requesterId': requesterId,
+          'requesterName': requesterName,
+          'associationId': association.id,
+          'associationTitle': association.title,
+          'associationType': type,
+        },
+      );
+    } catch (e) {
+      debugPrint(
+        'PublicProfileService: failed to send association request notification: $e',
+      );
+      // Don't rethrow - notification failure shouldn't block request creation
+    }
+  }
+  
+  NotificationType _getNotificationTypeForAssociation(String type) {
+    switch (type.toLowerCase()) {
+      case 'team':
+      case 'teams':
+        return NotificationType.teamInvite;
+      case 'tournament':
+      case 'tournaments':
+        return NotificationType.tournamentRegistration;
+      case 'venue':
+      case 'venues':
+        return NotificationType.venueBooking;
+      case 'coach':
+      case 'coaches':
+        return NotificationType.general;
+      default:
+        return NotificationType.general;
+    }
+  }
+  
+  String _getNotificationTitleForAssociation(String type) {
+    switch (type.toLowerCase()) {
+      case 'team':
+      case 'teams':
+        return 'Team Association Request';
+      case 'tournament':
+      case 'tournaments':
+        return 'Tournament Association Request';
+      case 'venue':
+      case 'venues':
+        return 'Venue Association Request';
+      case 'coach':
+      case 'coaches':
+        return 'Coach Association Request';
+      default:
+        return 'Association Request';
+    }
   }
 
   /// Save pending association to public_profiles document
+  /// NOTE: This should NOT auto-add associations. Associations should only be added after approval.
+  /// This method saves pending requests separately and they should only appear after approval.
   Future<void> savePendingAssociation({
     required String userId,
     required AssociationCardData association,
@@ -496,26 +734,29 @@ class PublicProfileService {
       final profileRef = _firestore.collection('public_profiles').doc(userId);
       final associationMap = _associationToMap(association);
       
-      // Get current associations
+      // Get current pending associations
       final snapshot = await profileRef.get();
       final data = snapshot.data() ?? {};
-      final associations = data['associations'] as Map<String, dynamic>? ?? {};
-      final typeAssociations = (associations[type] as List<dynamic>?) ?? [];
+      final pendingAssociations = data['pendingAssociations'] as Map<String, dynamic>? ?? {};
+      final typePendingAssociations = (pendingAssociations[type] as List<dynamic>?) ?? [];
       
-      // Check if association already exists
-      final exists = typeAssociations.any(
+      // Check if pending association already exists
+      final exists = typePendingAssociations.any(
         (item) => item is Map && item['id'] == association.id,
       );
       
       if (!exists) {
-        // Add the pending association
-        typeAssociations.add(associationMap);
-        associations[type] = typeAssociations;
+        // Add the pending association (with status: pending)
+        final pendingAssociationMap = Map<String, dynamic>.from(associationMap);
+        pendingAssociationMap['status'] = 'pending';
+        pendingAssociationMap['requestedAt'] = Timestamp.now(); // Use Timestamp.now() instead of FieldValue.serverTimestamp() for arrays
+        typePendingAssociations.add(pendingAssociationMap);
+        pendingAssociations[type] = typePendingAssociations;
         
-        // Update the document
+        // Update the document with pending associations (not approved associations)
         await profileRef.set(
           {
-            'associations': associations,
+            'pendingAssociations': pendingAssociations,
             'updatedAt': FieldValue.serverTimestamp(),
           },
           SetOptions(merge: true),
@@ -523,6 +764,212 @@ class PublicProfileService {
       }
     } catch (e) {
       debugPrint('PublicProfileService: failed to save pending association: $e');
+      rethrow;
+    }
+  }
+
+  /// Approve an association request and move it from pending to approved
+  /// Also auto-adds to matchmaking featured links if it's a team and no team is currently featured
+  Future<void> approveAssociationRequest({
+    required String requestId,
+    required String requesterId,
+    required String associationId,
+    required String type,
+    required String associationTitle,
+  }) async {
+    try {
+      // Get the request document
+      final requestSnapshot = await _firestore
+          .collection('profile_association_requests')
+          .doc(requestId)
+          .get();
+      
+      if (!requestSnapshot.exists) {
+        throw Exception('Association request not found');
+      }
+      
+      final requestData = requestSnapshot.data()!;
+      
+      // Get the requester's profile to find the pending association
+      final requesterProfileRef = _firestore.collection('public_profiles').doc(requesterId);
+      final requesterProfileSnapshot = await requesterProfileRef.get();
+      
+      if (!requesterProfileSnapshot.exists) {
+        throw Exception('Requester profile not found');
+      }
+      
+      final requesterData = requesterProfileSnapshot.data()!;
+      final pendingAssociations = requesterData['pendingAssociations'] as Map<String, dynamic>? ?? {};
+      final typePendingAssociations = (pendingAssociations[type] as List<dynamic>?) ?? [];
+      
+      // Find and remove the pending association
+      final pendingIndex = typePendingAssociations.indexWhere(
+        (item) => item is Map && item['id'] == associationId,
+      );
+      
+      if (pendingIndex == -1) {
+        throw Exception('Pending association not found');
+      }
+      
+      final pendingAssociation = typePendingAssociations[pendingIndex] as Map<String, dynamic>;
+      
+      // Remove from pending
+      typePendingAssociations.removeAt(pendingIndex);
+      pendingAssociations[type] = typePendingAssociations;
+      
+      // Add to approved associations
+      final associations = requesterData['associations'] as Map<String, dynamic>? ?? {};
+      final typeAssociations = (associations[type] as List<dynamic>?) ?? [];
+      
+      // Remove status and requestedAt from the association before adding
+      final approvedAssociation = Map<String, dynamic>.from(pendingAssociation);
+      approvedAssociation.remove('status');
+      approvedAssociation.remove('requestedAt');
+      
+      // Check if already exists in approved
+      final existsInApproved = typeAssociations.any(
+        (item) => item is Map && item['id'] == associationId,
+      );
+      
+      if (!existsInApproved) {
+        typeAssociations.add(approvedAssociation);
+        associations[type] = typeAssociations;
+      }
+      
+      // Update the request status
+      await _firestore.collection('profile_association_requests').doc(requestId).update({
+        'status': 'approved',
+        'respondedAt': FieldValue.serverTimestamp(),
+      });
+      
+      // Auto-add to matchmaking featured links if no item of this type is currently featured
+      final matchmaking = requesterData['matchmaking'] as Map<String, dynamic>? ?? {};
+      final normalizedType = type.toLowerCase();
+      bool shouldUpdateMatchmaking = false;
+      
+      if (normalizedType == 'team' || normalizedType == 'teams') {
+        final currentFeaturedTeam = matchmaking['featuredTeam'];
+        // Only auto-add if no team is currently featured
+        if (currentFeaturedTeam == null) {
+          matchmaking['featuredTeam'] = approvedAssociation;
+          shouldUpdateMatchmaking = true;
+        }
+      } else if (normalizedType == 'tournament' || normalizedType == 'tournaments') {
+        final currentFeaturedTournament = matchmaking['featuredTournament'];
+        // Only auto-add if no tournament is currently featured
+        if (currentFeaturedTournament == null) {
+          matchmaking['featuredTournament'] = approvedAssociation;
+          shouldUpdateMatchmaking = true;
+        }
+      } else if (normalizedType == 'venue' || normalizedType == 'venues') {
+        final currentFeaturedVenue = matchmaking['featuredVenue'];
+        // Only auto-add if no venue is currently featured
+        if (currentFeaturedVenue == null) {
+          matchmaking['featuredVenue'] = approvedAssociation;
+          shouldUpdateMatchmaking = true;
+        }
+      } else if (normalizedType == 'coach' || normalizedType == 'coaches') {
+        final currentFeaturedCoach = matchmaking['featuredCoach'];
+        // Only auto-add if no coach is currently featured
+        if (currentFeaturedCoach == null) {
+          matchmaking['featuredCoach'] = approvedAssociation;
+          shouldUpdateMatchmaking = true;
+        }
+      }
+      
+      // Update the requester's profile with associations and matchmaking in one operation
+      final profileUpdate = {
+        'pendingAssociations': pendingAssociations,
+        'associations': associations,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      
+      // Include matchmaking update if needed
+      if (shouldUpdateMatchmaking) {
+        profileUpdate['matchmaking'] = matchmaking;
+      }
+      
+      await requesterProfileRef.set(
+        profileUpdate,
+        SetOptions(merge: true),
+      );
+      
+      // Send notification to requester about approval
+      try {
+        final notificationService = NotificationService();
+        final ownerName = requestData['associationOwnerName'] as String? ?? 'Owner';
+        await notificationService.createNotification(
+          userId: requesterId,
+          type: NotificationType.general,
+          title: 'Association Approved',
+          message: '$ownerName approved your request to add $associationTitle to your profile.',
+          data: {
+            'associationId': associationId,
+            'associationTitle': associationTitle,
+            'associationType': type,
+            'approved': true,
+          },
+        );
+      } catch (e) {
+        debugPrint('Failed to send approval notification: $e');
+        // Don't fail the approval if notification fails
+      }
+    } catch (e) {
+      debugPrint('Failed to approve association request: $e');
+      rethrow;
+    }
+  }
+
+  /// Reject an association request
+  Future<void> rejectAssociationRequest({
+    required String requestId,
+    required String requesterId,
+  }) async {
+    try {
+      // Update the request status
+      await _firestore.collection('profile_association_requests').doc(requestId).update({
+        'status': 'rejected',
+        'respondedAt': FieldValue.serverTimestamp(),
+      });
+      
+      // Remove from pending associations in requester's profile
+      final requesterProfileRef = _firestore.collection('public_profiles').doc(requesterId);
+      final requesterProfileSnapshot = await requesterProfileRef.get();
+      
+      if (requesterProfileSnapshot.exists) {
+        final requesterData = requesterProfileSnapshot.data()!;
+        final requestData = (await _firestore
+            .collection('profile_association_requests')
+            .doc(requestId)
+            .get())
+            .data();
+        
+        if (requestData != null) {
+          final type = requestData['type'] as String?;
+          final associationId = requestData['associationId'] as String?;
+          
+          if (type != null && associationId != null) {
+            final pendingAssociations = requesterData['pendingAssociations'] as Map<String, dynamic>? ?? {};
+            final typePendingAssociations = (pendingAssociations[type] as List<dynamic>?) ?? [];
+            
+            typePendingAssociations.removeWhere(
+              (item) => item is Map && item['id'] == associationId,
+            );
+            
+            pendingAssociations[type] = typePendingAssociations;
+            
+            await requesterProfileRef.set(
+              {
+                'pendingAssociations': pendingAssociations,
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Failed to reject association request: $e');
       rethrow;
     }
   }
@@ -1380,6 +1827,145 @@ class PublicProfileService {
         icon: Icons.groups_3_outlined,
       ),
     ];
+  }
+
+  /// Load user-owned venues, teams, and tournaments and convert them to AssociationCardData
+  Future<Map<String, List<AssociationCardData>>> _loadUserOwnedAssociations(
+    String userId,
+  ) async {
+    final result = <String, List<AssociationCardData>>{
+      'venues': [],
+      'teams': [],
+      'tournaments': [],
+    };
+
+    try {
+      // Load user-owned venues
+      final venuesQuery = await _firestore
+          .collection('venues')
+          .where('ownerId', isEqualTo: userId)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      for (final doc in venuesQuery.docs) {
+        try {
+          final data = doc.data();
+          final venueId = doc.id;
+          final venue = AssociationCardData(
+            id: venueId,
+            title: data['title'] as String? ?? 'Unknown Venue',
+            subtitle: data['description'] as String? ?? '',
+            role: 'Owner',
+            imageUrl: (data['images'] as List?)?.isNotEmpty == true
+                ? (data['images'] as List).first.toString()
+                : '',
+            tags: [data['sportType'] as String? ?? 'Sports'].where((t) => t.isNotEmpty).toList(),
+            location: data['location'] as String?,
+            status: 'active',
+            description: data['description'] as String?,
+            since: data['createdAt'] != null
+                ? (data['createdAt'] as Timestamp).toDate()
+                : null,
+            ownerName: data['ownerName'] as String?,
+            ownerId: userId,
+          );
+          result['venues']!.add(venue);
+        } catch (e) {
+          debugPrint('Error parsing owned venue: $e');
+        }
+      }
+
+      // Load user-owned teams (where user is owner/captain)
+      final teamsQuery = await _firestore
+          .collection('teams')
+          .where('createdBy', isEqualTo: userId)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      for (final doc in teamsQuery.docs) {
+        try {
+          final data = doc.data();
+          final teamId = doc.id;
+          final team = AssociationCardData(
+            id: teamId,
+            title: data['name'] as String? ?? 'Unknown Team',
+            subtitle: data['description'] as String? ?? data['bio'] as String? ?? '',
+            role: 'Owner/Captain',
+            imageUrl: data['profileImageUrl'] as String? ?? '',
+            tags: [
+              data['sportType'] as String? ?? 'Sports',
+            ].where((t) => t.isNotEmpty).toList(),
+            location: data['location'] as String? ?? data['city'] as String?,
+            status: 'active',
+            description: data['description'] as String? ?? data['bio'] as String?,
+            since: data['createdAt'] != null
+                ? (data['createdAt'] as Timestamp).toDate()
+                : null,
+            ownerName: data['createdByName'] as String?,
+            ownerId: userId,
+          );
+          result['teams']!.add(team);
+        } catch (e) {
+          debugPrint('Error parsing owned team: $e');
+        }
+      }
+
+      // Load user-created tournaments
+      final tournamentsQuery = await _firestore
+          .collection('tournaments')
+          .where('organizerId', isEqualTo: userId)
+          .get();
+
+      for (final doc in tournamentsQuery.docs) {
+        try {
+          final data = doc.data();
+          final tournamentId = doc.id;
+          final tournament = AssociationCardData(
+            id: tournamentId,
+            title: data['name'] as String? ?? 'Unknown Tournament',
+            subtitle: data['description'] as String? ?? '',
+            role: 'Organizer',
+            imageUrl: data['imageUrl'] as String? ?? '',
+            tags: [
+              data['sportType'] as String? ?? 'Sports',
+              data['format'] as String? ?? '',
+            ].where((t) => t != null && t.isNotEmpty).toList(),
+            location: data['location'] as String?,
+            status: 'active',
+            description: data['description'] as String?,
+            since: data['createdAt'] != null
+                ? (data['createdAt'] as Timestamp).toDate()
+                : null,
+            ownerName: data['organizerName'] as String?,
+            ownerId: userId,
+          );
+          result['tournaments']!.add(tournament);
+        } catch (e) {
+          debugPrint('Error parsing owned tournament: $e');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading user-owned associations: $e');
+    }
+
+    return result;
+  }
+
+  /// Merge two lists of associations, avoiding duplicates
+  List<AssociationCardData> _mergeAssociations(
+    List<AssociationCardData> existing,
+    List<AssociationCardData> toAdd,
+  ) {
+    final existingIds = existing.map((a) => a.id).toSet();
+    final merged = List<AssociationCardData>.from(existing);
+    
+    for (final item in toAdd) {
+      if (!existingIds.contains(item.id)) {
+        merged.add(item);
+      }
+    }
+    
+    return merged;
   }
 }
 

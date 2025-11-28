@@ -31,6 +31,8 @@ import '../venue/widgets/venue_image_carousel.dart';
 import '../venue/widgets/venue_pricing_section.dart';
 import '../venue/widgets/venue_reviews_section.dart';
 import '../../modules/coach/screens/coach_detail_screen.dart';
+import '../../modules/venue/screens/edit_venue_screen.dart';
+import '../../modules/venue/services/venue_service.dart' as venue_module;
 
 class VenueProfileScreen extends StatefulWidget {
   final Venue venue;
@@ -217,6 +219,68 @@ class _VenueProfileScreenState extends State<VenueProfileScreen>
       _isFavorite = !_isFavorite;
     });
     // TODO: Implement favorite functionality
+  }
+
+  Future<void> _editVenue() async {
+    try {
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Loading venue details...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+
+      // Fetch venue as VenueModel for editing
+      final venueService = venue_module.VenueService();
+      final venueModel = await venueService.getVenue(widget.venue.id);
+
+      if (venueModel == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Venue not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      // Navigate to edit screen
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditVenueScreen(venue: venueModel),
+        ),
+      );
+
+      // Reload venue details if edited successfully
+      if (result == true) {
+        _loadVenueDetails();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Venue updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open edit screen: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _shareVenue() {
@@ -884,30 +948,65 @@ class _VenueProfileScreenState extends State<VenueProfileScreen>
                     icon: const Icon(Icons.more_vert, color: Colors.white),
                     onSelected: (value) {
                       switch (value) {
+                        case 'edit':
+                          _editVenue();
+                          break;
                         case 'report':
                           _reportVenue();
                           break;
                       }
                     },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'report',
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.report, color: Colors.red),
-                            SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                'Report',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                    itemBuilder: (context) {
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      final isOwner = currentUser != null && 
+                          currentUser.uid == widget.venue.ownerId;
+                      
+                      final items = <PopupMenuItem<String>>[];
+                      
+                      if (isOwner) {
+                        items.add(
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.edit, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Edit Venue',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
+                        );
+                      }
+                      
+                      items.add(
+                        const PopupMenuItem(
+                          value: 'report',
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.report, color: Colors.red),
+                              SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'Report',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      );
+                      
+                      return items;
+                    },
                   ),
                 ),
               ],

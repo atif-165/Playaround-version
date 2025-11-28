@@ -360,11 +360,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     if (userId.isEmpty) return;
     _associationRequestsSubscription?.cancel();
     
-    // Listen to profile_association_requests for tournaments and coaches
+    // Listen to profile_association_requests for all types (teams, tournaments, venues, coaches)
     _associationRequestsSubscription = FirebaseFirestore.instance
         .collection('profile_association_requests')
         .where('requesterId', isEqualTo: userId)
-        .where('type', whereIn: ['tournament', 'coach'])
+        .where('type', whereIn: ['team', 'tournament', 'venue', 'coach'])
         .snapshots()
         .listen((snapshot) {
       if (!mounted) return;
@@ -380,7 +380,24 @@ class _DashboardScreenState extends State<DashboardScreen>
           
           // Check if request was approved
           if (status == 'approved' && associationId != null && type != null) {
-            final typeKey = type == 'tournament' ? 'tournaments' : 'coaches';
+            String typeKey;
+            switch (type) {
+              case 'team':
+                typeKey = 'teams';
+                break;
+              case 'tournament':
+                typeKey = 'tournaments';
+                break;
+              case 'venue':
+                typeKey = 'venues';
+                break;
+              case 'coach':
+                typeKey = 'coaches';
+                break;
+              default:
+                continue;
+            }
+            
             final isAlreadyAvailable = _availableAssociations[typeKey]
                 ?.any((item) => item.id == associationId) ?? false;
             
@@ -2786,6 +2803,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           allowMessagesFromFriendsOnly: false,
         );
 
+    final nameController = TextEditingController(text: identity.fullName);
     final taglineController = TextEditingController(text: identity.tagline);
     final statusController =
         TextEditingController(text: about.statusMessage ?? '');
@@ -2983,6 +3001,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             children: [
                               _buildAdminOverviewTab(
                                 controller: controller,
+                                nameController: nameController,
                                 taglineController: taglineController,
                                 bioController: bioController,
                                 statusController: statusController,
@@ -3022,27 +3041,30 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   final isApproved = approvedAssociations
                                       .any((item) => item.id == association.id);
 
-                                  if (isSelected && !isApproved) {
-                                    final success = await _submitAssociationRequest(
-                                      association,
-                                      'team',
-                                    );
-                                    if (mounted && success) {
-                                      // Add to selected list after successful request (but NOT to available - it's pending)
-                                      setState(() {
-                                        if (_selectedTeamIds.add(association.id)) {
-                                          _teams.add(association);
-                                          // Don't call _cacheAssociation here - it should only be in selectedIds, not available
-                                        }
-                                      });
-                                      setSheetState(() {});
-                                    } else if (mounted) {
-                                      setState(() {});
-                                      setSheetState(() {});
+                                  // Only allow toggling if approved
+                                  if (!isApproved) {
+                                    // If not approved, clicking should send a request
+                                    if (isSelected) {
+                                      final success = await _submitAssociationRequest(
+                                        association,
+                                        'team',
+                                      );
+                                      if (mounted && success) {
+                                        setState(() {
+                                          if (_selectedTeamIds.add(association.id)) {
+                                            _teams.add(association);
+                                          }
+                                        });
+                                        setSheetState(() {});
+                                      } else if (mounted) {
+                                        setState(() {});
+                                        setSheetState(() {});
+                                      }
                                     }
                                     return;
                                   }
 
+                                  // If approved, allow toggling
                                   setState(() {
                                     if (isSelected) {
                                       if (_selectedTeamIds
@@ -3091,23 +3113,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   final isApproved = approvedAssociations
                                       .any((item) => item.id == association.id);
 
-                                  if (isSelected && !isApproved) {
-                                    final success = await _submitAssociationRequest(
-                                      association,
-                                      'tournament',
-                                    );
-                                    if (mounted && success) {
-                                      // Add to selected list after successful request (but NOT to available - it's pending)
-                                      setState(() {
-                                        if (_selectedTournamentIds.add(association.id)) {
-                                          _tournaments.add(association);
-                                          // Don't call _cacheAssociation here - it should only be in selectedIds, not available
-                                        }
-                                      });
-                                      setSheetState(() {});
-                                    } else if (mounted) {
-                                      setState(() {});
-                                      setSheetState(() {});
+                                  // Only allow toggling if approved
+                                  if (!isApproved) {
+                                    if (isSelected) {
+                                      final success = await _submitAssociationRequest(
+                                        association,
+                                        'tournament',
+                                      );
+                                      if (mounted && success) {
+                                        setState(() {
+                                          if (_selectedTournamentIds.add(association.id)) {
+                                            _tournaments.add(association);
+                                          }
+                                        });
+                                        setSheetState(() {});
+                                      } else if (mounted) {
+                                        setState(() {});
+                                        setSheetState(() {});
+                                      }
                                     }
                                     return;
                                   }
@@ -3159,23 +3182,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   final isApproved = approvedAssociations
                                       .any((item) => item.id == association.id);
 
-                                  if (isSelected && !isApproved) {
-                                    final success = await _submitAssociationRequest(
-                                      association,
-                                      'venue',
-                                    );
-                                    if (mounted && success) {
-                                      // Add to selected list after successful request (but NOT to available - it's pending)
-                                      setState(() {
-                                        if (_selectedVenueIds.add(association.id)) {
-                                          _venues.add(association);
-                                          // Don't call _cacheAssociation here - it should only be in selectedIds, not available
-                                        }
-                                      });
-                                      setSheetState(() {});
-                                    } else if (mounted) {
-                                      setState(() {});
-                                      setSheetState(() {});
+                                  // Only allow toggling if approved
+                                  if (!isApproved) {
+                                    if (isSelected) {
+                                      final success = await _submitAssociationRequest(
+                                        association,
+                                        'venue',
+                                      );
+                                      if (mounted && success) {
+                                        setState(() {
+                                          if (_selectedVenueIds.add(association.id)) {
+                                            _venues.add(association);
+                                          }
+                                        });
+                                        setSheetState(() {});
+                                      } else if (mounted) {
+                                        setState(() {});
+                                        setSheetState(() {});
+                                      }
                                     }
                                     return;
                                   }
@@ -3227,23 +3251,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   final isApproved = approvedAssociations
                                       .any((item) => item.id == association.id);
 
-                                  if (isSelected && !isApproved) {
-                                    final success = await _submitAssociationRequest(
-                                      association,
-                                      'coach',
-                                    );
-                                    if (mounted && success) {
-                                      // Add to selected list after successful request (but NOT to available - it's pending)
-                                      setState(() {
-                                        if (_selectedCoachIds.add(association.id)) {
-                                          _coaches.add(association);
-                                          // Don't call _cacheAssociation here - it should only be in selectedIds, not available
-                                        }
-                                      });
-                                      setSheetState(() {});
-                                    } else if (mounted) {
-                                      setState(() {});
-                                      setSheetState(() {});
+                                  // Only allow toggling if approved
+                                  if (!isApproved) {
+                                    if (isSelected) {
+                                      final success = await _submitAssociationRequest(
+                                        association,
+                                        'coach',
+                                      );
+                                      if (mounted && success) {
+                                        setState(() {
+                                          if (_selectedCoachIds.add(association.id)) {
+                                            _coaches.add(association);
+                                          }
+                                        });
+                                        setSheetState(() {});
+                                      } else if (mounted) {
+                                        setState(() {});
+                                        setSheetState(() {});
+                                      }
                                     }
                                     return;
                                   }
@@ -3416,8 +3441,18 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                                       setSheetState(() => isSaving = true);
 
+                                      // Update name if changed
+                                      final updatedName = nameController.text.trim();
+                                      if (updatedName.isNotEmpty && updatedName != identity.fullName) {
+                                        await _service.updateProfileName(
+                                          userId: identity.userId,
+                                          fullName: updatedName,
+                                        );
+                                      }
+
                                       setState(() {
                                         _identity = identity.copyWith(
+                                          fullName: updatedName.isNotEmpty ? updatedName : identity.fullName,
                                           tagline:
                                               taglineController.text.trim(),
                                           city: updatedCityValue,
@@ -3465,6 +3500,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                                       final payload = {
                                         'identity': {
+                                          'fullName': _identity?.fullName ?? identity.fullName,
                                           'tagline': _identity?.tagline ?? '',
                                           'city': _identity?.city ?? '',
                                           'age': _identity?.age ?? identity.age,
@@ -3524,8 +3560,29 @@ class _DashboardScreenState extends State<DashboardScreen>
                                           identity.userId,
                                           payload,
                                         );
+                                        
+                                        // Auto-populate featured links if not already set
+                                        final currentMatchmaking = _matchmaking;
+                                        final needsAutoPopulate = 
+                                            (currentMatchmaking?.featuredTeam == null && _teams.isNotEmpty) ||
+                                            (currentMatchmaking?.featuredVenue == null && _venues.isNotEmpty) ||
+                                            (currentMatchmaking?.featuredCoach == null && _coaches.isNotEmpty) ||
+                                            (currentMatchmaking?.featuredTournament == null && _tournaments.isNotEmpty);
+                                        
+                                        if (needsAutoPopulate) {
+                                          try {
+                                            await _service.autoPopulateFeaturedLinks(
+                                              userId: identity.userId,
+                                            );
+                                          } catch (e) {
+                                            debugPrint('Failed to auto-populate featured links: $e');
+                                          }
+                                        }
+                                        
                                         if (!mounted) return;
                                         Navigator.pop(context);
+                                        if (!mounted) return;
+                                        await _fetchProfile(refresh: true);
                                         if (!mounted) return;
                                         ScaffoldMessenger.of(this.context)
                                             .showSnackBar(
@@ -3575,29 +3632,31 @@ class _DashboardScreenState extends State<DashboardScreen>
           },
         );
       },
-    );
-
-    taglineController.dispose();
-    bioController.dispose();
-    statusController.dispose();
-    matchmakingTaglineController.dispose();
-    matchmakingAboutController.dispose();
-    matchmakingCityController.dispose();
-    matchmakingAgeController.dispose();
-    matchmakingSportsController.dispose();
-    matchmakingSeekingController.dispose();
-    matchmakingDistanceController.dispose();
-    matchmakingDistanceLinkController.dispose();
-    instagramController.dispose();
-    facebookController.dispose();
-    snapchatController.dispose();
-    youtubeController.dispose();
-    for (final field in quickFactFields) {
-      field.dispose();
-    }
-    for (final controller in highlightControllers) {
-      controller.dispose();
-    }
+    ).then((_) {
+      // Dispose controllers only after the modal is dismissed
+      nameController.dispose();
+      taglineController.dispose();
+      bioController.dispose();
+      statusController.dispose();
+      matchmakingTaglineController.dispose();
+      matchmakingAboutController.dispose();
+      matchmakingCityController.dispose();
+      matchmakingAgeController.dispose();
+      matchmakingSportsController.dispose();
+      matchmakingSeekingController.dispose();
+      matchmakingDistanceController.dispose();
+      matchmakingDistanceLinkController.dispose();
+      instagramController.dispose();
+      facebookController.dispose();
+      snapchatController.dispose();
+      youtubeController.dispose();
+      for (final field in quickFactFields) {
+        field.dispose();
+      }
+      for (final controller in highlightControllers) {
+        controller.dispose();
+      }
+    });
   }
 
   void _openViewerActions() {
@@ -3901,6 +3960,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildAdminOverviewTab({
     required ScrollController controller,
+    required TextEditingController nameController,
     required TextEditingController taglineController,
     required TextEditingController bioController,
     required TextEditingController statusController,
@@ -3923,6 +3983,14 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          TextField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              labelText: 'Full Name',
+              hintText: 'Enter your full name',
+            ),
+          ),
+          Gap(16.h),
           TextField(
             controller: taglineController,
             decoration: const InputDecoration(
@@ -4316,6 +4384,114 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           Gap(20.h),
+          Text(
+            'Featured Links',
+            style: TextStyles.font14DarkBlue600Weight
+                .copyWith(color: Colors.white),
+          ),
+          Gap(8.h),
+          Text(
+            'Select one item from each category to feature in matchmaking',
+            style: TextStyles.font12Grey400Weight,
+          ),
+          Gap(12.h),
+          ElevatedButton.icon(
+            onPressed: () async {
+              final identity = _identity;
+              if (identity == null) return;
+              try {
+                await _service.autoPopulateFeaturedLinks(
+                  userId: identity.userId,
+                );
+                await _fetchProfile(refresh: true);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Featured links auto-populated successfully'),
+                    ),
+                  );
+                }
+              } catch (error) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to auto-populate: $error'),
+                    ),
+                  );
+                }
+              }
+            },
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('Auto-populate from associations'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PublicProfileTheme.panelAccentColor.withOpacity(0.2),
+              foregroundColor: PublicProfileTheme.panelAccentColor,
+            ),
+          ),
+          Gap(16.h),
+          if (_matchmaking?.featuredTeam != null)
+            _buildFeaturedLinkTile(
+              'Featured Team',
+              _matchmaking!.featuredTeam!,
+              onRemove: () async {
+                final identity = _identity;
+                if (identity == null) return;
+                await _service.updateMatchmakingFeaturedLinks(
+                  userId: identity.userId,
+                  featuredTeam: null,
+                );
+                await _fetchProfile(refresh: true);
+              },
+            ),
+          if (_matchmaking?.featuredVenue != null) ...[
+            Gap(12.h),
+            _buildFeaturedLinkTile(
+              'Featured Venue',
+              _matchmaking!.featuredVenue!,
+              onRemove: () async {
+                final identity = _identity;
+                if (identity == null) return;
+                await _service.updateMatchmakingFeaturedLinks(
+                  userId: identity.userId,
+                  featuredVenue: null,
+                );
+                await _fetchProfile(refresh: true);
+              },
+            ),
+          ],
+          if (_matchmaking?.featuredCoach != null) ...[
+            Gap(12.h),
+            _buildFeaturedLinkTile(
+              'Featured Coach',
+              _matchmaking!.featuredCoach!,
+              onRemove: () async {
+                final identity = _identity;
+                if (identity == null) return;
+                await _service.updateMatchmakingFeaturedLinks(
+                  userId: identity.userId,
+                  featuredCoach: null,
+                );
+                await _fetchProfile(refresh: true);
+              },
+            ),
+          ],
+          if (_matchmaking?.featuredTournament != null) ...[
+            Gap(12.h),
+            _buildFeaturedLinkTile(
+              'Featured Tournament',
+              _matchmaking!.featuredTournament!,
+              onRemove: () async {
+                final identity = _identity;
+                if (identity == null) return;
+                await _service.updateMatchmakingFeaturedLinks(
+                  userId: identity.userId,
+                  featuredTournament: null,
+                );
+                await _fetchProfile(refresh: true);
+              },
+            ),
+          ],
+          Gap(20.h),
           SwitchListTile(
             value: allowMessages,
             onChanged: onAllowMessagesChanged,
@@ -4329,6 +4505,67 @@ class _DashboardScreenState extends State<DashboardScreen>
               'When enabled, only approved connections can view full profile & start a chat.',
               style: TextStyles.font12Grey400Weight,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturedLinkTile(
+    String title,
+    AssociationCardData data, {
+    required VoidCallback onRemove,
+  }) {
+    return Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8.r),
+            child: CachedNetworkImage(
+              imageUrl: data.imageUrl,
+              width: 48.w,
+              height: 48.w,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => Container(
+                width: 48.w,
+                height: 48.w,
+                color: Colors.white.withOpacity(0.1),
+                child: Icon(
+                  Icons.image,
+                  color: Colors.white.withOpacity(0.5),
+                ),
+              ),
+            ),
+          ),
+          Gap(12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyles.font12Grey400Weight,
+                ),
+                Gap(4.h),
+                Text(
+                  data.title,
+                  style: TextStyles.font14DarkBlue600Weight
+                      .copyWith(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            color: Colors.white70,
+            onPressed: onRemove,
+            tooltip: 'Remove',
           ),
         ],
       ),
@@ -5882,6 +6119,10 @@ class _AdminAssociationsTabState extends State<_AdminAssociationsTab> {
                   ),
                 ),
                 child: ListTile(
+                  onTap: !isApproved && !isSelected ? () async {
+                    // If not approved and not selected, clicking sends a request
+                    await widget.onToggle(association, true);
+                  } : null,
                   leading: CircleAvatar(
                     backgroundColor: associationStatus != null
                         ? associationStatus.color.withAlpha(51)
@@ -5932,7 +6173,9 @@ class _AdminAssociationsTabState extends State<_AdminAssociationsTab> {
                             ),
                           ),
                           child: Text(
-                            'Status: ${associationStatus.displayName}',
+                            associationStatus == AssociationStatus.pending 
+                                ? 'Pending approval'
+                                : associationStatus.displayName,
                             style: TextStyles.font10Grey400Weight.copyWith(
                               color: associationStatus.color,
                               fontWeight: FontWeight.w600,
@@ -5949,13 +6192,25 @@ class _AdminAssociationsTabState extends State<_AdminAssociationsTab> {
                       ],
                     ],
                   ),
-                  trailing: Switch(
-                    value: isSelected,
-                    activeColor: PublicProfileTheme.panelAccentColor,
-                    onChanged: (value) async {
-                      await widget.onToggle(association, value);
-                    },
-                  ),
+                  trailing: isApproved 
+                      ? Switch(
+                          value: isSelected,
+                          activeColor: PublicProfileTheme.panelAccentColor,
+                          onChanged: (value) async {
+                            await widget.onToggle(association, value);
+                          },
+                        )
+                      : (isSelected 
+                          ? Icon(
+                              Icons.hourglass_empty,
+                              color: Colors.orange,
+                              size: 24.sp,
+                            )
+                          : Icon(
+                              Icons.add_circle_outline,
+                              color: PublicProfileTheme.panelAccentColor,
+                              size: 24.sp,
+                            )),
                 ),
               );
             },

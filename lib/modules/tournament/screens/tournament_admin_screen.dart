@@ -216,6 +216,8 @@ class _TournamentAdminScreenState extends State<TournamentAdminScreen>
   String? _scheduleTeam2Id;
   DateTime? _scheduleMatchDate;
   TimeOfDay? _scheduleMatchTime;
+  final TextEditingController _scheduleRoundController = TextEditingController();
+  final TextEditingController _scheduleMatchNumberController = TextEditingController();
   bool _isCreatingMatch = false;
   List<TournamentTeam> _cachedTeams = [];
   bool _isLoadingTeams = true;
@@ -330,6 +332,8 @@ class _TournamentAdminScreenState extends State<TournamentAdminScreen>
     _aboutController.dispose();
     _locationController.dispose();
     _prizeController.dispose();
+    _scheduleRoundController.dispose();
+    _scheduleMatchNumberController.dispose();
     for (final controller in _liveCommentaryControllers.values) {
       controller.dispose();
     }
@@ -2694,8 +2698,58 @@ class _TournamentAdminScreenState extends State<TournamentAdminScreen>
     }
 
     if (_cachedTeams.isEmpty) {
-      return _buildMatchesPlaceholder(
-        'No tournament teams have been created yet. Add teams before scheduling matches.',
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.groups_outlined,
+                size: 72.sp,
+                color: Colors.grey[400],
+              ),
+              Gap(16.h),
+              Text(
+                'No Teams Created Yet',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Gap(8.h),
+              Text(
+                'Create teams before scheduling matches.',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 14.sp,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Gap(24.h),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CreateTournamentTeamScreen(
+                        tournamentId: _currentTournament.id,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.group_add),
+                label: const Text('Create Team'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _accentColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -2848,6 +2902,65 @@ class _TournamentAdminScreenState extends State<TournamentAdminScreen>
             style: TextStyles.font16DarkBlue600Weight.copyWith(
               color: Colors.white,
             ),
+          ),
+          Gap(12.h),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _scheduleRoundController,
+                  style: TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Round/Stage',
+                    labelStyle: TextStyle(color: Colors.grey[400]),
+                    hintText: 'e.g., Group Stage, Quarter Final',
+                    hintStyle: TextStyle(color: Colors.grey[600]),
+                    filled: true,
+                    fillColor: Colors.grey[800],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      borderSide: BorderSide(color: Colors.grey[700]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      borderSide: BorderSide(color: Colors.grey[700]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      borderSide: BorderSide(color: _accentColor),
+                    ),
+                  ),
+                ),
+              ),
+              Gap(12.w),
+              Expanded(
+                child: TextFormField(
+                  controller: _scheduleMatchNumberController,
+                  style: TextStyle(color: Colors.white),
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Match Number',
+                    labelStyle: TextStyle(color: Colors.grey[400]),
+                    hintText: '1',
+                    hintStyle: TextStyle(color: Colors.grey[600]),
+                    filled: true,
+                    fillColor: Colors.grey[800],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      borderSide: BorderSide(color: Colors.grey[700]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      borderSide: BorderSide(color: Colors.grey[700]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.r),
+                      borderSide: BorderSide(color: _accentColor),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           Gap(12.h),
           SizedBox(
@@ -3065,8 +3178,12 @@ class _TournamentAdminScreenState extends State<TournamentAdminScreen>
           teamName: team2.name,
           teamLogoUrl: team2.logoUrl,
         ),
-        matchNumber: 'Match ${existingMatches.length + 1}',
-        round: 'Group Stage',
+        matchNumber: _scheduleMatchNumberController.text.trim().isNotEmpty
+            ? _scheduleMatchNumberController.text.trim()
+            : 'Match ${existingMatches.length + 1}',
+        round: _scheduleRoundController.text.trim().isNotEmpty
+            ? _scheduleRoundController.text.trim()
+            : 'Group Stage',
         scheduledTime: scheduledDateTime,
         venueName: _currentTournament.venueName,
       );
@@ -3091,6 +3208,8 @@ class _TournamentAdminScreenState extends State<TournamentAdminScreen>
         _scheduleTeam2Id = null;
         _scheduleMatchDate = null;
         _scheduleMatchTime = null;
+        _scheduleRoundController.clear();
+        _scheduleMatchNumberController.clear();
         _isCreatingMatch = false;
       });
 

@@ -158,5 +158,61 @@ service cloud.firestore {
     match /coach_profiles/{userId} {
       allow read, write: if isAuthenticated() && isOwner(userId);
     }
+
+    // Venues collection rules
+    match /venues/{venueId} {
+      // Allow anyone to read venues (for discovery and booking)
+      allow read: if true;
+      
+      // Allow authenticated users to create venues
+      allow create: if isAuthenticated() &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Allow venue owners to update their venues
+      allow update: if isAuthenticated() &&
+                       resource.data.ownerId == request.auth.uid;
+      
+      // Allow venue owners to delete their venues
+      allow delete: if isAuthenticated() &&
+                       resource.data.ownerId == request.auth.uid;
+    }
+
+    // Venue bookings collection rules
+    match /venue_bookings/{bookingId} {
+      // Allow read if user is the booker or venue owner
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid ||
+                      resource.data.venueOwnerId == request.auth.uid);
+      
+      // Allow authenticated users to create bookings
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.createdAt == request.time;
+      
+      // Allow booker or venue owner to update booking status
+      allow update: if isAuthenticated() &&
+                       (resource.data.userId == request.auth.uid ||
+                        resource.data.venueOwnerId == request.auth.uid);
+    }
+
+    // Venue reviews collection rules
+    match /venue_reviews/{reviewId} {
+      // Allow anyone to read reviews
+      allow read: if true;
+
+      // Allow authenticated users to create reviews
+      allow create: if isAuthenticated() &&
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.createdAt == request.time;
+
+      // Allow review authors to update their reviews
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+
+      // Allow review authors to delete their reviews
+      allow delete: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+    }
   }
 }

@@ -14,6 +14,7 @@ import '../../../theming/styles.dart';
 import '../models/models.dart';
 import '../services/tournament_service.dart';
 import '../services/tournament_team_service.dart';
+import '../services/tournament_join_request_service.dart';
 
 /// Screen for scheduling tournament matches
 class MatchSchedulingScreen extends StatefulWidget {
@@ -31,6 +32,8 @@ class MatchSchedulingScreen extends StatefulWidget {
 class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
   final _tournamentService = TournamentService();
   final TournamentTeamService _teamService = TournamentTeamService();
+  final TournamentJoinRequestService _joinRequestService =
+      TournamentJoinRequestService();
   final _formKey = GlobalKey<FormState>();
 
   // Form controllers
@@ -44,10 +47,14 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
   TimeOfDay? _selectedTime;
   bool _isLoading = false;
   bool _isLoadingTeams = true;
+  bool _teamsLoaded = false;
+  bool _requestsLoaded = false;
   StreamSubscription<List<TournamentTeam>>? _teamSubscription;
+  StreamSubscription<List<TournamentJoinRequest>>? _teamRequestSubscription;
 
   // Data
   List<TournamentTeam> _activeTeams = [];
+  List<TournamentJoinRequest> _acceptedTeamRequests = [];
 
   @override
   void initState() {
@@ -60,23 +67,85 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
     _roundController.dispose();
     _matchNumberController.dispose();
     _teamSubscription?.cancel();
+    _teamRequestSubscription?.cancel();
     super.dispose();
   }
 
   void _listenToTournamentTeams() {
+    // Listen to created tournament teams
     _teamSubscription = _teamService
         .getTeamsStream(widget.tournament.id)
         .listen((teams) {
       if (!mounted) return;
       setState(() {
         _activeTeams = teams;
-        _isLoadingTeams = false;
+        _teamsLoaded = true;
+        _updateLoadingState();
       });
     }, onError: (error) {
       if (!mounted) return;
-      setState(() => _isLoadingTeams = false);
+      setState(() {
+        _teamsLoaded = true;
+        _isLoadingTeams = false;
+      });
       context.showSnackBar('Failed to load teams: $error');
     });
+
+    // Listen to accepted team requests
+    _teamRequestSubscription = _joinRequestService
+        .watchTeamRequests(widget.tournament.id)
+        .listen((requests) {
+      if (!mounted) return;
+      setState(() {
+        _acceptedTeamRequests = requests
+            .where((r) => r.isTeamRequest && r.status == 'accepted')
+            .toList();
+        _requestsLoaded = true;
+        _updateLoadingState();
+      });
+    }, onError: (error) {
+      if (!mounted) return;
+      setState(() {
+        _requestsLoaded = true;
+        _isLoadingTeams = false;
+      });
+      context.showSnackBar('Failed to load team requests: $error');
+    });
+  }
+
+  void _updateLoadingState() {
+    // Only set loading to false after both streams have provided data
+    if (_teamsLoaded && _requestsLoaded) {
+      _isLoadingTeams = false;
+    }
+  }
+
+  /// Get all available teams (created teams + accepted team requests)
+  List<TournamentTeam> get _allAvailableTeams {
+    final List<TournamentTeam> allTeams = List.from(_activeTeams);
+
+    // Convert accepted team requests to TournamentTeam objects
+    for (final request in _acceptedTeamRequests) {
+      // Check if this team request already exists as a created team
+      final existsAsCreatedTeam = _activeTeams.any(
+        (team) => team.id == request.teamId || team.name == request.teamName,
+      );
+
+      if (!existsAsCreatedTeam && request.teamId != null) {
+        // Create a TournamentTeam from the accepted team request
+        final teamFromRequest = TournamentTeam(
+          id: request.teamId!,
+          tournamentId: widget.tournament.id,
+          name: request.teamName ?? 'Team ${request.teamId}',
+          logoUrl: request.teamLogoUrl,
+          createdAt: request.createdAt,
+          isActive: true,
+        );
+        allTeams.add(teamFromRequest);
+      }
+    }
+
+    return allTeams;
   }
 
   @override
@@ -101,7 +170,8 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
   }
 
   Widget _buildBody() {
-    if (_activeTeams.length < 2) {
+    final allTeams = _allAvailableTeams;
+    if (allTeams.length < 2) {
       return _buildInsufficientTeamsMessage();
     }
 
@@ -310,8 +380,9 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
     required Function(String?) onChanged,
     String? excludeTeamId,
   }) {
+    final allTeams = _allAvailableTeams;
     final availableTeams =
-        _activeTeams.where((team) => team.id != excludeTeamId).toList();
+        allTeams.where((team) => team.id != excludeTeamId).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,10 +612,9 @@ class _MatchSchedulingScreenState extends State<MatchSchedulingScreen> {
         _selectedTime!.minute,
       );
 
-      final team1 =
-          _activeTeams.firstWhere((t) => t.id == _selectedTeam1Id);
-      final team2 =
-          _activeTeams.firstWhere((t) => t.id == _selectedTeam2Id);
+      final allTeams = _allAvailableTeams;
+      final team1 = allTeams.firstWhere((t) => t.id == _selectedTeam1Id);
+      final team2 = allTeams.firstWhere((t) => t.id == _selectedTeam2Id);
 
       await _tournamentService.scheduleMatch(
         tournamentId: widget.tournament.id,

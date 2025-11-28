@@ -612,8 +612,7 @@ class _EditVenueScreenState extends State<EditVenueScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context); // Close dialog
-              Navigator.pop(
-                  context, true); // Close edit screen with success result
+              Navigator.pop(context, true); // Return true to indicate success
             },
             child: const Text('OK'),
           ),

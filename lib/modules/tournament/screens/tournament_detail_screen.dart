@@ -429,10 +429,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
   StreamSubscription<List<TournamentTeam>>? _teamsSubscription;
 
   bool _isRegistering = false;
-  bool _demoMatchesApplied = false;
-  bool _demoStandingsApplied = false;
-  bool _usingDemoMatches = false;
-  bool _usingDemoStandings = false;
 
   // Tab controller for different sections
   late TabController _tabController;
@@ -512,7 +508,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
 
   void _loadTournamentData() {
     _teamStandings = Map.from(_tournament.teamPoints);
-    _applyDemoStandingsIfNeeded();
   }
 
   Future<void> _hydrateVenue() async {
@@ -566,11 +561,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
       setState(() {
         _liveTournament = updated;
         _teamStandings = Map<String, int>.from(updated.teamPoints);
-        if (updated.teamPoints.isNotEmpty) {
-          _demoStandingsApplied = false;
-          _usingDemoStandings = false;
-        }
-        _applyDemoStandingsIfNeeded();
       });
     });
 
@@ -579,11 +569,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
       if (!mounted) return;
       setState(() {
         _teamStandings = Map<String, int>.from(leaderboard);
-        if (leaderboard.isNotEmpty) {
-          _demoStandingsApplied = false;
-          _usingDemoStandings = false;
-        }
-        _applyDemoStandingsIfNeeded();
       });
     });
 
@@ -591,20 +576,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
         _liveService.getMatchUpdates(tournamentId).listen((matches) {
       if (!mounted) return;
       setState(() {
-        if (matches.isNotEmpty) {
-          _demoMatchesApplied = false;
-          _usingDemoMatches = false;
-          _allMatches = matches;
-          _categorizeMatches(matches);
-          return;
-        }
-
-        if (_allMatches.isNotEmpty) {
-          // Keep showing the last known dataset (demo or real) until we
-          // actually receive new matches from the backend.
-          return;
-        }
-
         _allMatches = matches;
         _categorizeMatches(matches);
       });
@@ -614,20 +585,10 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
         _teamService.getTeamsStream(tournamentId).listen((teams) {
       if (!mounted) return;
       setState(() {
-        if (teams.isNotEmpty) {
-          _demoStandingsApplied = false;
-          _usingDemoStandings = false;
-          _activeTeams = teams;
-          _teamLookup = {
-            for (final team in teams) team.id: team,
-          };
-        } else if (!_usingDemoStandings) {
-          _activeTeams = teams;
-          _teamLookup = {
-            for (final team in teams) team.id: team,
-          };
-        }
-        _applyDemoStandingsIfNeeded();
+        _activeTeams = teams;
+        _teamLookup = {
+          for (final team in teams) team.id: team,
+        };
       });
     });
   }
@@ -679,7 +640,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
     _todayMatches = today;
     _futureMatches = upcoming;
     _pastMatches = completed.reversed.toList();
-    _applyDemoMatchesIfNeeded();
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -1552,6 +1512,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
       return;
     }
 
+    // Create controllers that will be managed within the dialog
     final nameController = TextEditingController(text: userProfile.fullName);
     final emailController = TextEditingController(text: authUser.email ?? '');
     final cityController = TextEditingController(text: userProfile.location);
@@ -1559,7 +1520,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
     final positionController = TextEditingController();
     final experienceController = TextEditingController();
     final notesController = TextEditingController();
-
     final teamSearchController = TextEditingController();
     final teamNotesController = TextEditingController();
 
@@ -1569,11 +1529,10 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
     final skillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Professional'];
     double selfRating = 6;
     String selectedSkillLevel = skillLevels[1];
-
     double teamSkillRating = 7;
     Team? selectedTeam;
-
     JoinRequestType? selectedType;
+    
     final submission = await showModalBottomSheet<_JoinRequestSubmission>(
       context: context,
       isScrollControlled: true,
@@ -2088,15 +2047,40 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
       },
     );
 
-    nameController.dispose();
-    emailController.dispose();
-    cityController.dispose();
-    contactController.dispose();
-    positionController.dispose();
-    experienceController.dispose();
-    notesController.dispose();
-    teamSearchController.dispose();
-    teamNotesController.dispose();
+    // Dispose controllers after a delay to ensure dialog is completely closed
+    // This prevents errors when the dialog is still animating/rebuilding
+    // The delay ensures all animations and rebuilds are complete
+    Future.delayed(const Duration(milliseconds: 500), () {
+      try {
+        nameController.dispose();
+      } catch (_) {
+        // Controller already disposed or in use
+      }
+      try {
+        emailController.dispose();
+      } catch (_) {}
+      try {
+        cityController.dispose();
+      } catch (_) {}
+      try {
+        contactController.dispose();
+      } catch (_) {}
+      try {
+        positionController.dispose();
+      } catch (_) {}
+      try {
+        experienceController.dispose();
+      } catch (_) {}
+      try {
+        notesController.dispose();
+      } catch (_) {}
+      try {
+        teamSearchController.dispose();
+      } catch (_) {}
+      try {
+        teamNotesController.dispose();
+      } catch (_) {}
+    });
 
     if (submission == null) return;
     await _submitJoinRequest(submission);
@@ -2439,684 +2423,6 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
     );
   }
 
-  bool get _allowDemoContent {
-    final metaFlag =
-        _tournament.metadata?['enableDemoContent'] as bool? ?? false;
-    if (metaFlag) return true;
-    return _isRoyalSportsLeague || _isRegionalSportsLeague;
-  }
-
-  void _applyDemoMatchesIfNeeded() {
-    if (_demoMatchesApplied || !_allowDemoContent) return;
-
-    final hasMatches = _allMatches.isNotEmpty ||
-        _liveMatches.isNotEmpty ||
-        _todayMatches.isNotEmpty ||
-        _futureMatches.isNotEmpty ||
-        _pastMatches.isNotEmpty;
-    if (hasMatches) return;
-
-    List<TournamentMatch>? demoMatches;
-    if (_isRoyalSportsLeague) {
-      demoMatches = _buildRoyalSportsLeagueDemoMatches();
-    } else if (_isRegionalSportsLeague) {
-      demoMatches = _buildRegionalSportsLeagueDemoMatches();
-    } else {
-      demoMatches = _buildSportSpecificDemoMatches();
-    }
-
-    if (demoMatches == null || demoMatches.isEmpty) return;
-
-    _demoMatchesApplied = true;
-    _usingDemoMatches = true;
-    _allMatches = demoMatches;
-    _categorizeMatches(demoMatches);
-  }
-
-  void _applyDemoStandingsIfNeeded() {
-    if (_demoStandingsApplied || _teamStandings.isNotEmpty || !_allowDemoContent) {
-      return;
-    }
-
-    _demoStandingsApplied = true;
-    _usingDemoStandings = true;
-
-    final demoTeams = _isRegionalSportsLeague
-        ? _buildRegionalSportsLeagueDemoTeams()
-        : _buildGenericDemoTeams();
-    if (demoTeams.isEmpty) return;
-    _teamStandings = {
-      for (final team in demoTeams) team.id: team.points,
-    };
-    _activeTeams = demoTeams;
-    _teamLookup = {
-      for (final team in demoTeams) team.id: team,
-    };
-  }
-
-  List<TournamentMatch> _buildRoyalSportsLeagueDemoMatches() {
-    final now = DateTime.now();
-    final venueName = _tournament.venueName;
-    final venueLocation = _tournament.location;
-
-    TournamentMatch createMatch({
-      required String id,
-      required String matchNumber,
-      required String team1Id,
-      required String team1Name,
-      required int team1Score,
-      required String team2Id,
-      required String team2Name,
-      required int team2Score,
-      required DateTime scheduledTime,
-      DateTime? actualStartTime,
-      DateTime? actualEndTime,
-      TournamentMatchStatus status = TournamentMatchStatus.scheduled,
-      String? round,
-      String? result,
-    }) {
-      return TournamentMatch(
-        id: id,
-        tournamentId: _tournament.id,
-        tournamentName: _tournament.name,
-        sportType: _tournament.sportType,
-        matchNumber: matchNumber,
-        round: round,
-        team1: TeamMatchScore(
-          teamId: team1Id,
-          teamName: team1Name,
-          score: team1Score,
-          playerIds: const [],
-        ),
-        team2: TeamMatchScore(
-          teamId: team2Id,
-          teamName: team2Name,
-          score: team2Score,
-          playerIds: const [],
-        ),
-        scheduledTime: scheduledTime,
-        actualStartTime: actualStartTime,
-        actualEndTime: actualEndTime,
-        status: status,
-        venueName: venueName,
-        venueLocation: venueLocation,
-        result: result,
-      );
-    }
-
-    return [
-      createMatch(
-        id: 'demo-rsl-live-1',
-        matchNumber: 'Match 12',
-        team1Id: 'rsl-mavericks',
-        team1Name: 'Multan Mavericks',
-        team1Score: 2,
-        team2Id: 'rsl-lightning',
-        team2Name: 'Lahore Lightning',
-        team2Score: 1,
-        scheduledTime: now.subtract(const Duration(minutes: 70)),
-        actualStartTime: now.subtract(const Duration(minutes: 70)),
-        status: TournamentMatchStatus.live,
-        round: 'League Stage',
-        result: '78\' • Second Half',
-      ),
-      createMatch(
-        id: 'demo-rsl-upcoming-1',
-        matchNumber: 'Match 13',
-        team1Id: 'rsl-royals',
-        team1Name: 'Karachi Royals',
-        team1Score: 0,
-        team2Id: 'rsl-warriors',
-        team2Name: 'Islamabad Warriors',
-        team2Score: 0,
-        scheduledTime: now.add(const Duration(hours: 5)),
-        status: TournamentMatchStatus.scheduled,
-        round: 'League Stage',
-        result: 'Kick-off at ${DateFormat('h:mm a').format(now.add(const Duration(hours: 5)))}',
-      ),
-      createMatch(
-        id: 'demo-rsl-completed-1',
-        matchNumber: 'Match 11',
-        team1Id: 'rsl-guardians',
-        team1Name: 'Golden Guardians',
-        team1Score: 3,
-        team2Id: 'rsl-stallions',
-        team2Name: 'Sapphire Stallions',
-        team2Score: 2,
-        scheduledTime: now.subtract(const Duration(days: 1)),
-        actualStartTime: now.subtract(const Duration(days: 1)),
-        actualEndTime:
-            now.subtract(const Duration(days: 1)).add(const Duration(minutes: 95)),
-        status: TournamentMatchStatus.completed,
-        round: 'League Stage',
-        result: 'Golden Guardians won 3-2',
-      ),
-    ];
-  }
-
-  List<TournamentMatch> _buildRegionalSportsLeagueDemoMatches() {
-    final now = DateTime.now();
-
-    TournamentMatch buildMatch({
-      required String id,
-      required String matchNumber,
-      required String team1Id,
-      required String team1Name,
-      required int team1Score,
-      required String team2Id,
-      required String team2Name,
-      required int team2Score,
-      required DateTime scheduledTime,
-      TournamentMatchStatus status = TournamentMatchStatus.scheduled,
-      String? round,
-      DateTime? actualStart,
-      DateTime? actualEnd,
-      String? result,
-      List<CommentaryEntry> commentary = const [],
-      List<PlayerMatchStats> team1Stats = const [],
-      List<PlayerMatchStats> team2Stats = const [],
-    }) {
-      return TournamentMatch(
-        id: id,
-        tournamentId: _tournament.id,
-        tournamentName: _tournament.name,
-        sportType: _tournament.sportType,
-        matchNumber: matchNumber,
-        round: round ?? 'League Stage',
-        scheduledTime: scheduledTime,
-        actualStartTime: actualStart,
-        actualEndTime: actualEnd,
-        status: status,
-        result: result,
-        commentary: commentary,
-        team1: TeamMatchScore(
-          teamId: team1Id,
-          teamName: team1Name,
-          score: team1Score,
-        ),
-        team2: TeamMatchScore(
-          teamId: team2Id,
-          teamName: team2Name,
-          score: team2Score,
-        ),
-        team1PlayerStats: team1Stats,
-        team2PlayerStats: team2Stats,
-        venueName: _tournament.venueName ?? 'National Stadium',
-        venueLocation: _tournament.location ?? 'Pakistan',
-      );
-    }
-
-    final liveCommentary = [
-      CommentaryEntry(
-        id: 'regional-live-1',
-        text: 'Haris Iqbal curls one into the top corner!',
-        minute: '72\'',
-        timestamp: now.subtract(const Duration(minutes: 8)),
-        eventType: 'goal',
-        playerName: 'Haris Iqbal',
-      ),
-      CommentaryEntry(
-        id: 'regional-live-2',
-        text: 'Sheryar Malik denies a sure goal with a sliding tackle.',
-        minute: '75\'',
-        timestamp: now.subtract(const Duration(minutes: 5)),
-        eventType: 'defense',
-        playerName: 'Sheryar Malik',
-      ),
-    ];
-
-    final completedCommentary = [
-      CommentaryEntry(
-        id: 'regional-completed-1',
-        text: 'Final whistle! Royals close it out in dramatic fashion.',
-        minute: '90+3\'',
-        timestamp: now.subtract(const Duration(hours: 16)),
-        eventType: 'summary',
-      ),
-      CommentaryEntry(
-        id: 'regional-completed-2',
-        text: 'Adeel Sarfraz scores a stoppage-time header!',
-        minute: '90+1\'',
-        timestamp: now.subtract(const Duration(hours: 16, minutes: 2)),
-        eventType: 'goal',
-        playerName: 'Adeel Sarfraz',
-      ),
-    ];
-
-    return [
-      buildMatch(
-        id: 'demo-regional-live',
-        matchNumber: 'Match 28',
-        team1Id: 'rsl-mavericks',
-        team1Name: 'Multan Mavericks',
-        team1Score: 2,
-        team2Id: 'rsl-lightning',
-        team2Name: 'Lahore Lightning',
-        team2Score: 2,
-        status: TournamentMatchStatus.live,
-        scheduledTime: now.subtract(const Duration(minutes: 90)),
-        actualStart: now.subtract(const Duration(minutes: 90)),
-        result: '78\' • Second Half',
-        commentary: liveCommentary,
-        team1Stats: const [
-          PlayerMatchStats(playerId: 'haris', playerName: 'Haris Iqbal', goals: 1, assists: 1),
-          PlayerMatchStats(playerId: 'zeeshan', playerName: 'Zeeshan Tariq', goals: 1),
-        ],
-        team2Stats: const [
-          PlayerMatchStats(playerId: 'fahad', playerName: 'Fahad Mehmood', goals: 1, assists: 1),
-          PlayerMatchStats(playerId: 'adil', playerName: 'Adil Bashir', goals: 1),
-        ],
-      ),
-      buildMatch(
-        id: 'demo-regional-upcoming',
-        matchNumber: 'Match 29',
-        team1Id: 'rsl-royals',
-        team1Name: 'Karachi Royals',
-        team1Score: 0,
-        team2Id: 'rsl-warriors',
-        team2Name: 'Islamabad Warriors',
-        team2Score: 0,
-        status: TournamentMatchStatus.scheduled,
-        scheduledTime: now.add(const Duration(hours: 6)),
-        result: 'Kick-off at ${DateFormat('h:mm a').format(now.add(const Duration(hours: 6)))}',
-        team1Stats: const [
-          PlayerMatchStats(playerId: 'royals-cpt', playerName: 'Saad Rauf'),
-        ],
-        team2Stats: const [
-          PlayerMatchStats(playerId: 'warriors-cpt', playerName: 'Adeel Sarfraz'),
-        ],
-      ),
-      buildMatch(
-        id: 'demo-regional-completed',
-        matchNumber: 'Match 27',
-        team1Id: 'rsl-guardians',
-        team1Name: 'Golden Guardians',
-        team1Score: 3,
-        team2Id: 'rsl-stallions',
-        team2Name: 'Sapphire Stallions',
-        team2Score: 1,
-        status: TournamentMatchStatus.completed,
-        scheduledTime: now.subtract(const Duration(hours: 20)),
-        actualStart: now.subtract(const Duration(hours: 20)),
-        actualEnd: now.subtract(const Duration(hours: 18, minutes: 45)),
-        result: 'Golden Guardians won 3-1',
-        commentary: completedCommentary,
-        team1Stats: const [
-          PlayerMatchStats(playerId: 'guardian-7', playerName: 'Imran Aziz', goals: 2, assists: 1),
-          PlayerMatchStats(playerId: 'guardian-4', playerName: 'Usman Tariq', goals: 1),
-        ],
-        team2Stats: const [
-          PlayerMatchStats(playerId: 'stallion-9', playerName: 'Bilal Hashmi', goals: 1),
-        ],
-      ),
-    ];
-  }
-
-  List<TournamentMatch> _buildSportSpecificDemoMatches() {
-    final teamNames = _demoTeamNamesForSport();
-    if (teamNames.length < 4) return [];
-
-    final now = DateTime.now();
-    final venueName = _tournament.venueName ?? '${_tournament.location ?? 'Central'} Arena';
-
-    TournamentMatch createMatch({
-      required String id,
-      required String team1Name,
-      required int team1Score,
-      required String team2Name,
-      required int team2Score,
-      required TournamentMatchStatus status,
-      required DateTime scheduledTime,
-      String? result,
-    }) {
-      return TournamentMatch(
-        id: id,
-        tournamentId: _tournament.id,
-        tournamentName: _tournament.name,
-        sportType: _tournament.sportType,
-        matchNumber: 'Match ${id.hashCode.abs() % 50 + 1}',
-        round: 'Main Stage',
-        scheduledTime: scheduledTime,
-        actualStartTime:
-            status == TournamentMatchStatus.scheduled ? null : scheduledTime,
-        status: status,
-        result: result,
-        team1: TeamMatchScore(
-          teamId: _normalizeTeamId(team1Name),
-          teamName: team1Name,
-          score: team1Score,
-        ),
-        team2: TeamMatchScore(
-          teamId: _normalizeTeamId(team2Name),
-          teamName: team2Name,
-          score: team2Score,
-        ),
-        venueName: venueName,
-        venueLocation: _tournament.location ?? 'Global Venue',
-      );
-    }
-
-    final upcomingTime = now.add(const Duration(hours: 5));
-    final completedTime = now.subtract(const Duration(hours: 18));
-
-    return [
-      createMatch(
-        id: 'demo-${_tournament.id}-live',
-        team1Name: teamNames[0],
-        team1Score: 2,
-        team2Name: teamNames[1],
-        team2Score: 1,
-        status: TournamentMatchStatus.live,
-        scheduledTime: now.subtract(const Duration(minutes: 70)),
-        result: _liveStatusDescription(),
-      ),
-      createMatch(
-        id: 'demo-${_tournament.id}-upcoming',
-        team1Name: teamNames[2],
-        team1Score: 0,
-        team2Name: teamNames[3],
-        team2Score: 0,
-        status: TournamentMatchStatus.scheduled,
-        scheduledTime: upcomingTime,
-        result: _upcomingStatusDescription(upcomingTime),
-      ),
-      createMatch(
-        id: 'demo-${_tournament.id}-completed',
-        team1Name: teamNames[4 % teamNames.length],
-        team1Score: 3,
-        team2Name: teamNames[5 % teamNames.length],
-        team2Score: 2,
-        status: TournamentMatchStatus.completed,
-        scheduledTime: completedTime,
-        result: _completedResultDescription(
-          teamNames[4 % teamNames.length],
-          3,
-          teamNames[5 % teamNames.length],
-          2,
-        ),
-      ),
-    ];
-  }
-
-  List<TournamentTeam> _buildGenericDemoTeams() {
-    final teamNames = _demoTeamNamesForSport();
-    if (teamNames.isEmpty) return [];
-
-    final configurations = [
-      const (wins: 4, draws: 1, losses: 0, points: 13, goalsFor: 18, goalsAgainst: 7),
-      const (wins: 3, draws: 1, losses: 1, points: 10, goalsFor: 15, goalsAgainst: 9),
-      const (wins: 2, draws: 1, losses: 2, points: 7, goalsFor: 11, goalsAgainst: 10),
-      const (wins: 1, draws: 2, losses: 2, points: 5, goalsFor: 9, goalsAgainst: 12),
-    ];
-
-    return List.generate(configurations.length, (index) {
-      final name = teamNames[index % teamNames.length];
-      final config = configurations[index];
-      return TournamentTeam(
-        id: _normalizeTeamId(name),
-        tournamentId: _tournament.id,
-        name: name,
-        playerNames: _generatePlayerNames(name),
-        wins: config.wins,
-        draws: config.draws,
-        losses: config.losses,
-        points: config.points,
-        goalsFor: config.goalsFor,
-        goalsAgainst: config.goalsAgainst,
-      );
-    });
-  }
-
-  List<String> _demoTeamNamesForSport() {
-    switch (_tournament.sportType) {
-      case SportType.cricket:
-        return [
-          'Boundary Breakers',
-          'Spin Wizards',
-          'Pace Titans',
-          'Century Kings',
-          'Power Hitters',
-          'Yorker Squad',
-        ];
-      case SportType.football:
-      case SportType.soccer:
-        return [
-          'Metro United',
-          'Harbor City FC',
-          'Capital Strikers',
-          'Coastal Rangers',
-          'Northern Royals',
-          'Southern Titans',
-        ];
-      case SportType.basketball:
-        return [
-          'Skyline Hoopsters',
-          'Downtown Flyers',
-          'Baseline Kings',
-          'Summit Dunkers',
-          'Neon Nets',
-          'Prime Shooters',
-        ];
-      case SportType.tennis:
-        return [
-          'Baseline Masters',
-          'Spin Artists',
-          'Grand Slam Club',
-          'Court Aces',
-          'Topspin Legends',
-          'Rally Titans',
-        ];
-      case SportType.badminton:
-        return [
-          'Feather Flyers',
-          'Drop Shot Pros',
-          'Smash Factory',
-          'Net Dominators',
-          'Rally Ninjas',
-          'Drive Force',
-        ];
-      case SportType.volleyball:
-        return [
-          'Spike Society',
-          'Block Brigade',
-          'Serve Savants',
-          'Coastal Diggers',
-          'Set Masters',
-          'Rally Rebels',
-        ];
-      case SportType.hockey:
-        return [
-          'Glacier Blades',
-          'Arctic Wolves',
-          'Metro Stickmen',
-          'Capital Ice',
-          'Steel Panthers',
-          'Frost Giants',
-        ];
-      case SportType.rugby:
-        return [
-          'Scrum Force',
-          'Maul Masters',
-          'Try City',
-          'Ruck Raiders',
-          'Lineout Legends',
-          'Tackle Titans',
-        ];
-      case SportType.baseball:
-        return [
-          'Diamond Aces',
-          'Grand Slammers',
-          'Pitch Perfect',
-          'Home Run Heroes',
-          'Batting Brigade',
-          'Fastball Flyers',
-        ];
-      case SportType.cycling:
-        return [
-          'Peloton Prime',
-          'Sprint Syndicate',
-          'Hill Climbers',
-          'Aero Alliance',
-          'Velocity Vanguards',
-          'Cadence Crew',
-        ];
-      case SportType.running:
-        return [
-          'Marathon Mavericks',
-          'Sprint Collective',
-          'Ultra Finishers',
-          'Track Titans',
-          'Pace Setters',
-          'Stride Society',
-        ];
-      case SportType.swimming:
-        return [
-          'Wave Runners',
-          'Aqua Surge',
-          'Lane Legends',
-          'Stroke Masters',
-          'Tide Breakers',
-          'Splash Squad',
-        ];
-      case SportType.other:
-        return [
-          'Alpha Titans',
-          'Velocity Crew',
-          'Nova Legends',
-          'Blue Comets',
-          'Onyx Guardians',
-          'Solar Sparks',
-        ];
-    }
-  }
-
-  String _normalizeTeamId(String name) =>
-      name.toLowerCase().replaceAll(' ', '-');
-
-  List<String> _generatePlayerNames(String teamName) {
-    final prefix = teamName.split(' ').first;
-    return List.generate(3, (index) => '$prefix Player ${index + 1}');
-  }
-
-  String _liveStatusDescription() {
-    switch (_tournament.sportType) {
-      case SportType.cricket:
-        return 'Over 15 • Second Innings';
-      case SportType.basketball:
-        return 'Q3 • 04:12';
-      case SportType.tennis:
-        return 'Set 3 • Game 5';
-      case SportType.badminton:
-        return 'Game 2 • Rally 18';
-      case SportType.volleyball:
-        return 'Set 4 • 18-16';
-      case SportType.hockey:
-        return 'Period 3 • 05:30';
-      case SportType.rugby:
-        return 'Second Half • 62\'';
-      case SportType.baseball:
-        return 'Inning 7 • Top';
-      case SportType.cycling:
-        return 'Stage 4 • KM 120';
-      case SportType.running:
-        return 'Lap 6 • 24 km';
-      case SportType.swimming:
-        return 'Final Heat • 150m';
-      case SportType.football:
-      case SportType.soccer:
-      case SportType.other:
-        return '78\' • Second Half';
-    }
-  }
-
-  String _completedResultDescription(
-    String winner,
-    int winnerScore,
-    String runnerUp,
-    int runnerUpScore,
-  ) {
-    switch (_tournament.sportType) {
-      case SportType.cricket:
-        return '$winner won by ${winnerScore - runnerUpScore} runs';
-      case SportType.tennis:
-      case SportType.badminton:
-        return '$winner won ${winnerScore}-${runnerUpScore} sets';
-      case SportType.cycling:
-        return '$winner topped the stage, ${runnerUp} finished close';
-      case SportType.running:
-        return '$winner posted a blazing finish';
-      default:
-        return '$winner won $winnerScore-$runnerUpScore';
-    }
-  }
-
-  String _upcomingStatusDescription(DateTime time) {
-    final formatted = DateFormat('h:mm a').format(time);
-    switch (_tournament.sportType) {
-      case SportType.cycling:
-        return 'Stage rollout at $formatted';
-      case SportType.running:
-        return 'Race start at $formatted';
-      case SportType.cricket:
-        return 'First ball at $formatted';
-      default:
-        return 'Kick-off at $formatted';
-    }
-  }
-
-  List<TournamentTeam> _buildRegionalSportsLeagueDemoTeams() {
-    return [
-      TournamentTeam(
-        id: 'rsl-multan',
-        tournamentId: _tournament.id,
-        name: 'Multan Mavericks',
-        playerNames: const ['Haris Iqbal', 'Zeeshan Tariq', 'Usman Jalal'],
-        wins: 4,
-        draws: 1,
-        losses: 0,
-        points: 13,
-        goalsFor: 18,
-        goalsAgainst: 7,
-      ),
-      TournamentTeam(
-        id: 'rsl-karachi',
-        tournamentId: _tournament.id,
-        name: 'Karachi Kingslayers',
-        playerNames: const ['Saad Rauf', 'Rizwan Shah', 'Sheryar Malik'],
-        wins: 3,
-        draws: 1,
-        losses: 1,
-        points: 10,
-        goalsFor: 16,
-        goalsAgainst: 9,
-      ),
-      TournamentTeam(
-        id: 'rsl-lahore',
-        tournamentId: _tournament.id,
-        name: 'Lahore Lightning',
-        playerNames: const ['Fahad Mehmood', 'Imran Raza', 'Adil Bashir'],
-        wins: 2,
-        draws: 2,
-        losses: 1,
-        points: 8,
-        goalsFor: 14,
-        goalsAgainst: 12,
-      ),
-      TournamentTeam(
-        id: 'rsl-islamabad',
-        tournamentId: _tournament.id,
-        name: 'Islamabad Icebreakers',
-        playerNames: const ['Adeel Sarfraz', 'Raheel Abbas', 'Moin Qureshi'],
-        wins: 1,
-        draws: 1,
-        losses: 3,
-        points: 4,
-        goalsFor: 9,
-        goalsAgainst: 15,
-      ),
-    ];
-  }
-
   Widget _buildJoinButton() {
     if (_tournament.status != TournamentStatus.registrationOpen) {
       return const SizedBox.shrink();
@@ -3339,7 +2645,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
 
   Widget _buildTeamsTab() {
     final teams = _activeTeams;
-    if (teams.isEmpty && !_usingDemoStandings) {
+    if (teams.isEmpty) {
       return SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
         child: TournamentTeamsList(tournamentId: _tournament.id),

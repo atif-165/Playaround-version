@@ -8,6 +8,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../models/user_profile.dart';
+import '../../../models/notification_model.dart';
+import '../../../services/notification_service.dart';
 import '../../../repositories/user_repository.dart';
 import '../models/chat_message.dart';
 import '../models/chat_room.dart';
@@ -877,10 +879,56 @@ class ChatService {
           recipientTokens: tokens,
         );
       }
+
+      // Also save notifications to notifications collection for in-app notifications
+      try {
+        final notificationService = NotificationService();
+        final messageText = _getMessagePreview(notificationMessage);
+        
+        for (final participantId in participantIds) {
+          await notificationService.createNotification(
+            userId: participantId,
+            type: NotificationType.newMessage,
+            title: chatRoom.isGroupChat 
+                ? (chatRoom.name ?? 'Group Chat')
+                : message.senderName,
+            message: chatRoom.isGroupChat 
+                ? '${message.senderName}: $messageText'
+                : messageText,
+            data: {
+              'chatId': chatId,
+              'messageId': message.id,
+              'senderId': message.fromId,
+              'senderName': message.senderName,
+              'chatType': chatRoom.isGroupChat ? 'group' : 'direct',
+            },
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('❌ ChatService: Error creating in-app message notifications: $e');
+        }
+        // Don't fail the message send if notification creation fails
+      }
     } catch (e) {
       if (kDebugMode) {
         debugPrint('❌ ChatService: Error sending message notifications - $e');
       }
+    }
+  }
+
+  /// Get a preview text for the message notification
+  String _getMessagePreview(ChatMessage message) {
+    if (message.text != null && message.text!.isNotEmpty) {
+      return message.text!.length > 50 
+          ? '${message.text!.substring(0, 50)}...' 
+          : message.text!;
+    } else if (message.type == MessageType.image) {
+      return '📷 Sent an image';
+    } else if (message.type == MessageType.entity && message.sharedEntity != null) {
+      return '🔗 Shared ${message.sharedEntity!.type.value}';
+    } else {
+      return 'New message';
     }
   }
 

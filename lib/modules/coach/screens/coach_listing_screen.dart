@@ -137,8 +137,13 @@ class _CoachListingScreenState extends State<CoachListingScreen> {
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeInOut,
+                  switchOutCurve: Curves.easeInOut,
                   child: _isLoading
-                      ? const Center(child: CustomProgressIndicator())
+                      ? const Center(
+                          key: ValueKey('loading'),
+                          child: CustomProgressIndicator(),
+                        )
                       : _buildCoachesList(),
                 ),
               ),
@@ -456,49 +461,57 @@ class _CoachListingScreenState extends State<CoachListingScreen> {
   Widget _buildCoachesList() {
     if (_filteredCoaches.isEmpty) {
       return RefreshIndicator(
+        key: const ValueKey('empty_list'),
         onRefresh: _loadInitialData,
-        child: ListView(
+        child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            SizedBox(height: 120.h),
-            Icon(
-              Icons.self_improvement_outlined,
-              size: 84.sp,
-              color: Colors.white.withOpacity(0.25),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - 200.h,
             ),
-            Gap(20.h),
-            Center(
-              child: Text(
-                'No coaches match your filters',
-                style: TextStyles.font16DarkBlueBold.copyWith(
-                  color: Colors.white,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: 120.h),
+                Icon(
+                  Icons.self_improvement_outlined,
+                  size: 84.sp,
+                  color: Colors.white.withOpacity(0.25),
                 ),
-              ),
-            ),
-            Gap(10.h),
-            Center(
-              child: Text(
-                'Try browsing all sports or refining your search keywords.',
-                style: TextStyles.font14Grey400Weight.copyWith(
-                  color: Colors.white.withOpacity(0.65),
+                Gap(20.h),
+                Center(
+                  child: Text(
+                    'No coaches match your filters',
+                    style: TextStyles.font16DarkBlueBold.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
+                Gap(10.h),
+                Center(
+                  child: Text(
+                    'Try browsing all sports or refining your search keywords.',
+                    style: TextStyles.font14Grey400Weight.copyWith(
+                      color: Colors.white.withOpacity(0.65),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                SizedBox(height: 220.h),
+              ],
             ),
-            SizedBox(height: 220.h),
-          ],
+          ),
         ),
       );
     }
 
     return RefreshIndicator(
+      key: const ValueKey('coaches_list'),
       onRefresh: _loadInitialData,
       child: ListView.separated(
         padding: EdgeInsets.fromLTRB(20.w, 8.h, 20.w, 26.h),
         itemCount: _filteredCoaches.length,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
+        physics: const AlwaysScrollableScrollPhysics(),
         separatorBuilder: (_, __) => Gap(18.h),
         itemBuilder: (context, index) {
           final coach = _filteredCoaches[index];
@@ -528,10 +541,15 @@ class _CoachListingScreenState extends State<CoachListingScreen> {
           await _coachService.getCurrentUserCoachProfile();
       if (currentCoachProfile != null) {
         // Navigate to profile edit screen instead of detail screen
-        Navigator.of(context).pushNamed(
+        final result = await Navigator.of(context).pushNamed(
           Routes.coachProfileEditScreen,
           arguments: currentCoachProfile,
         );
+        
+        // Refresh the listing when returning from edit screen
+        if (result == true && mounted) {
+          _loadInitialData();
+        }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

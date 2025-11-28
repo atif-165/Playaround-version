@@ -25,8 +25,12 @@ class FirestoreMatchmakingDataSource {
     return snapshot.docs.map(TeamModel.fromFirestore).toList();
   }
 
-  Future<List<VenueModel>> fetchVenues({int limit = 50}) async {
-    final snapshot = await _firestore.collection('venues').limit(limit).get();
+  Future<List<VenueModel>> fetchVenues({int? limit}) async {
+    Query query = _firestore.collection('venues');
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    final snapshot = await query.get();
     return snapshot.docs.map(VenueModel.fromFirestore).toList();
   }
 

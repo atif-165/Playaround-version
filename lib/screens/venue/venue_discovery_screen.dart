@@ -56,16 +56,31 @@ class _VenueDiscoveryScreenState extends State<VenueDiscoveryScreen> {
     }
 
     try {
+      // Test direct fetch first (commented out - for debugging only)
+      // await VenueService.testFetchVenues();
+      
       final venues = await VenueService.getVenues(
         filter: _currentFilter,
       );
 
       if (!mounted) return;
 
+      print('🔍 VenueDiscoveryScreen: Received ${venues.length} venues from service');
+      
       final activeVenues =
           venues.where((venue) => venue.isActive).toList(growable: false);
-      final resolvedVenues =
-          activeVenues.isEmpty ? _fallbackVenues : activeVenues;
+      
+      print('🔍 VenueDiscoveryScreen: ${activeVenues.length} active venues after filtering');
+      
+      // Use actual venues from Firestore, not fallback
+      // Only use fallback if there's an error, not if list is empty
+      final resolvedVenues = activeVenues;
+      
+      if (resolvedVenues.isEmpty && venues.isNotEmpty) {
+        print('⚠️ Warning: All ${venues.length} venues are inactive');
+      } else if (resolvedVenues.isEmpty) {
+        print('⚠️ Warning: No venues fetched from Firestore');
+      }
 
       setState(() {
         _venues = resolvedVenues;

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -12,6 +13,10 @@ import '../../theming/colors.dart';
 import '../../theming/public_profile_theme.dart';
 import '../../theming/styles.dart';
 import '../../config/app_route_paths.dart';
+import '../../modules/coach/services/coach_associations_service.dart';
+import '../../modules/tournament/services/tournament_service.dart';
+import '../dashboard/services/user_profile_dashboard_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 const _notificationHeroGradient = LinearGradient(
   begin: Alignment.topCenter,
@@ -32,6 +37,10 @@ class NotificationsScreen extends StatefulWidget {
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _notificationService = NotificationService();
+  final CoachAssociationsService _coachAssociationsService = CoachAssociationsService();
+  final PublicProfileService _publicProfileService = PublicProfileService();
+  final TournamentService _tournamentService = TournamentService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _initializedListener = false;
 
   @override
@@ -217,7 +226,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       onDismissed: (_) => _deleteNotification(notification.id),
       child: GestureDetector(
-        onTap: () => _onNotificationTap(notification),
+          onTap: () {
+          // Don't navigate for coach player requests, association requests, or tournament approval - they have action buttons
+          if (notification.type == NotificationType.coachPlayerRequest || 
+              _isAssociationRequest(notification) ||
+              notification.type == NotificationType.tournamentApproval) {
+            return;
+          }
+          _onNotificationTap(notification);
+        },
         child: Container(
           margin: EdgeInsets.only(bottom: 16.h),
           padding: EdgeInsets.all(18.w),
@@ -278,7 +295,91 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       style: TextStyles.font14Grey400Weight
                           .copyWith(color: Colors.white70, height: 1.4),
                     ),
-                    if (notification.data != null &&
+                    // Show approve/deny buttons for coach player requests
+                    if (notification.type == NotificationType.coachPlayerRequest &&
+                        notification.data != null) ...[
+                      Gap(12.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppTextButton(
+                              buttonText: 'Approve',
+                              textStyle: TextStyles.font14White600Weight,
+                              onPressed: () => _handleApproveCoachRequest(notification),
+                              backgroundColor: ColorsManager.success,
+                              buttonHeight: 38,
+                            ),
+                          ),
+                          Gap(12.w),
+                          Expanded(
+                            child: AppTextButton(
+                              buttonText: 'Deny',
+                              textStyle: TextStyles.font14White600Weight,
+                              onPressed: () => _handleDenyCoachRequest(notification),
+                              backgroundColor: ColorsManager.error,
+                              buttonHeight: 38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] 
+                    // Show approve/deny buttons for tournament approval requests
+                    else if (notification.type == NotificationType.tournamentApproval &&
+                        notification.data != null &&
+                        notification.data!['tournamentId'] != null) ...[
+                      Gap(12.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppTextButton(
+                              buttonText: 'Accept',
+                              textStyle: TextStyles.font14White600Weight,
+                              onPressed: () => _handleApproveTournamentRequest(notification),
+                              backgroundColor: ColorsManager.success,
+                              buttonHeight: 38,
+                            ),
+                          ),
+                          Gap(12.w),
+                          Expanded(
+                            child: AppTextButton(
+                              buttonText: 'Deny',
+                              textStyle: TextStyles.font14White600Weight,
+                              onPressed: () => _handleDenyTournamentRequest(notification),
+                              backgroundColor: ColorsManager.error,
+                              buttonHeight: 38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ]
+                    // Show approve/deny buttons for association requests (team, tournament, venue, coach)
+                    else if (_isAssociationRequest(notification)) ...[
+                      Gap(12.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppTextButton(
+                              buttonText: 'Approve',
+                              textStyle: TextStyles.font14White600Weight,
+                              onPressed: () => _handleApproveAssociationRequest(notification),
+                              backgroundColor: ColorsManager.success,
+                              buttonHeight: 38,
+                            ),
+                          ),
+                          Gap(12.w),
+                          Expanded(
+                            child: AppTextButton(
+                              buttonText: 'Deny',
+                              textStyle: TextStyles.font14White600Weight,
+                              onPressed: () => _handleDenyAssociationRequest(notification),
+                              backgroundColor: ColorsManager.error,
+                              buttonHeight: 38,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] 
+                    else if (notification.data != null &&
                         notification.data!['action'] != null) ...[
                       Gap(12.h),
                       AppTextButton(
@@ -336,6 +437,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Icons.person_add_alt_1;
       case NotificationType.profileUpdate:
         return Icons.campaign_outlined;
+      case NotificationType.newMessage:
+        return Icons.message;
+      case NotificationType.newPost:
+        return Icons.article;
       case NotificationType.userMatch:
         return Icons.people;
       case NotificationType.coachVenueRequest:
@@ -393,6 +498,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return ColorsManager.primary;
       case NotificationType.profileUpdate:
         return ColorsManager.secondary;
+      case NotificationType.newMessage:
+        return ColorsManager.mainBlue;
+      case NotificationType.newPost:
+        return ColorsManager.primary;
       case NotificationType.userMatch:
         return Colors.green;
       case NotificationType.coachVenueRequest:
@@ -502,10 +611,35 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           Navigator.pushNamed(context, '/profileScreen');
           break;
         case NotificationType.profileFollow:
-          Navigator.pushNamed(context, '/peopleSearchScreen');
+          // Navigate to follower's profile
+          final followerId = notification.data?['followerId'] as String?;
+          if (followerId != null) {
+            context.push('/dashboard/$followerId');
+          } else {
+            Navigator.pushNamed(context, '/peopleSearchScreen');
+          }
           break;
         case NotificationType.profileUpdate:
-          Navigator.pushNamed(context, '/profileScreen');
+          final profileUserId = notification.data?['profileUserId'] as String?;
+          if (profileUserId != null) {
+            context.push('/dashboard/$profileUserId');
+          } else {
+            Navigator.pushNamed(context, '/profileScreen');
+          }
+          break;
+        case NotificationType.newMessage:
+          // Navigate to chat
+          final chatId = notification.data?['chatId'] as String?;
+          if (chatId != null) {
+            context.push('/chat/$chatId');
+          }
+          break;
+        case NotificationType.newPost:
+          // Navigate to post
+          final postId = notification.data?['postId'] as String?;
+          if (postId != null) {
+            context.push('/community/post/$postId');
+          }
           break;
         case NotificationType.userMatch:
           // Navigate to matches or chat
@@ -615,6 +749,183 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Future<void> _handleApproveCoachRequest(NotificationModel notification) async {
+    if (notification.data == null) return;
+
+    final coachId = notification.data!['coachId'] as String?;
+    final playerId = notification.data!['playerId'] as String?;
+    final playerName = notification.data!['playerName'] as String? ?? 'Player';
+
+    if (coachId == null || playerId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid request data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show loading indicator
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    try {
+      final success = await _coachAssociationsService.approvePlayerAssociation(
+        coachId,
+        playerId,
+        playerName,
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+
+        if (success) {
+          // Mark notification as read and delete it
+          await _notificationService.markAsRead(notification.id);
+          await _notificationService.deleteNotification(notification.id);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Request approved! You have been added to ${notification.data!['coachName'] ?? 'the coach'}\'s profile.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to approve request. It may have already been processed.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error approving request: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDenyCoachRequest(NotificationModel notification) async {
+    if (notification.data == null) return;
+
+    final coachId = notification.data!['coachId'] as String?;
+    final playerId = notification.data!['playerId'] as String?;
+    final playerName = notification.data!['playerName'] as String? ?? 'Player';
+
+    if (coachId == null || playerId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid request data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: PublicProfileTheme.panelColor,
+        title: const Text(
+          'Reject Request?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to reject ${notification.data!['coachName'] ?? 'the coach'}\'s request to add you to their coaching profile?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Show loading indicator
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    try {
+      final success = await _coachAssociationsService.rejectPlayerAssociation(
+        coachId,
+        playerId,
+        playerName,
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+
+        if (success) {
+          // Mark notification as read and delete it
+          await _notificationService.markAsRead(notification.id);
+          await _notificationService.deleteNotification(notification.id);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Request rejected'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to reject request. It may have already been processed.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error rejecting request: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _deleteNotification(String notificationId) async {
     try {
       await _notificationService.deleteNotification(notificationId);
@@ -627,6 +938,452 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         );
       }
+    }
+  }
+
+  bool _isAssociationRequest(NotificationModel notification) {
+    if (notification.data == null) return false;
+    final data = notification.data!;
+    
+    // Check if this is an association request notification
+    return (notification.type == NotificationType.teamInvite ||
+            notification.type == NotificationType.tournamentRegistration ||
+            notification.type == NotificationType.venueBooking ||
+            notification.type == NotificationType.general) &&
+           data.containsKey('associationType') &&
+           data.containsKey('associationId') &&
+           data.containsKey('requesterId');
+  }
+
+  Future<void> _handleApproveAssociationRequest(NotificationModel notification) async {
+    if (notification.data == null) return;
+
+    final data = notification.data!;
+    final requesterId = data['requesterId'] as String?;
+    final associationId = data['associationId'] as String?;
+    final associationTitle = data['associationTitle'] as String? ?? 'item';
+    final associationType = data['associationType'] as String?;
+
+    if (requesterId == null || associationId == null || associationType == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid request data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Find the request document
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final requestsSnapshot = await firestore
+          .collection('profile_association_requests')
+          .where('requesterId', isEqualTo: requesterId)
+          .where('associationId', isEqualTo: associationId)
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+
+      if (requestsSnapshot.docs.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Request not found or already processed'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      final requestDoc = requestsSnapshot.docs.first;
+      final requestId = requestDoc.id;
+
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      try {
+        await _publicProfileService.approveAssociationRequest(
+          requestId: requestId,
+          requesterId: requesterId,
+          associationId: associationId,
+          type: associationType,
+          associationTitle: associationTitle,
+        );
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+
+          // Mark notification as read and delete it
+          await _notificationService.markAsRead(notification.id);
+          await _notificationService.deleteNotification(notification.id);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Request approved! $associationTitle will appear on the requester\'s profile.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error approving request: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to find request: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDenyAssociationRequest(NotificationModel notification) async {
+    if (notification.data == null) return;
+
+    final data = notification.data!;
+    final requesterId = data['requesterId'] as String?;
+    final associationId = data['associationId'] as String?;
+    final associationTitle = data['associationTitle'] as String? ?? 'item';
+
+    if (requesterId == null || associationId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid request data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: PublicProfileTheme.panelColor,
+        title: const Text(
+          'Reject Request?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to reject the request to add $associationTitle to the requester\'s profile?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Find the request document
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final requestsSnapshot = await firestore
+          .collection('profile_association_requests')
+          .where('requesterId', isEqualTo: requesterId)
+          .where('associationId', isEqualTo: associationId)
+          .where('status', isEqualTo: 'pending')
+          .limit(1)
+          .get();
+
+      if (requestsSnapshot.docs.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Request not found or already processed'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      final requestDoc = requestsSnapshot.docs.first;
+      final requestId = requestDoc.id;
+
+      // Show loading indicator
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      try {
+        await _publicProfileService.rejectAssociationRequest(
+          requestId: requestId,
+          requesterId: requesterId,
+        );
+
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+
+          // Mark notification as read and delete it
+          await _notificationService.markAsRead(notification.id);
+          await _notificationService.deleteNotification(notification.id);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Request rejected'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.of(context).pop(); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error rejecting request: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to find request: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleApproveTournamentRequest(NotificationModel notification) async {
+    if (notification.data == null) return;
+    if (!mounted) return;
+
+    final tournamentId = notification.data!['tournamentId'] as String?;
+    final venueTitle = notification.data!['venueTitle'] as String? ?? 'the venue';
+
+    if (tournamentId == null) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Invalid notification data'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final user = _auth.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Store navigator and messenger before async operations
+    final navigator = Navigator.of(context, rootNavigator: false);
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Show loading indicator
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await _tournamentService.respondToVenueApproval(
+        tournamentId: tournamentId,
+        ownerId: user.uid,
+        approve: true,
+      );
+
+      if (!mounted) return;
+      if (navigator.canPop()) {
+        navigator.pop(); // Close loading dialog
+      }
+
+      // Mark notification as read and delete it
+      await _notificationService.markAsRead(notification.id);
+      await _notificationService.deleteNotification(notification.id);
+
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Tournament approved! It will now be visible to players.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      if (navigator.canPop()) {
+        navigator.pop(); // Close loading dialog
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error approving tournament: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleDenyTournamentRequest(NotificationModel notification) async {
+    if (notification.data == null) return;
+    if (!mounted) return;
+
+    final tournamentId = notification.data!['tournamentId'] as String?;
+    final venueTitle = notification.data!['venueTitle'] as String? ?? 'the venue';
+
+    if (tournamentId == null) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Invalid notification data'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final user = _auth.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('User not authenticated'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Store navigator and messenger before async operations
+    final navigator = Navigator.of(context, rootNavigator: false);
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Show confirmation dialog
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: PublicProfileTheme.panelColor,
+        title: const Text(
+          'Reject Tournament Request?',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to reject the tournament request for $venueTitle?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // Show loading indicator
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    try {
+      await _tournamentService.respondToVenueApproval(
+        tournamentId: tournamentId,
+        ownerId: user.uid,
+        approve: false,
+      );
+
+      if (!mounted) return;
+      if (navigator.canPop()) {
+        navigator.pop(); // Close loading dialog
+      }
+
+      // Mark notification as read and delete it
+      await _notificationService.markAsRead(notification.id);
+      await _notificationService.deleteNotification(notification.id);
+
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Tournament request rejected'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      if (navigator.canPop()) {
+        navigator.pop(); // Close loading dialog
+      }
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error rejecting tournament: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

@@ -162,6 +162,7 @@ class _TeamAdminSettingsScreenState extends State<TeamAdminSettingsScreen>
             ? _descriptionController.text.trim()
             : null,
         teamImageUrl: profileImageUrl,
+        bannerImageUrl: bannerImageUrl,
       );
 
       if (mounted) {

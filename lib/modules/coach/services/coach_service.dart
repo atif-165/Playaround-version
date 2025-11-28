@@ -23,15 +23,15 @@ class CoachService {
     String? searchQuery,
     List<String>? sportFilters,
     String? locationFilter,
-    int limit = 20,
+    int limit = 500, // Increased limit significantly to show all coaches
   }) {
     try {
       Query query = _firestore
           .collection(_usersCollection)
           .where('role', isEqualTo: 'coach')
-          .limit(limit);
+          .limit(limit * 2); // Fetch more than needed to account for filtering
 
-      // Apply location filter if provided
+      // Apply location filter if provided (server-side)
       if (locationFilter != null && locationFilter.isNotEmpty) {
         query = query.where('location', isEqualTo: locationFilter);
       }
@@ -62,8 +62,20 @@ class CoachService {
           }).toList();
         }
 
-        // Sort by rating (assuming we'll add this field later)
-        coaches.sort((a, b) => b.fullName.compareTo(a.fullName));
+        // Sort by updatedAt descending (most recently updated first)
+        // This ensures newly created/updated profiles like "farhat" appear at the top
+        coaches.sort((a, b) {
+          // Primary sort: by updatedAt (most recent first)
+          final dateComparison = b.updatedAt.compareTo(a.updatedAt);
+          if (dateComparison != 0) return dateComparison;
+          // Secondary sort: by name (alphabetical) if dates are equal
+          return a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase());
+        });
+
+        // Apply limit after sorting
+        if (coaches.length > limit) {
+          coaches = coaches.take(limit).toList();
+        }
 
         return coaches;
       });

@@ -209,23 +209,10 @@ class CoachAssociationsService {
       final searchTerm = trimmed.toLowerCase();
 
       // Fetch more players to have better search results (similar to teams)
-      // First try with isProfileComplete filter, then fallback without it
+      // Don't filter by isProfileComplete - coaches should be able to find all players
       Query baseQuery = _usersCollection.where('role', isEqualTo: 'player');
       
-      // Try to add isProfileComplete filter, but don't fail if it doesn't work
-      Query? filteredQuery;
-      try {
-        filteredQuery = baseQuery.where('isProfileComplete', isEqualTo: true);
-        // Test the query by trying to get 1 document
-        await filteredQuery.limit(1).get();
-      } catch (e) {
-        if (kDebugMode) {
-          debugPrint('⚠️ isProfileComplete filter not available, using base query');
-        }
-        filteredQuery = null;
-      }
-
-      final queryToUse = filteredQuery ?? baseQuery;
+      final queryToUse = baseQuery;
 
       List<QueryDocumentSnapshot> docs;
       try {
@@ -269,11 +256,7 @@ class CoachAssociationsService {
             return data;
           })
           .where((data) {
-            // Filter out incomplete profiles if isProfileComplete field exists
-            final isComplete = data['isProfileComplete'];
-            if (isComplete != null && isComplete != true) {
-              return false;
-            }
+            // Don't filter by isProfileComplete - allow coaches to find all players
             return _matchesPlayerSearch(data, searchTerm);
           })
           .take(limit)
@@ -388,19 +371,26 @@ class CoachAssociationsService {
           .set(updatedAssociations.toFirestore());
 
       // Send notification to venue owner
-      await _notificationService.createNotification(
-        userId: venue.ownerId,
-        type: NotificationType.coachVenueRequest,
-        title: 'Coach Venue Request',
-        message:
-            '$coachName wants to add your venue "${venue.title}" to their profile',
-        data: {
-          'coachId': coachId,
-          'coachName': coachName,
-          'venueId': venue.id,
-          'venueName': venue.title,
-        },
-      );
+      try {
+        await _notificationService.createNotification(
+          userId: venue.ownerId,
+          type: NotificationType.coachVenueRequest,
+          title: 'Coach Venue Request',
+          message:
+              '$coachName wants to add your venue "${venue.title}" to their profile',
+          data: {
+            'coachId': coachId,
+            'coachName': coachName,
+            'venueId': venue.id,
+            'venueName': venue.title,
+          },
+        );
+      } catch (notificationError) {
+        if (kDebugMode) {
+          debugPrint('Error sending venue association notification: $notificationError');
+        }
+        // Don't fail the request if notification fails
+      }
 
       return true;
     } catch (e) {
@@ -454,19 +444,26 @@ class CoachAssociationsService {
           .set(updatedAssociations.toFirestore());
 
       // Send notification to team captain
-      await _notificationService.createNotification(
-        userId: team.createdBy,
-        type: NotificationType.coachTeamRequest,
-        title: 'Coach Team Request',
-        message:
-            '$coachName wants to add your team "${team.name}" to their profile',
-        data: {
-          'coachId': coachId,
-          'coachName': coachName,
-          'teamId': team.id,
-          'teamName': team.name,
-        },
-      );
+      try {
+        await _notificationService.createNotification(
+          userId: team.createdBy,
+          type: NotificationType.coachTeamRequest,
+          title: 'Coach Team Request',
+          message:
+              '$coachName wants to add your team "${team.name}" to their profile',
+          data: {
+            'coachId': coachId,
+            'coachName': coachName,
+            'teamId': team.id,
+            'teamName': team.name,
+          },
+        );
+      } catch (notificationError) {
+        if (kDebugMode) {
+          debugPrint('Error sending team association notification: $notificationError');
+        }
+        // Don't fail the request if notification fails
+      }
 
       return true;
     } catch (e) {
@@ -518,18 +515,25 @@ class CoachAssociationsService {
           .set(updatedAssociations.toFirestore());
 
       // Send notification to player
-      await _notificationService.createNotification(
-        userId: player.uid,
-        type: NotificationType.coachPlayerRequest,
-        title: 'Coach Request',
-        message: '$coachName wants to add you to their coaching profile',
-        data: {
-          'coachId': coachId,
-          'coachName': coachName,
-          'playerId': player.uid,
-          'playerName': player.fullName,
-        },
-      );
+      try {
+        await _notificationService.createNotification(
+          userId: player.uid,
+          type: NotificationType.coachPlayerRequest,
+          title: 'Coach Request',
+          message: '$coachName wants to add you to their coaching profile',
+          data: {
+            'coachId': coachId,
+            'coachName': coachName,
+            'playerId': player.uid,
+            'playerName': player.fullName,
+          },
+        );
+      } catch (notificationError) {
+        if (kDebugMode) {
+          debugPrint('Error sending player association notification: $notificationError');
+        }
+        // Don't fail the request if notification fails
+      }
 
       return true;
     } catch (e) {
@@ -613,6 +617,204 @@ class CoachAssociationsService {
     } catch (e) {
       if (kDebugMode) {
         debugPrint('Error removing player association: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Approve player association request (called by player)
+  Future<bool> approvePlayerAssociation(
+    String coachId,
+    String playerId,
+    String playerName,
+  ) async {
+    try {
+      final associations = await getCoachAssociations(coachId);
+      if (associations == null) {
+        if (kDebugMode) {
+          debugPrint('Coach associations not found for coachId: $coachId');
+        }
+        return false;
+      }
+
+      // Find the player association
+      final playerIndex = associations.players.indexWhere(
+        (p) => p.playerId == playerId,
+      );
+
+      if (playerIndex == -1) {
+        if (kDebugMode) {
+          debugPrint('Player association not found for playerId: $playerId');
+        }
+        return false;
+      }
+
+      final existingAssociation = associations.players[playerIndex];
+
+      // Check if already processed
+      if (existingAssociation.status != AssociationStatus.pending) {
+        if (kDebugMode) {
+          debugPrint('Player association already processed: ${existingAssociation.status}');
+        }
+        return false;
+      }
+
+      // Update the association status
+      final updatedAssociation = CoachPlayerAssociation(
+        playerId: existingAssociation.playerId,
+        playerName: existingAssociation.playerName,
+        status: AssociationStatus.approved,
+        requestedAt: existingAssociation.requestedAt,
+        approvedAt: DateTime.now(),
+        rejectedAt: null,
+        rejectionReason: null,
+      );
+
+      final updatedPlayers = List<CoachPlayerAssociation>.from(associations.players);
+      updatedPlayers[playerIndex] = updatedAssociation;
+
+      final updatedAssociations = associations.copyWith(
+        players: updatedPlayers,
+        updatedAt: DateTime.now(),
+      );
+
+      await _associationsCollection
+          .doc(coachId)
+          .set(updatedAssociations.toFirestore());
+
+      // Send notification to coach
+      try {
+        final coachDoc = await _usersCollection.doc(coachId).get();
+        final coachData = coachDoc.data() as Map<String, dynamic>?;
+        final coachName = coachData?['fullName'] ?? coachData?['name'] ?? 'Coach';
+
+        await _notificationService.createNotification(
+          userId: coachId,
+          type: NotificationType.general,
+          title: 'Request Approved',
+          message: '$playerName has approved your request to add them to your coaching profile',
+          data: {
+            'coachId': coachId,
+            'playerId': playerId,
+            'playerName': playerName,
+            'status': 'approved',
+          },
+        );
+      } catch (notificationError) {
+        if (kDebugMode) {
+          debugPrint('Error sending approval notification: $notificationError');
+        }
+        // Don't fail the approval if notification fails
+      }
+
+      if (kDebugMode) {
+        debugPrint('✅ Player association approved: $playerId -> $coachId');
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error approving player association: $e');
+      }
+      return false;
+    }
+  }
+
+  /// Reject player association request (called by player)
+  Future<bool> rejectPlayerAssociation(
+    String coachId,
+    String playerId,
+    String playerName, {
+    String? rejectionReason,
+  }) async {
+    try {
+      final associations = await getCoachAssociations(coachId);
+      if (associations == null) {
+        if (kDebugMode) {
+          debugPrint('Coach associations not found for coachId: $coachId');
+        }
+        return false;
+      }
+
+      // Find the player association
+      final playerIndex = associations.players.indexWhere(
+        (p) => p.playerId == playerId,
+      );
+
+      if (playerIndex == -1) {
+        if (kDebugMode) {
+          debugPrint('Player association not found for playerId: $playerId');
+        }
+        return false;
+      }
+
+      final existingAssociation = associations.players[playerIndex];
+
+      // Check if already processed
+      if (existingAssociation.status != AssociationStatus.pending) {
+        if (kDebugMode) {
+          debugPrint('Player association already processed: ${existingAssociation.status}');
+        }
+        return false;
+      }
+
+      // Update the association status
+      final updatedAssociation = CoachPlayerAssociation(
+        playerId: existingAssociation.playerId,
+        playerName: existingAssociation.playerName,
+        status: AssociationStatus.rejected,
+        requestedAt: existingAssociation.requestedAt,
+        approvedAt: null,
+        rejectedAt: DateTime.now(),
+        rejectionReason: rejectionReason,
+      );
+
+      final updatedPlayers = List<CoachPlayerAssociation>.from(associations.players);
+      updatedPlayers[playerIndex] = updatedAssociation;
+
+      final updatedAssociations = associations.copyWith(
+        players: updatedPlayers,
+        updatedAt: DateTime.now(),
+      );
+
+      await _associationsCollection
+          .doc(coachId)
+          .set(updatedAssociations.toFirestore());
+
+      // Send notification to coach
+      try {
+        final coachDoc = await _usersCollection.doc(coachId).get();
+        final coachData = coachDoc.data() as Map<String, dynamic>?;
+        final coachName = coachData?['fullName'] ?? coachData?['name'] ?? 'Coach';
+
+        await _notificationService.createNotification(
+          userId: coachId,
+          type: NotificationType.general,
+          title: 'Request Rejected',
+          message: '$playerName has rejected your request to add them to your coaching profile',
+          data: {
+            'coachId': coachId,
+            'playerId': playerId,
+            'playerName': playerName,
+            'status': 'rejected',
+            'rejectionReason': rejectionReason,
+          },
+        );
+      } catch (notificationError) {
+        if (kDebugMode) {
+          debugPrint('Error sending rejection notification: $notificationError');
+        }
+        // Don't fail the rejection if notification fails
+      }
+
+      if (kDebugMode) {
+        debugPrint('❌ Player association rejected: $playerId -> $coachId');
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error rejecting player association: $e');
       }
       return false;
     }

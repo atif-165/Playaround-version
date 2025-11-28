@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import '../../../models/venue_model.dart';
 import '../../../models/venue_booking_model.dart';
 import '../../../models/listing_model.dart';
@@ -131,9 +132,86 @@ class VenueService {
       }
 
       await _venuesCollection.doc(venueId).set(venueData);
+      
+      // Auto-add venue to user's public profile
+      try {
+        await _addVenueToPublicProfile(user.uid, venueId, venueData);
+      } catch (e) {
+        // Log error but don't fail venue creation if profile update fails
+        debugPrint('⚠️ Failed to add venue to public profile: $e');
+      }
+      
       return venueId;
     } catch (e) {
       throw Exception('Failed to create venue: $e');
+    }
+  }
+
+  /// Automatically add venue to owner's public profile
+  Future<void> _addVenueToPublicProfile(
+    String userId,
+    String venueId,
+    Map<String, dynamic> venueData,
+  ) async {
+    try {
+      final profileRef = _firestore.collection('public_profiles').doc(userId);
+      
+      // Get current associations
+      final snapshot = await profileRef.get();
+      final data = snapshot.data() ?? {};
+      final associations = data['associations'] as Map<String, dynamic>? ?? {};
+      final venues = (associations['venues'] as List<dynamic>?) ?? [];
+      
+      // Check if venue already exists
+      final exists = venues.any(
+        (item) => item is Map && item['id'] == venueId,
+      );
+      
+      if (!exists) {
+        // Create association data
+        final primaryImage = (venueData['images'] as List?)?.isNotEmpty == true
+            ? (venueData['images'] as List).first
+            : venueData['ownerProfilePicture'];
+        
+        final tags = <String>[
+          venueData['sportType']?.toString() ?? '',
+          if ((venueData['availableDays'] as List?)?.isNotEmpty == true)
+            '${(venueData['availableDays'] as List).length} active days',
+        ];
+        
+        final venueAssociation = {
+          'id': venueId,
+          'title': venueData['title']?.toString() ?? '',
+          'subtitle': venueData['location']?.toString() ?? '',
+          'role': 'Venue',
+          'imageUrl': primaryImage?.toString() ?? '',
+          'tags': tags,
+          'location': venueData['location']?.toString() ?? '',
+          'status': 'Rating ${(venueData['averageRating'] ?? 0.0).toStringAsFixed(1)} • ${venueData['totalBookings'] ?? 0} bookings',
+          'description': venueData['description']?.toString() ?? '',
+          'since': venueData['createdAt'],
+          'ownerName': venueData['ownerName']?.toString() ?? '',
+          'ownerId': venueData['ownerId']?.toString() ?? '',
+        };
+        
+        // Add the venue association
+        venues.add(venueAssociation);
+        associations['venues'] = venues;
+        
+        // Update the document
+        await profileRef.set(
+          {
+            'associations': associations,
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+        
+        debugPrint('✅ Venue automatically added to public profile');
+      }
+    } catch (e) {
+      debugPrint('❌ Error adding venue to public profile: $e');
+      rethrow;
     }
   }
 
@@ -205,11 +283,15 @@ class VenueService {
             .where('location', isLessThanOrEqualTo: '$location\uf8ff');
       }
 
-      query = query.orderBy('createdAt', descending: true);
-
-      if (limit != null) {
-        query = query.limit(limit);
+      // Only use orderBy if limit is provided, otherwise fetch all and sort in memory
+      bool useOrderBy = limit != null;
+      if (useOrderBy) {
+        query = query.orderBy('createdAt', descending: true);
       }
+
+      // Use a high limit (1000) when no limit is specified to fetch all venues
+      final effectiveLimit = limit ?? 1000;
+      query = query.limit(effectiveLimit);
 
       return query.snapshots().map((snapshot) {
         try {
@@ -217,6 +299,15 @@ class VenueService {
               .map((doc) =>
                   VenueModel.fromMap(doc.data() as Map<String, dynamic>))
               .toList();
+
+          // Sort in memory if we didn't use orderBy
+          if (!useOrderBy) {
+            venues.sort((a, b) {
+              final aCreated = a.createdAt ?? DateTime(1970);
+              final bCreated = b.createdAt ?? DateTime(1970);
+              return bCreated.compareTo(aCreated);
+            });
+          }
 
           // Apply search filter if provided
           if (searchQuery != null && searchQuery.isNotEmpty) {
@@ -229,6 +320,7 @@ class VenueService {
                 .toList();
           }
 
+          debugPrint('🔍 VenueService.getVenues: Returning ${venues.length} venues');
           return venues;
         } catch (e) {
           // Log the error and return empty list to prevent stream from breaking

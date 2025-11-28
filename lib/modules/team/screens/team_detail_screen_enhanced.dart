@@ -1101,27 +1101,31 @@ class _TeamDetailScreenEnhancedState extends State<TeamDetailScreenEnhanced>
           _buildHighlightChips(),
           Gap(24.h),
 
-          _buildInfoSection('Recent Achievements', [
-            ..._achievementTimeline.map(_buildAchievementRow),
-          ]),
-          Gap(24.h),
+          if (_achievementTimeline.isNotEmpty) ...[
+            _buildInfoSection('Recent Achievements', [
+              ..._achievementTimeline.map(_buildAchievementRow),
+            ]),
+            Gap(24.h),
+          ],
 
-          _buildInfoSection('Training Focus', [
-            Wrap(
-              spacing: 12.w,
-              runSpacing: 12.h,
-              children: _trainingFocus
-                  .map(
-                    (focus) => _buildFocusChip(
-                      focus['label'] as String,
-                      focus['value'] as String,
-                      focus['icon'] as IconData,
-                    ),
-                  )
-                  .toList(),
-            ),
-          ]),
-          Gap(24.h),
+          if (_trainingFocus.isNotEmpty) ...[
+            _buildInfoSection('Training Focus', [
+              Wrap(
+                spacing: 12.w,
+                runSpacing: 12.h,
+                children: _trainingFocus
+                    .map(
+                      (focus) => _buildFocusChip(
+                        focus['label'] as String,
+                        focus['value'] as String,
+                        focus['icon'] as IconData,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ]),
+            Gap(24.h),
+          ],
 
           // Join Team Button (for non-members)
           if (!_isAdmin && !widget.team.isMember(_currentUserId ?? ''))
@@ -2028,13 +2032,17 @@ class _TeamDetailScreenEnhancedState extends State<TeamDetailScreenEnhanced>
           Gap(24.h),
           _buildInfoSection('Roster Insights', _buildRosterInsights()),
           Gap(24.h),
-          _buildInfoSection('Player Spotlight', [
-            ..._playerSpotlight.map(_buildPlayerSpotlightCard),
-          ]),
-          Gap(24.h),
-          _buildInfoSection('Season Milestones', [
-            ..._achievementTimeline.map(_buildAchievementRow),
-          ]),
+          if (_playerSpotlight.isNotEmpty) ...[
+            _buildInfoSection('Player Spotlight', [
+              ..._playerSpotlight.map(_buildPlayerSpotlightCard),
+            ]),
+            Gap(24.h),
+          ],
+          if (_achievementTimeline.isNotEmpty) ...[
+            _buildInfoSection('Season Milestones', [
+              ..._achievementTimeline.map(_buildAchievementRow),
+            ]),
+          ],
         ],
       ),
     );
@@ -2155,7 +2163,7 @@ class _TeamDetailScreenEnhancedState extends State<TeamDetailScreenEnhanced>
       ),
       _buildInsightRow(
         'Tournaments Played',
-        '${widget.team.tournamentsParticipated.isEmpty ? _tournamentsPlayedData.length : widget.team.tournamentsParticipated.length} major events contested',
+        '${widget.team.tournamentsParticipated.length} major events contested',
         Icons.emoji_events_rounded,
       ),
     ];
@@ -2470,26 +2478,7 @@ class _TeamDetailScreenEnhancedState extends State<TeamDetailScreenEnhanced>
       }).toList();
     }
 
-    return [
-      {
-        'icon': Icons.auto_graph_rounded,
-        'title': '11-Game Unbeaten Streak',
-        'subtitle': 'Tactical overhaul delivered the franchise record run.',
-        'period': 'Mar 2025',
-      },
-      {
-        'icon': Icons.sports_motorsports_rounded,
-        'title': 'Fastest Transition Team',
-        'subtitle': 'Achieved league-best 5.3s defence-to-attack turnaround.',
-        'period': 'Jan 2025',
-      },
-      {
-        'icon': Icons.volunteer_activism_rounded,
-        'title': 'Academy Pipeline Established',
-        'subtitle': 'Graduated 4 academy athletes into senior rotation roster.',
-        'period': 'Nov 2024',
-      },
-    ];
+    return [];
   }
 
   List<Map<String, dynamic>> _buildPlayerSpotlight() {
@@ -2508,52 +2497,12 @@ class _TeamDetailScreenEnhancedState extends State<TeamDetailScreenEnhanced>
       }).toList();
     }
 
-    return [
-      {
-        'name': 'Ayesha Malik',
-        'achievement': 'Regional MVP • Captain',
-        'progress': '+18% agility • 6 decisive goals',
-        'avatar':
-            'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?auto=format&fit=crop&w=400&q=80',
-        'role': 'Forward',
-      },
-      {
-        'name': 'Bilal Khan',
-        'achievement': 'Elite Defender of the Year',
-        'progress': '92% tackle success • 14 cleansheets',
-        'avatar':
-            'https://images.unsplash.com/photo-1541849546-216549ae2161?auto=format&fit=crop&w=400&q=80',
-        'role': 'Defender',
-      },
-      {
-        'name': 'Usman Tariq',
-        'achievement': 'Emerging Playmaker 2025',
-        'progress': '11 assists • 75 progressive carries',
-        'avatar':
-            'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=400&q=80',
-        'role': 'Midfielder',
-      },
-    ];
+    return [];
   }
 
   List<Map<String, dynamic>> _buildTrainingFocus() {
-    return [
-      {
-        'label': 'High-Press Execution',
-        'value': '+12% success rate over last 6 weeks',
-        'icon': Icons.speed_rounded,
-      },
-      {
-        'label': 'Set-Piece Conversion',
-        'value': '38% of goals from designed plays',
-        'icon': Icons.flag_rounded,
-      },
-      {
-        'label': 'Recovery & Load',
-        'value': 'Injury downtime reduced by 22%',
-        'icon': Icons.local_hospital_rounded,
-      },
-    ];
+    // Return empty list - no dummy data
+    return [];
   }
 
   Widget _buildInfoSection(String title, List<Widget> children) {

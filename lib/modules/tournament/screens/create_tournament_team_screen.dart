@@ -99,11 +99,11 @@ class _CreateTournamentTeamScreenState
                 );
           }
 
-          // For this demo, showing pending requests
-          // In production, you'd filter for ACCEPTED requests
+          // Filter for ACCEPTED individual requests only
           final requests = snapshot.data ?? [];
-          final individualRequests =
-              requests.where((r) => !r.isTeamRequest).toList();
+          final individualRequests = requests
+              .where((r) => !r.isTeamRequest && r.status == 'accepted')
+              .toList();
 
           return SingleChildScrollView(
             padding: EdgeInsets.all(16.w),

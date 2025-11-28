@@ -366,13 +366,6 @@ class CommunityFeedScreen extends HookConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'community-feed-fab',
-        onPressed: () {
-          // TODO: navigate to post composer
-        },
-        child: const Icon(Icons.add),
-      ),
     );
   }
 }

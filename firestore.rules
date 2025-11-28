@@ -128,6 +128,59 @@ service cloud.firestore {
       allow write: if isSignedIn() && resource.data.ownerId == request.auth.uid;
     }
     
+    // Venues collection - allow public read for discovery
+    match /venues/{venueId} {
+      // Allow anyone to read venues (for discovery and booking)
+      allow read: if true;
+      
+      // Allow authenticated users to create venues
+      allow create: if isSignedIn() &&
+                       request.resource.data.ownerId == request.auth.uid;
+      
+      // Allow venue owners to update their venues
+      allow update: if isSignedIn() &&
+                       resource.data.ownerId == request.auth.uid;
+      
+      // Allow venue owners to delete their venues
+      allow delete: if isSignedIn() &&
+                       resource.data.ownerId == request.auth.uid;
+    }
+
+    // Venue bookings collection
+    match /venue_bookings/{bookingId} {
+      // Allow read if user is the booker or venue owner
+      allow read: if isSignedIn() &&
+                     (resource.data.userId == request.auth.uid ||
+                      resource.data.venueOwnerId == request.auth.uid);
+      
+      // Allow authenticated users to create bookings
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Allow booker or venue owner to update booking status
+      allow update: if isSignedIn() &&
+                       (resource.data.userId == request.auth.uid ||
+                        resource.data.venueOwnerId == request.auth.uid);
+    }
+
+    // Venue reviews collection
+    match /venue_reviews/{reviewId} {
+      // Allow anyone to read reviews
+      allow read: if true;
+
+      // Allow authenticated users to create reviews
+      allow create: if isSignedIn() &&
+                       request.resource.data.userId == request.auth.uid;
+
+      // Allow review authors to update their reviews
+      allow update: if isSignedIn() &&
+                       resource.data.userId == request.auth.uid;
+
+      // Allow review authors to delete their reviews
+      allow delete: if isSignedIn() &&
+                       resource.data.userId == request.auth.uid;
+    }
+    
     // Default rule for other collections
     match /{document=**} {
       allow read, write: if isSignedIn();

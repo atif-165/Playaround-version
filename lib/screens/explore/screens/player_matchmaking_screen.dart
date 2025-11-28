@@ -79,6 +79,7 @@ class _PlayerMatchmakingScreenState extends State<PlayerMatchmakingScreen> {
   String? _error;
   bool _syncing = false;
   int _superLikes = 0;
+  bool _isProfileModalOpen = false;
   static const int _superLikeLimit = 3;
 
   @override
@@ -441,7 +442,11 @@ class _PlayerMatchmakingScreenState extends State<PlayerMatchmakingScreen> {
   }
 
   void _showProfile(PlayerModel player) {
+    // Prevent multiple modals from opening simultaneously
+    if (_isProfileModalOpen) return;
+    
     final distance = _distance(player);
+    _isProfileModalOpen = true;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -450,7 +455,14 @@ class _PlayerMatchmakingScreenState extends State<PlayerMatchmakingScreen> {
         player: player,
         distanceKm: distance,
       ),
-    );
+    ).whenComplete(() {
+      // Reset flag when modal is dismissed
+      if (mounted) {
+        setState(() {
+          _isProfileModalOpen = false;
+        });
+      }
+    });
   }
 }
 

@@ -57,6 +57,18 @@
     java.lang.Object readResolve();
 }
 
+# Keep Kotlin UUID classes (required by kotlinx.serialization)
+-keep class kotlin.uuid.** { *; }
+-keep class kotlin.uuid.Uuid { *; }
+-keep class kotlin.uuid.Uuid$Companion { *; }
+-dontwarn kotlin.uuid.**
+
+# Keep kotlinx.serialization classes
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class kotlinx.serialization.** { *; }
+-keep,includedescriptorclasses class kotlinx.serialization.KSerializer { *; }
+-keepclassmembers class kotlinx.serialization.internal.** { *; }
+
 # Stripe SDK - Suppress warnings for React Native dependencies not used in Flutter
 -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivity$g
 -dontwarn com.stripe.android.pushProvisioning.PushProvisioningActivityStarter$Args

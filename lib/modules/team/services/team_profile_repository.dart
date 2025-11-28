@@ -29,21 +29,21 @@ class TeamProfileRepository {
     return _firestore.collection('teams').doc(teamId).collection(path);
   }
 
-  /// Stream overview cards with dummy fallback.
+  /// Stream overview cards - returns empty list if no data exists.
   Stream<List<TeamOverviewCard>> overviewCards(String teamId) {
     return _subCollection(teamId, 'overview_cards').snapshots().map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.overviewCards(teamId);
+        return <TeamOverviewCard>[];
       }
       return snapshot.docs.map(TeamOverviewCard.fromDoc).toList();
     });
   }
 
-  /// Stream achievements for overview/performance sections.
+  /// Stream achievements for overview/performance sections - returns empty list if no data exists.
   Stream<List<TeamAchievement>> achievements(String teamId) {
     return _subCollection(teamId, 'achievements').snapshots().map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.achievements(teamId);
+        return <TeamAchievement>[];
       }
       return snapshot.docs
           .map((doc) => TeamAchievement.fromMap({
@@ -54,17 +54,17 @@ class TeamProfileRepository {
     });
   }
 
-  /// Stream custom stats maintained by admin.
+  /// Stream custom stats maintained by admin - returns empty list if no data exists.
   Stream<List<TeamCustomStat>> customStats(String teamId) {
     return _subCollection(teamId, 'custom_stats').snapshots().map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.customStats(teamId);
+        return <TeamCustomStat>[];
       }
       return snapshot.docs.map(TeamCustomStat.fromDoc).toList();
     });
   }
 
-  /// Stream upcoming matches for schedule.
+  /// Stream upcoming matches for schedule - returns empty list if no data exists.
   Stream<List<TeamMatch>> scheduleMatches(String teamId) {
     return _firestore
         .collection('teams')
@@ -74,7 +74,7 @@ class TeamProfileRepository {
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.scheduleMatches(teamId);
+        return <TeamMatch>[];
       }
       return snapshot.docs
           .map((doc) => TeamMatch.fromFireStore(doc, null))
@@ -82,7 +82,7 @@ class TeamProfileRepository {
     });
   }
 
-  /// Stream historical venues with pagination support.
+  /// Stream historical venues with pagination support - returns empty list if no data exists.
   Stream<List<TeamHistoryEntry>> historyEntries(
     String teamId, {
     DocumentSnapshot<Map<String, dynamic>>? startAfter,
@@ -101,50 +101,58 @@ class TeamProfileRepository {
 
     return query.snapshots().map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.history(teamId);
+        return <TeamHistoryEntry>[];
       }
       return snapshot.docs.map(TeamHistoryEntry.fromDoc).toList();
     });
   }
 
-  /// Stream tournament participation cards.
+  /// Stream tournament participation cards - returns empty list if no data exists.
   Stream<List<TeamTournamentEntry>> tournamentEntries(String teamId) {
     return _subCollection(teamId, 'tournaments')
         .orderBy('startDate', descending: true)
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.tournaments(teamId);
+        return <TeamTournamentEntry>[];
       }
       return snapshot.docs.map(TeamTournamentEntry.fromDoc).toList();
     });
   }
 
-  /// Stream compact player highlight stats.
+  /// Stream compact player highlight stats - returns empty list if no data exists.
   Stream<List<PlayerHighlightStat>> playerHighlights(String teamId) {
     return _subCollection(teamId, 'player_highlights')
         .orderBy('playerName')
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) {
-        return DummyTeamData.playerHighlights(teamId);
+        return <PlayerHighlightStat>[];
       }
       return snapshot.docs.map(PlayerHighlightStat.fromDoc).toList();
     });
   }
 
-  /// Stream high-level team performance summary.
+  /// Stream high-level team performance summary - returns empty performance if no data exists.
   Stream<TeamPerformance> teamPerformance(String teamId) {
     return _subCollection(teamId, 'performance')
         .doc('aggregate')
         .snapshots()
         .map((snapshot) {
       if (!snapshot.exists) {
-        return DummyTeamData.teamPerformance(teamId);
+        return TeamPerformance(
+          teamId: teamId,
+          teamName: '',
+          lastUpdated: DateTime.now(),
+        );
       }
       final data = snapshot.data();
       if (data == null) {
-        return DummyTeamData.teamPerformance(teamId);
+        return TeamPerformance(
+          teamId: teamId,
+          teamName: '',
+          lastUpdated: DateTime.now(),
+        );
       }
       try {
         return TeamPerformance.fromMap({
@@ -156,7 +164,11 @@ class TeamProfileRepository {
         if (kDebugMode) {
           debugPrint('⚠️ Failed to parse team performance: $error');
         }
-        return DummyTeamData.teamPerformance(teamId);
+        return TeamPerformance(
+          teamId: teamId,
+          teamName: '',
+          lastUpdated: DateTime.now(),
+        );
       }
     });
   }

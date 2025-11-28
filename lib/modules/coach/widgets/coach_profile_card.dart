@@ -211,48 +211,10 @@ class CoachProfileCard extends StatelessWidget {
   }
 
   Widget _buildRatingRow() {
-    const rating = 4.7;
-    const reviews = 32;
-
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-          decoration: BoxDecoration(
-            color: const Color(0xFF18143A),
-            borderRadius: BorderRadius.circular(24.r),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.star_rounded,
-                size: 16.sp,
-                color: const Color(0xFFFFD76F),
-              ),
-              Gap(4.w),
-              Text(
-                rating.toStringAsFixed(1),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12.sp,
-                ),
-              ),
-            ],
-          ),
-        ),
-        Gap(8.w),
-        Text(
-          '$reviews reviews',
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
-    );
+    // TODO: Implement actual review system to fetch and display real ratings
+    // For now, hide the rating row since there are no real reviews
+    // When review system is implemented, fetch reviews and calculate actual rating
+    return const SizedBox.shrink();
   }
 
   Widget _buildQuickStats(Color accent) {

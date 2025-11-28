@@ -8,6 +8,8 @@ import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import 'community_notification_service.dart';
 import '../../../core/utils/stream_debounce.dart';
+import '../../../services/notification_service.dart';
+import '../../../models/notification_model.dart';
 
 class CommunityPostPage {
   final List<CommunityPost> posts;
@@ -139,6 +141,22 @@ class CommunityService {
         'awardCounts': <String, int>{},
         'moderatorIds': <String>[],
       }, SetOptions(merge: true));
+
+      // Notify followers about the new post
+      try {
+        await _notifyFollowersAboutNewPost(
+          authorId: userId,
+          postId: post.id,
+          authorNickname: authorNickname,
+          content: content,
+          images: images,
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('⚠️ Failed to notify followers about new post: $e');
+        }
+        // Don't fail post creation if notification fails
+      }
 
       if (kDebugMode) {
         debugPrint('✅ Community post created: ${post.id}');
@@ -845,6 +863,93 @@ class CommunityService {
         update(batch, docs[j]);
       }
       await batch.commit();
+    }
+  }
+
+  /// Notify followers when someone creates a new post
+  static Future<void> _notifyFollowersAboutNewPost({
+    required String authorId,
+    required String postId,
+    required String authorNickname,
+    required String content,
+    required List<String> images,
+  }) async {
+    try {
+      // Get the author's public profile to find followers
+      final profileDoc = await _firestore
+          .collection('public_profiles')
+          .doc(authorId)
+          .get();
+      
+      if (!profileDoc.exists) return;
+      
+      final profileData = profileDoc.data();
+      if (profileData == null) return;
+      
+      // Extract followers list
+      final followers = profileData['followers'] as List<dynamic>? ?? [];
+      if (followers.isEmpty) return;
+      
+      // Extract follower user IDs
+      final followerIds = followers
+          .whereType<Map>()
+          .map((follower) => follower['userId'] as String?)
+          .whereType<String>()
+          .toList();
+      
+      if (followerIds.isEmpty) return;
+      
+      // Create notification preview text
+      String postPreview = content;
+      if (postPreview.length > 100) {
+        postPreview = '${postPreview.substring(0, 100)}...';
+      } else if (images.isNotEmpty && postPreview.isEmpty) {
+        postPreview = '📷 Shared ${images.length} ${images.length == 1 ? 'image' : 'images'}';
+      } else if (postPreview.isEmpty) {
+        postPreview = 'New post';
+      }
+      
+      // Create notifications for all followers
+      final notificationService = NotificationService();
+      final batch = _firestore.batch();
+      final notificationRefs = <DocumentReference>[];
+      
+      for (final followerId in followerIds) {
+        final notificationId = _firestore.collection('notifications').doc().id;
+        final notificationRef = _firestore.collection('notifications').doc(notificationId);
+        notificationRefs.add(notificationRef);
+        
+        final notificationData = {
+          'id': notificationId,
+          'userId': followerId,
+          'type': NotificationType.newPost.value,
+          'title': 'New Post from $authorNickname',
+          'message': postPreview,
+          'data': {
+            'postId': postId,
+            'authorId': authorId,
+            'authorName': authorNickname,
+          },
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+        
+        batch.set(notificationRef, notificationData);
+      }
+      
+      // Commit all notifications in one batch
+      if (notificationRefs.isNotEmpty) {
+        await batch.commit();
+      }
+      
+      if (kDebugMode) {
+        debugPrint('✅ Notified ${followerIds.length} followers about new post');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Error notifying followers about new post: $e');
+      }
+      rethrow;
     }
   }
 }

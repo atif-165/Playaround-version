@@ -11,13 +11,164 @@ class VenueService {
   static const String _reviewsCollection = 'venue_reviews';
   static const String _slotsCollection = 'booking_slots';
 
+  // Test function to directly fetch venues (for debugging)
+  static Future<void> testFetchVenues() async {
+    try {
+      print('🧪 TEST: Fetching venues directly...');
+      final snapshot = await _firestore.collection(_venuesCollection).get();
+      print('🧪 TEST: Fetched ${snapshot.docs.length} documents');
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        print('  📄 ${doc.id}: ${data['title'] ?? data['name'] ?? 'N/A'} - isActive: ${data['isActive']}');
+      }
+    } catch (e, stackTrace) {
+      print('❌ TEST ERROR: $e');
+      print('Stack: $stackTrace');
+    }
+  }
+
   // Venue CRUD Operations
   static Future<List<Venue>> getVenues({
     VenueFilter? filter,
-    int limit = 20,
+    int? limit,
     DocumentSnapshot? lastDocument,
   }) async {
     try {
+      // First, verify we can access the collection at all
+      print('🔍 VenueService.getVenues: Starting query on collection: $_venuesCollection');
+      print('🔍 VenueService.getVenues: Firebase instance: ${_firestore.app.name}');
+      
+      // Try the absolute simplest query first - no filters, no orderBy, no limit
+      print('🔍 VenueService.getVenues: Attempting simplest possible query first...');
+      try {
+        final simplestSnapshot = await _firestore.collection(_venuesCollection).get();
+        print('✅ VenueService.getVenues: Simplest query returned ${simplestSnapshot.docs.length} documents');
+        if (simplestSnapshot.docs.isNotEmpty) {
+          // If simple query works, use it
+          List<Venue> venues = [];
+          int parseErrors = 0;
+          
+          for (var doc in simplestSnapshot.docs) {
+            try {
+              final venue = Venue.fromFirestore(doc);
+              print('✅ Parsed venue: ${venue.name} (id: ${doc.id}, isActive: ${venue.isActive})');
+              venues.add(venue);
+            } catch (e, stackTrace) {
+              parseErrors++;
+              print('⚠️ Error parsing venue ${doc.id}: $e');
+              print('⚠️ Stack trace: $stackTrace');
+              // Print document data for debugging
+              print('⚠️ Document data: ${doc.data()}');
+            }
+          }
+          
+          print('🔍 VenueService.getVenues: Successfully parsed ${venues.length} venues out of ${simplestSnapshot.docs.length} documents');
+          
+          if (parseErrors > 0) {
+            print('⚠️ VenueService.getVenues: Failed to parse $parseErrors venues');
+          }
+          
+          print('🔍 VenueService.getVenues: Before filtering: ${venues.length} venues');
+          print('🔍 VenueService.getVenues: Filter: ${filter?.toMap()}');
+          
+          // Apply filters in memory if needed
+          if (filter != null) {
+            final beforeFilterCount = venues.length;
+            
+            // Apply location-based filtering if coordinates are provided
+            if (filter.latitude != null &&
+                filter.longitude != null &&
+                filter.radius != null) {
+              final beforeLocationFilter = venues.length;
+              venues = venues.where((venue) {
+                double distance = Geolocator.distanceBetween(
+                      filter!.latitude!,
+                      filter.longitude!,
+                      venue.latitude,
+                      venue.longitude,
+                    ) /
+                    1000; // Convert to kilometers
+                return distance <= filter.radius!;
+              }).toList();
+              print('🔍 Location filter: ${beforeLocationFilter} -> ${venues.length} venues');
+            }
+
+            // Apply text search filter
+            if (filter.searchQuery != null && filter.searchQuery!.isNotEmpty) {
+              final beforeSearchFilter = venues.length;
+              String searchQuery = filter.searchQuery!.toLowerCase();
+              venues = venues.where((venue) {
+                return venue.name.toLowerCase().contains(searchQuery) ||
+                    venue.description.toLowerCase().contains(searchQuery) ||
+                    venue.address.toLowerCase().contains(searchQuery) ||
+                    venue.sports
+                        .any((sport) => sport.toLowerCase().contains(searchQuery));
+              }).toList();
+              print('🔍 Search filter: ${beforeSearchFilter} -> ${venues.length} venues');
+            }
+            
+            // Apply other filters
+            if (filter.city != null) {
+              final beforeCityFilter = venues.length;
+              venues = venues.where((v) => v.city == filter.city).toList();
+              print('🔍 City filter (${filter.city}): ${beforeCityFilter} -> ${venues.length} venues');
+            }
+            if (filter.state != null) {
+              final beforeStateFilter = venues.length;
+              venues = venues.where((v) => v.state == filter.state).toList();
+              print('🔍 State filter (${filter.state}): ${beforeStateFilter} -> ${venues.length} venues');
+            }
+            if (filter.country != null) {
+              final beforeCountryFilter = venues.length;
+              venues = venues.where((v) => v.country == filter.country).toList();
+              print('🔍 Country filter (${filter.country}): ${beforeCountryFilter} -> ${venues.length} venues');
+            }
+            if (filter.sports.isNotEmpty) {
+              final beforeSportsFilter = venues.length;
+              venues = venues.where((v) => 
+                v.sports.any((s) => filter.sports.contains(s))
+              ).toList();
+              print('🔍 Sports filter (${filter.sports}): ${beforeSportsFilter} -> ${venues.length} venues');
+            }
+            if (filter.minPrice != null) {
+              final beforePriceFilter = venues.length;
+              venues = venues.where((v) => v.pricing.hourlyRate >= filter.minPrice!).toList();
+              print('🔍 Min price filter (${filter.minPrice}): ${beforePriceFilter} -> ${venues.length} venues');
+            }
+            if (filter.maxPrice != null) {
+              final beforePriceFilter = venues.length;
+              venues = venues.where((v) => v.pricing.hourlyRate <= filter.maxPrice!).toList();
+              print('🔍 Max price filter (${filter.maxPrice}): ${beforePriceFilter} -> ${venues.length} venues');
+            }
+            if (filter.minRating != null) {
+              final beforeRatingFilter = venues.length;
+              venues = venues.where((v) => v.rating >= filter.minRating!).toList();
+              print('🔍 Min rating filter (${filter.minRating}): ${beforeRatingFilter} -> ${venues.length} venues');
+            }
+            if (filter.isVerified != null) {
+              final beforeVerifiedFilter = venues.length;
+              venues = venues.where((v) => v.isVerified == filter.isVerified).toList();
+              print('🔍 Verified filter (${filter.isVerified}): ${beforeVerifiedFilter} -> ${venues.length} venues');
+            }
+            // Note: isActive filter is not part of VenueFilter - we always show active venues by default
+            // The screen already filters for active venues after receiving results
+            
+            print('🔍 VenueService.getVenues: After filtering: ${beforeFilterCount} -> ${venues.length} venues');
+          }
+          
+          // Sort in memory
+          venues.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          print('🔍 VenueService.getVenues: Returning ${venues.length} venues after filtering');
+          return venues;
+        }
+      } catch (e) {
+        print('❌ VenueService.getVenues: Simplest query failed: $e');
+        // Continue with regular query
+      }
+      
+      // Start with the simplest possible query - just get all documents
       Query query = _firestore.collection(_venuesCollection);
 
       // Apply filters
@@ -49,13 +200,15 @@ class VenueService {
         if (filter.isVerified != null) {
           query = query.where('isVerified', isEqualTo: filter.isVerified);
         }
-        if (filter.isActive != null) {
-          query = query.where('isActive', isEqualTo: filter.isActive);
-        }
+        // Note: isActive filter is not part of VenueFilter - we always show active venues by default
+        // The screen already filters for active venues after receiving results
       }
 
-      // Apply sorting
+      // For now, let's try fetching without orderBy and without limit to see if we get any documents
+      // Firestore allows fetching up to a certain number without orderBy
+      bool useOrderBy = false;
       if (filter?.sortBy != null) {
+        useOrderBy = true;
         switch (filter!.sortBy) {
           case 'rating':
             query = query.orderBy('rating',
@@ -70,19 +223,115 @@ class VenueService {
                 descending: !(filter.sortAscending ?? false));
             break;
         }
-      } else {
+      } else if (limit != null && limit! < 100) {
+        // Only use orderBy for small limits (pagination)
+        useOrderBy = true;
+        query = query.orderBy('createdAt', descending: true);
+      } else if (lastDocument != null) {
+        // Use orderBy for pagination
+        useOrderBy = true;
         query = query.orderBy('createdAt', descending: true);
       }
+      // Skip orderBy when fetching all venues to avoid index requirements
 
       // Apply pagination
       if (lastDocument != null) {
         query = query.startAfterDocument(lastDocument);
       }
-      query = query.limit(limit);
+      
+      // Apply limit - but only if explicitly provided or for pagination
+      // Don't apply default limit when fetching all venues to avoid restrictions
+      if (limit != null) {
+        query = query.limit(limit);
+      } else if (lastDocument == null && !useOrderBy) {
+        // When fetching all without orderBy, don't use limit
+        // Firestore allows fetching documents without limit (up to a certain point)
+        print('🔍 VenueService.getVenues: Fetching without limit to get all documents');
+      } else {
+        // Use a reasonable limit for other cases
+        query = query.limit(1000);
+      }
 
-      QuerySnapshot snapshot = await query.get();
-      List<Venue> venues =
-          snapshot.docs.map((doc) => Venue.fromFirestore(doc)).toList();
+      print('🔍 VenueService.getVenues: Executing query (useOrderBy: $useOrderBy, limit: ${limit ?? "none"})');
+      print('🔍 VenueService.getVenues: Collection name: $_venuesCollection');
+      
+      QuerySnapshot snapshot;
+      try {
+        snapshot = await query.get();
+        print('✅ VenueService.getVenues: Query executed successfully');
+      } catch (e, stackTrace) {
+        print('❌ VenueService.getVenues: Query failed with error: $e');
+        print('❌ Stack trace: $stackTrace');
+        
+        // Try the absolute simplest query possible
+        print('🔍 VenueService.getVenues: Trying absolute simplest query...');
+        try {
+          final simplestQuery = _firestore.collection(_venuesCollection);
+          snapshot = await simplestQuery.get();
+          print('🔍 VenueService.getVenues: Simplest query returned ${snapshot.docs.length} documents');
+        } catch (e2) {
+          print('❌ VenueService.getVenues: Simplest query also failed: $e2');
+          // Don't rethrow, return empty list instead
+          return [];
+        }
+      }
+      
+      // Debug: Log raw document count
+      print('🔍 VenueService.getVenues: Firestore returned ${snapshot.docs.length} documents');
+      
+      // If we got 0 documents, try fetching with a very simple query
+      if (snapshot.docs.isEmpty) {
+        print('⚠️ VenueService.getVenues: Got 0 documents, trying alternative approaches...');
+        
+        // Try 1: Get all documents without any limit
+        try {
+          print('🔍 Trying: collection($_venuesCollection).get()');
+          final testQuery = _firestore.collection(_venuesCollection);
+          final testSnapshot = await testQuery.get();
+          print('🔍 Test query returned ${testSnapshot.docs.length} documents');
+          if (testSnapshot.docs.isNotEmpty) {
+            snapshot = testSnapshot;
+            print('✅ Found ${snapshot.docs.length} documents with test query!');
+          }
+        } catch (e) {
+          print('❌ Test query failed: $e');
+        }
+        
+        // Try 2: Check if collection exists by trying to get a single doc
+        try {
+          print('🔍 Checking if collection exists by getting collection reference...');
+          final collectionRef = _firestore.collection(_venuesCollection);
+          final testSnapshot = await collectionRef.limit(1).get();
+          print('🔍 Collection exists, limit(1) returned ${testSnapshot.docs.length} documents');
+        } catch (e) {
+          print('❌ Collection check failed: $e');
+        }
+      }
+      
+      List<Venue> venues = [];
+      int parseErrors = 0;
+      
+      for (var doc in snapshot.docs) {
+        try {
+          final venue = Venue.fromFirestore(doc);
+          venues.add(venue);
+        } catch (e) {
+          parseErrors++;
+          print('⚠️ Error parsing venue ${doc.id}: $e');
+        }
+      }
+      
+      if (parseErrors > 0) {
+        print('⚠️ VenueService.getVenues: Failed to parse $parseErrors venues');
+      }
+      
+      // Sort in memory if we didn't use orderBy
+      if (!useOrderBy) {
+        venues.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+      
+      // Debug: Log the number of venues fetched
+      print('🔍 VenueService.getVenues: Successfully parsed ${venues.length} venues (useOrderBy: $useOrderBy)');
 
       // Apply location-based filtering if coordinates are provided
       if (filter?.latitude != null &&
@@ -434,3 +683,4 @@ class VenueService {
     }
   }
 }
+
